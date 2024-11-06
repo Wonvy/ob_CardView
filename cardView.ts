@@ -120,16 +120,34 @@ export class CardView extends ItemView {
         const title = card.createDiv('note-title');
         title.setText(file.basename);
 
-        // 添加预览功能
+        const lastModified = card.createDiv('note-date');
+        lastModified.setText(new Date(file.stat.mtime).toLocaleDateString());
+
+        const cache = this.app.metadataCache.getFileCache(file);
+        if (cache?.tags) {
+            const tagContainer = card.createDiv('note-tags');
+            cache.tags.forEach(tag => {
+                const tagEl = tagContainer.createEl('span', {
+                    text: tag.tag,
+                    cls: 'note-tag'
+                });
+            });
+        }
+
         card.addEventListener('mouseenter', async () => {
-            this.previewContainer.empty();
-            const content = await this.app.vault.read(file);
-            await MarkdownRenderer.renderMarkdown(
-                content,
-                this.previewContainer,
-                file.path,
-                this
-            );
+            try {
+                this.previewContainer.empty();
+                const content = await this.app.vault.read(file);
+                await MarkdownRenderer.renderMarkdown(
+                    content,
+                    this.previewContainer,
+                    file.path,
+                    this
+                );
+            } catch (error) {
+                console.error('预览加载失败:', error);
+                this.previewContainer.setText('预览加载失败');
+            }
         });
 
         return card;
@@ -150,6 +168,24 @@ export class CardView extends ItemView {
      * @param tag - 标签名称
      */
     private filterByTag(tag: string) {
-        // 实现标签过滤逻辑
+        const files = this.app.vault.getMarkdownFiles();
+        this.container.empty();
+
+        files.forEach(file => {
+            const cache = this.app.metadataCache.getFileCache(file);
+            if (cache?.tags && cache.tags.some(t => t.tag === tag)) {
+                const card = this.createNoteCard(file);
+                this.container.appendChild(card);
+            }
+        });
+
+        // 高亮选中的标签
+        this.tagContainer.querySelectorAll('button').forEach(btn => {
+            if (btn.textContent === tag) {
+                btn.addClass('active-tag');
+            } else {
+                btn.removeClass('active-tag');
+            }
+        });
     }
 } 

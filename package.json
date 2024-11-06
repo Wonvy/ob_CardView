@@ -1,0 +1,28 @@
+{
+    "name": "obsidian-card-view",
+    "version": "1.0.0",
+    "description": "在 Obsidian 中以卡片方式查看笔记，支持标签过滤和多种视图模式。",
+    "main": "main.js",
+    "scripts": {
+        "dev": "node esbuild.config.mjs",
+        "build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
+        "version": "node version-bump.mjs && git add manifest.json versions.json",
+        "deploy": "npm run build && node deploy.js"
+    },
+    "keywords": [
+        "obsidian",
+        "plugin"
+    ],
+    "author": "你的名字",
+    "license": "MIT",
+    "devDependencies": {
+        "@types/node": "^16.11.6",
+        "@typescript-eslint/eslint-plugin": "^5.2.0",
+        "@typescript-eslint/parser": "^5.2.0",
+        "builtin-modules": "^3.2.0",
+        "esbuild": "0.13.12",
+        "obsidian": "latest",
+        "tslib": "2.3.1",
+        "typescript": "4.4.4"
+    }
+} 

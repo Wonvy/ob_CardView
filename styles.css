@@ -6,18 +6,49 @@
     padding: 1rem;
 }
 
-/* 卡片样式 */
+/* 卡片样式优化 */
 .note-card {
     background-color: var(--background-secondary);
     border-radius: 8px;
     padding: 1rem;
     cursor: pointer;
     transition: all 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    min-height: 120px;
+    border: 1px solid var(--background-modifier-border);
 }
 
 .note-card:hover {
     transform: translateY(-2px);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border-color: var(--interactive-accent);
+}
+
+.note-title {
+    font-size: 1.1em;
+    font-weight: bold;
+    color: var(--text-normal);
+}
+
+.note-date {
+    font-size: 0.8em;
+    color: var(--text-muted);
+}
+
+.note-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+}
+
+.note-tag {
+    background-color: var(--interactive-accent);
+    color: var(--text-on-accent);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.8em;
 }
 
 /* 标签过滤器样式 */
@@ -38,6 +69,12 @@
     cursor: pointer;
 }
 
+.tag-filter button.active-tag {
+    background-color: var(--text-accent);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
 /* 视图切换器样式 */
 .view-switcher {
     display: flex;
@@ -45,7 +82,7 @@
     padding: 1rem;
 }
 
-/* 预览容器样式 */
+/* 预览容器样式优化 */
 .preview-container {
     position: fixed;
     right: 0;
@@ -56,6 +93,13 @@
     border-left: 1px solid var(--background-modifier-border);
     padding: 1rem;
     overflow-y: auto;
+    z-index: 100;
+    box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
+}
+
+/* 确保预览容器在暗色主题下也能正常显示 */
+.theme-dark .preview-container {
+    background-color: var(--background-primary-alt);
 }
 
 /* 不同视图样式 */
