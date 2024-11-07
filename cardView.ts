@@ -217,7 +217,7 @@ export class CardView extends ItemView {
                 cls: `view-switch-btn ${view.id === this.currentView ? 'active' : ''}`,
             });
             
-            // 直接使用 SVG 图标
+            // 直接 SVG 图标
             const iconHtml = {
                 'grid': '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>',
                 'list': '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>',
@@ -364,8 +364,7 @@ export class CardView extends ItemView {
             // 修改事件监听
             openButton.addEventListener('click', async (e) => {
                 e.stopPropagation();
-                const leaf = this.app.workspace.getLeaf('tab');
-                await leaf.openFile(file);
+                await this.openInAppropriateLeaf(file);
             });
 
             // 单击选择
@@ -375,8 +374,7 @@ export class CardView extends ItemView {
 
             // 双击打开
             card.addEventListener('dblclick', async () => {
-                const leaf = this.app.workspace.getLeaf('tab');
-                await leaf.openFile(file);
+                await this.openInAppropriateLeaf(file);
             });
 
             // 右键菜单
@@ -392,7 +390,7 @@ export class CardView extends ItemView {
         // 添加卡片悬停事件
         card.addEventListener('mouseenter', async () => {
             openButton.style.opacity = '1';  // 显示打开按钮
-            // ... 其他悬停事件代码 ...
+            // ... 其他悬停事件码 ...
         });
 
         card.addEventListener('mouseleave', () => {
@@ -627,7 +625,7 @@ export class CardView extends ItemView {
                 for (const file of notes) {
                     const noteItem = notesList.createDiv('timeline-note-item');
                     
-                    // 创建标记线
+                    // 创建标记
                     noteItem.createDiv('timeline-note-marker');
                     
                     // 创建笔记内容
@@ -1119,7 +1117,7 @@ export class CardView extends ItemView {
                 day.removeClass('selected');
             });
         }
-        // 刷新视图以显示所有笔记
+        // 刷新视图以显示���有笔记
         this.refreshView();
     }
 
@@ -1225,8 +1223,7 @@ export class CardView extends ItemView {
             // 修改事件监听
             openButton.addEventListener('click', async (e) => {
                 e.stopPropagation();
-                const leaf = this.app.workspace.getLeaf('tab');
-                await leaf.openFile(file);
+                await this.openInAppropriateLeaf(file);
             });
 
             // 单击选择
@@ -1236,8 +1233,7 @@ export class CardView extends ItemView {
 
             // 双击打开
             card.addEventListener('dblclick', async () => {
-                const leaf = this.app.workspace.getLeaf('tab');
-                await leaf.openFile(file);
+                await this.openInAppropriateLeaf(file);
             });
 
             // 右键菜单
@@ -1269,6 +1265,31 @@ export class CardView extends ItemView {
         
         const regex = new RegExp(searchTerm, 'gi');
         return content.replace(regex, match => `<span class="search-highlight">${match}</span>`);
+    }
+
+    // 修改方法名以更好地反映其功能
+    private async openInAppropriateLeaf(file: TFile) {
+        // 获取所有可见的 markdown 类型的叶子
+        const leaves = this.app.workspace.getLeavesOfType('markdown');
+        
+        // 获取当前卡片视图所在的根分屏
+        const currentRoot = this.leaf.getRoot();
+        
+        // 找到不在当前根分屏下的叶子
+        const otherLeaf = leaves.find(leaf => {
+            const root = leaf.getRoot();
+            return root !== currentRoot;
+        });
+        
+        if (otherLeaf) {
+            // 如果找到其他分屏的叶子，在那里打开文件
+            await otherLeaf.openFile(file);
+            this.app.workspace.setActiveLeaf(otherLeaf);
+        } else {
+            // 如果没有找到其他分屏的叶子，在当前分屏创建新标签页
+            const leaf = this.app.workspace.getLeaf('tab');
+            await leaf.openFile(file);
+        }
     }
 }
 
