@@ -29,6 +29,9 @@ export class CardView extends ItemView {
     private selectedNotes: Set<string> = new Set();
     private lastSelectedNote: string | null = null;
     private recentFolders: string[] = [];
+    private cardSize: number = 280;  // 默认卡片宽度
+    private readonly MIN_CARD_SIZE = 280;  // 最小卡片宽度
+    private readonly MAX_CARD_SIZE = 600;  // 最大卡片宽度
 
     /**
      * 构造函数
@@ -123,6 +126,14 @@ export class CardView extends ItemView {
 
         this.previewResizer = previewWrapper.createDiv('preview-resizer');
         this.setupResizer();
+
+        // 添加全局滚轮事件监听
+        document.addEventListener('wheel', (e: WheelEvent) => {
+            if (e.ctrlKey) {
+                e.preventDefault();
+                this.adjustCardSize(e.deltaY);
+            }
+        }, { passive: false });
 
         await this.loadNotes();
     }
@@ -245,11 +256,26 @@ export class CardView extends ItemView {
         const lastModified = header.createDiv('note-date');
         lastModified.setText(new Date(file.stat.mtime).toLocaleDateString());
 
-        // 添加文件夹路径
+        // 修改文件夹路径的创建和样式
         const folderPath = header.createDiv('note-folder');
         const folder = file.parent ? (file.parent.path === '/' ? '根目录' : file.parent.path) : '根目录';
         folderPath.setText(folder);
-        folderPath.setAttribute('title', folder);
+        folderPath.setAttribute('title', `打开文件夹: ${folder}`);
+        
+        // 添加点击事件
+        folderPath.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            // 打开文件夹
+            const fileExplorer = this.app.workspace.getLeavesOfType('file-explorer')[0];
+            if (fileExplorer) {
+                const fileExplorerView = fileExplorer.view as any;
+                if (fileExplorerView.expandFolder) {
+                    await this.revealFolderInExplorer(folder);
+                    // 聚焦到文件浏览器
+                    fileExplorer.setEphemeralState({ focus: true });
+                }
+            }
+        });
 
         // 添加打开按钮
         const openButton = header.createDiv('note-open-button');
@@ -785,6 +811,26 @@ export class CardView extends ItemView {
         }
 
         menu.showAtMouseEvent(event);
+    }
+
+    // 添加调整卡片大小的方法
+    private adjustCardSize(delta: number) {
+        // 根据滚轮方向调整大小
+        const adjustment = delta > 0 ? -10 : 10;
+        const newSize = Math.max(
+            this.MIN_CARD_SIZE,
+            Math.min(this.MAX_CARD_SIZE, this.cardSize + adjustment)
+        );
+
+        if (newSize !== this.cardSize) {
+            this.cardSize = newSize;
+            // 更新所有卡片的大小
+            this.container.querySelectorAll('.note-card').forEach((card: HTMLElement) => {
+                card.style.width = `${this.cardSize}px`;
+            });
+            // 更新网格布局
+            this.container.style.gridTemplateColumns = `repeat(auto-fill, ${this.cardSize}px)`;
+        }
     }
 }
 

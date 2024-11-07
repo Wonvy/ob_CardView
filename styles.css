@@ -90,6 +90,7 @@
     gap: 1rem;
     justify-content: center;
     padding: 1rem;
+    transition: all 0.2s ease;
 }
 
 /* 预览容器样式更新 */
@@ -126,6 +127,7 @@
     cursor: pointer;
     transition: all 0.2s ease;
     overflow: hidden;
+    transition: width 0.2s ease;
 }
 
 .note-card:hover {
@@ -327,11 +329,23 @@
     padding: 2px 4px;
     border-radius: 4px;
     transition: all 0.2s ease;
+    position: absolute;
+    top: 0.5rem;
+    right: 1rem;
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .note-folder:hover {
     background-color: var(--background-modifier-hover);
     color: var(--text-normal);
+    text-decoration: underline;
+}
+
+.note-folder:active {
+    transform: translateY(1px);
 }
 
 /* 文件夹高亮样式 */
@@ -790,6 +804,7 @@
     cursor: pointer;
     transition: all 0.2s ease;
     overflow: hidden;
+    transition: width 0.2s ease;
 }
 
 /* 卡片头部样式 */
