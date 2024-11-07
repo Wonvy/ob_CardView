@@ -106,10 +106,14 @@ export class CardView extends ItemView {
         this.tagContainer = containerEl.createDiv('tag-filter');
         await this.loadTags();
 
-        // 主内容区域
+        // 创建主内容区域
         const contentArea = containerEl.createDiv('card-view-content');
         this.container = contentArea.createDiv('card-container');
         
+        // 使用保存的宽度初始化卡片容器
+        this.cardSize = this.plugin.settings.cardWidth;
+        this.container.style.gridTemplateColumns = `repeat(auto-fill, ${this.cardSize}px)`;
+
         // 预览区域
         const previewWrapper = containerEl.createDiv('preview-wrapper');
         this.previewContainer = previewWrapper.createDiv('preview-container');
@@ -233,10 +237,16 @@ export class CardView extends ItemView {
             files.map(file => this.createNoteCard(file))
         );
 
-        // 添加所有卡片到容器
+        // 添加所有卡片到容器，并设置正确的宽度
         cards.forEach(card => {
-            this.container.appendChild(card);
+            if (card instanceof HTMLElement) {
+                card.style.width = `${this.cardSize}px`;
+                this.container.appendChild(card);
+            }
         });
+
+        // 确保容器使用正确的网格列宽度
+        this.container.style.gridTemplateColumns = `repeat(auto-fill, ${this.cardSize}px)`;
     }
 
     /**
@@ -652,15 +662,19 @@ export class CardView extends ItemView {
             return matchesSearch && matchesTags;
         });
 
-        // 使用 Promise.all 等待所有卡片创建完成
         const cards = await Promise.all(
             filteredFiles.map(file => this.createNoteCard(file))
         );
 
-        // 添加所有卡片到容器
         cards.forEach(card => {
-            this.container.appendChild(card);
+            if (card instanceof HTMLElement) {
+                card.style.width = `${this.cardSize}px`;
+                this.container.appendChild(card);
+            }
         });
+
+        // 确保容器使用正确的网格列宽度
+        this.container.style.gridTemplateColumns = `repeat(auto-fill, ${this.cardSize}px)`;
     }
 
     // 添加标签切换方法
@@ -813,24 +827,33 @@ export class CardView extends ItemView {
         menu.showAtMouseEvent(event);
     }
 
-    // 添加调整卡片大小的方法
+    // 修改调整卡片大小的方法
     private adjustCardSize(delta: number) {
-        // 根据滚轮方向调整大小
         const adjustment = delta > 0 ? -10 : 10;
         const newSize = Math.max(
-            this.MIN_CARD_SIZE,
-            Math.min(this.MAX_CARD_SIZE, this.cardSize + adjustment)
+            this.plugin.settings.minCardWidth,
+            Math.min(this.plugin.settings.maxCardWidth, this.cardSize + adjustment)
         );
 
         if (newSize !== this.cardSize) {
             this.cardSize = newSize;
-            // 更新所有卡片的大小
-            this.container.querySelectorAll('.note-card').forEach((card: HTMLElement) => {
-                card.style.width = `${this.cardSize}px`;
-            });
-            // 更新网格布局
-            this.container.style.gridTemplateColumns = `repeat(auto-fill, ${this.cardSize}px)`;
+            this.updateCardSize(newSize);
+            // 保存新的宽度
+            this.plugin.saveCardWidth(newSize);
         }
+    }
+
+    // 添加更新卡片大小的方法
+    public updateCardSize(width: number) {
+        this.cardSize = width;
+        // 更新所有卡片的宽度
+        this.container.querySelectorAll('.note-card').forEach((card: Element) => {
+            if (card instanceof HTMLElement) {
+                card.style.width = `${width}px`;
+            }
+        });
+        // 更新容器的网格列宽度
+        this.container.style.gridTemplateColumns = `repeat(auto-fill, ${width}px)`;
     }
 }
 
