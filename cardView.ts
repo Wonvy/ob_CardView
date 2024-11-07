@@ -596,7 +596,7 @@ export class CardView extends ItemView {
                 '# ' + fileName + '\n\n'
             );
             
-            // 在新标签页中打开笔记
+            // 在新标签页中打开笔 记
             const leaf = this.app.workspace.getLeaf('tab');
             await leaf.openFile(file);
             
