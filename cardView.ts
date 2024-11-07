@@ -69,8 +69,14 @@ export class CardView extends ItemView {
         containerEl.empty();
         containerEl.addClass('card-view-container');
         
+        // 创建主布局容器
+        const mainLayout = containerEl.createDiv('main-layout');
+        
+        // 创建左侧内容区域
+        const contentSection = mainLayout.createDiv('content-section');
+        
         // 创建工具栏
-        const toolbar = containerEl.createDiv('card-view-toolbar');
+        const toolbar = contentSection.createDiv('card-view-toolbar');
         
         // 左侧工具组
         const leftTools = toolbar.createDiv('toolbar-left');
@@ -103,22 +109,22 @@ export class CardView extends ItemView {
         });
 
         // 标签栏
-        this.tagContainer = containerEl.createDiv('tag-filter');
+        this.tagContainer = contentSection.createDiv('tag-filter');
         await this.loadTags();
 
         // 创建主内容区域
-        const contentArea = containerEl.createDiv('card-view-content');
+        const contentArea = contentSection.createDiv('card-view-content');
         this.container = contentArea.createDiv('card-container');
         
         // 使用保存的宽度初始化卡片容器
         this.cardSize = this.plugin.settings.cardWidth;
         this.container.style.gridTemplateColumns = `repeat(auto-fill, ${this.cardSize}px)`;
 
-        // 预览区域
-        const previewWrapper = containerEl.createDiv('preview-wrapper');
+        // 创建预览区域
+        const previewWrapper = mainLayout.createDiv('preview-wrapper');
         this.previewContainer = previewWrapper.createDiv('preview-container');
         
-        // 预览控制按钮
+        // 添加预览控制按钮
         const previewControls = previewWrapper.createDiv('preview-controls');
         const toggleButton = previewControls.createEl('button', {
             cls: 'preview-toggle',
@@ -128,6 +134,7 @@ export class CardView extends ItemView {
         
         toggleButton.addEventListener('click', () => this.togglePreview());
 
+        // 添加调整大小的功能
         this.previewResizer = previewWrapper.createDiv('preview-resizer');
         this.setupResizer();
 
@@ -447,6 +454,7 @@ export class CardView extends ItemView {
         }
     }
 
+    // 修改预览栏大小调整方法
     private setupResizer() {
         let startX: number;
         let startWidth: number;
@@ -465,6 +473,8 @@ export class CardView extends ItemView {
             const width = startWidth - (e.pageX - startX);
             if (width >= 50 && width <= 800) {
                 this.previewContainer.style.width = `${width}px`;
+                // 调整卡片容器的宽度
+                this.adjustContentWidth();
                 if (this.isPreviewCollapsed) {
                     this.isPreviewCollapsed = false;
                     this.previewContainer.removeClass('collapsed');
@@ -480,6 +490,27 @@ export class CardView extends ItemView {
         };
 
         this.previewResizer.addEventListener('mousedown', startResize);
+    }
+
+    // 添加内容区域宽度调整方法
+    private adjustContentWidth() {
+        const mainLayout = this.containerEl.querySelector('.main-layout');
+        const previewWidth = this.previewContainer.offsetWidth;
+        const contentSection = this.containerEl.querySelector('.content-section');
+        
+        if (mainLayout && contentSection) {
+            const totalWidth = mainLayout.offsetWidth;
+            const newContentWidth = totalWidth - previewWidth - 4; // 4px 是分隔线宽度
+            contentSection.style.width = `${newContentWidth}px`;
+            
+            // 重新计算卡片列数
+            const availableWidth = newContentWidth - 32; // 减去内边距
+            const columns = Math.floor(availableWidth / this.cardSize);
+            const gap = 16; // 卡片间距
+            const actualCardWidth = (availableWidth - (columns - 1) * gap) / columns;
+            
+            this.container.style.gridTemplateColumns = `repeat(${columns}, ${actualCardWidth}px)`;
+        }
     }
 
     private highlightFolder(folder: string) {
