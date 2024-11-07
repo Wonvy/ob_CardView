@@ -1,4 +1,4 @@
-import { App, Plugin, PluginSettingTab, Setting, TFile, WorkspaceLeaf } from 'obsidian';
+import { App, Plugin, PluginSettingTab, Setting, TFile, TFolder,WorkspaceLeaf } from 'obsidian';
 import { CardView, VIEW_TYPE_CARD } from './cardView';
 
 interface CardViewPluginSettings {
@@ -106,6 +106,25 @@ export default class CardViewPlugin extends Plugin {
         });
 
         this.addSettingTab(new CardViewSettingTab(this.app, this));
+
+        // 监听文件列表的点击事件
+        this.app.workspace.on("file-open", (file: TFile | null) => {
+            if (file) {
+                this.handleFileOpen(file);
+            }
+        });
+
+    }
+
+    handleFileOpen(file: TFile) {
+        // 处理文件打开事件
+        console.log(`文件 ${file.path} 被打开`);
+        // 在这里可以添加您想要的逻辑，例如更新视图或显示相关信息
+    }
+
+    handleFolderOpen(folder: string) { // 新增处理文件夹打开的函数
+        console.log(`文件夹 ${folder} 被打开`);
+        // 在这里可以添加您想要的逻辑，例如更新视图或显示相关信息
     }
 
     async loadSettings() {

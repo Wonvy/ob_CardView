@@ -239,9 +239,7 @@ export class CardView extends ItemView {
         });
     }
 
-    /**
-     * 加载所有笔记并创建卡片
-     */
+    // 加载所有笔记并创建卡片
     private async loadNotes() {
         const files = this.app.vault.getMarkdownFiles();
         this.container.empty();
@@ -345,7 +343,7 @@ export class CardView extends ItemView {
                 content,
                 noteContent,
                 file.path,
-                this
+                this 
             );
 
             // 鼠标悬停事件
@@ -368,6 +366,7 @@ export class CardView extends ItemView {
                 }
             });
 
+            // 鼠标离开事件
             card.addEventListener('mouseleave', () => {
                 openButton.style.opacity = '0';  // 隐藏打开按钮
                 title.style.opacity = '1';
@@ -463,6 +462,7 @@ export class CardView extends ItemView {
         });
     }
 
+    // 切换预览栏的显示状态
     private togglePreview() {
         this.isPreviewCollapsed = !this.isPreviewCollapsed;
         if (this.isPreviewCollapsed) {
@@ -531,6 +531,7 @@ export class CardView extends ItemView {
         }
     }
 
+    // 高亮文件夹
     private highlightFolder(folder: string) {
         this.currentFolder = this.currentFolder === folder ? null : folder;
         this.container.querySelectorAll('.note-card').forEach(card => {
@@ -576,6 +577,7 @@ export class CardView extends ItemView {
         }
     }
 
+    // 创建新笔记
     private async createNewNote() {
         // 获取当前日期作为默认文件名
         const date = new Date();
@@ -599,6 +601,7 @@ export class CardView extends ItemView {
         }
     }
 
+    // 创建时间轴视图
     private async createTimelineView() {
         const timelineContainer = this.container.createDiv('timeline-container');
         
@@ -669,26 +672,6 @@ export class CardView extends ItemView {
                 }
             }
         }
-    }
-
-    // 添加右键菜单功能
-    private addContextMenu(card: HTMLElement, file: TFile) {
-        card.addEventListener('contextmenu', (event) => {
-            event.preventDefault();
-            event.stopPropagation();
-            
-            // 如果点击的卡片没有被选中，且没有按住 Ctrl 键，
-            // 则清除其他选择并选中当前卡片
-            const path = card.getAttribute('data-path');
-            if (path && !this.selectedNotes.has(path) && !event.ctrlKey) {
-                this.clearSelection();
-                this.selectedNotes.add(path);
-                card.addClass('selected');
-            }
-
-            const selectedFiles = this.getSelectedFiles();
-            this.showContextMenu(event, selectedFiles);
-        });
     }
 
     // 刷新视图（用于搜索和过滤）
@@ -771,7 +754,10 @@ export class CardView extends ItemView {
     // 处理卡片选择
     private handleCardSelection(path: string, event: MouseEvent) {
         const card = this.container.querySelector(`[data-path="${path}"]`);
-        if (!card) return;
+        if (!card) {
+          this.clearSelection();
+          return;
+        }
 
         if (event.ctrlKey) {
             // Ctrl + 点击：切换选择
@@ -920,6 +906,7 @@ export class CardView extends ItemView {
         this.container.style.gridTemplateColumns = `repeat(auto-fill, ${width}px)`;
     }
 
+    // 创建日历按钮
     private createCalendarButton(leftTools: HTMLElement) {
         const calendarBtn = leftTools.createEl('button', {
             cls: 'calendar-toggle-button',
@@ -935,6 +922,7 @@ export class CardView extends ItemView {
         });
     }
 
+    // 切换日历的显示状态
     private toggleCalendar() {
         this.isCalendarVisible = !this.isCalendarVisible;
         if (this.isCalendarVisible) {
@@ -959,6 +947,7 @@ export class CardView extends ItemView {
         this.refreshView();
     }
 
+    // 显示日历
     private showCalendar() {
         if (!this.calendarContainer) {
             // 修改：将日历容器添加到 content-section 之前
@@ -980,6 +969,7 @@ export class CardView extends ItemView {
         }
     }
 
+    // 隐藏日历 
     private hideCalendar() {
         if (this.calendarContainer) {
             this.calendarContainer.style.display = 'none';
@@ -993,6 +983,7 @@ export class CardView extends ItemView {
         }
     }
 
+    // 渲染日历
     private renderCalendar() {
         if (!this.calendarContainer) {
             return;
@@ -1082,6 +1073,7 @@ export class CardView extends ItemView {
         }
     }
 
+    // 获取每天的笔记数量
     private getNotesCountByDate(year: number, month: number): Record<string, number> {
         const counts: Record<string, number> = {};
         const files = this.app.vault.getMarkdownFiles();
@@ -1097,6 +1089,7 @@ export class CardView extends ItemView {
         return counts;
     }
 
+    // 根据日期过滤笔记
     private filterNotesByDate(dateStr: string) {
         // 如果已经选中了这个日期，则清除过滤
         if (this.currentFilter.type === 'date' && this.currentFilter.value === dateStr) {
@@ -1134,145 +1127,7 @@ export class CardView extends ItemView {
         this.refreshView();
     }
 
-    private async createNoteCard(file: TFile, searchTerm: string = ''): Promise<HTMLElement> {
-        const card = document.createElement('div');
-        card.addClass('note-card');
-        card.setAttribute('data-path', file.path);
-        
-        // 创建卡片头部
-        const header = card.createDiv('note-card-header');
-        
-        // 添加修改时间
-        const lastModified = header.createDiv('note-date');
-        lastModified.setText(new Date(file.stat.mtime).toLocaleDateString());
-
-        // 修改文件夹路径的创建和样式
-        const folderPath = header.createDiv('note-folder');
-        const folder = file.parent ? (file.parent.path === '/' ? '根目录' : file.parent.path) : '根目录';
-        folderPath.setText(folder);
-        folderPath.setAttribute('title', `打开文件夹: ${folder}`);
-        
-        // 添加点击事件
-        folderPath.addEventListener('click', async (e) => {
-            e.stopPropagation();
-            // 打开文件夹
-            const fileExplorer = this.app.workspace.getLeavesOfType('file-explorer')[0];
-            if (fileExplorer) {
-                const fileExplorerView = fileExplorer.view as any;
-                if (fileExplorerView.expandFolder) {
-                    await this.revealFolderInExplorer(folder);
-                    // 聚焦到文件浏览器
-                    fileExplorer.setEphemeralState({ focus: true });
-                }
-            }
-        });
-
-        // 添加打开按钮
-        const openButton = header.createDiv('note-open-button');
-        openButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>`;
-        openButton.setAttribute('title', '在新标签页中打开');
-        openButton.style.opacity = '0';  // 默认隐藏
-
-        // 创建卡片内容容器
-        const cardContent = card.createDiv('note-card-content');
-
-        // 处理标题（移到内容区域顶部）
-        const title = cardContent.createDiv('note-title');
-        let displayTitle = file.basename;
-        // 处理日期开头的标题
-        const timePattern = /^\d{4}[-./]\d{2}[-./]\d{2}/;
-        if (timePattern.test(displayTitle)) {
-            displayTitle = displayTitle.replace(timePattern, '').trim();
-        }
-        title.setText(displayTitle);
-
-        try {
-            // 读取笔记内容
-            const content = await this.app.vault.read(file);
-            
-            // 创建笔记内容容器
-            const noteContent = cardContent.createDiv('note-content');
-            
-            // 在渲染内容之前，添加高亮处理
-            if (searchTerm) {
-                const highlightedContent = this.highlightSearchTerm(content, searchTerm);
-                noteContent.innerHTML = highlightedContent;
-            }
-
-            // 渲染 Markdown 内容
-            await MarkdownRenderer.renderMarkdown(
-                content,
-                noteContent,
-                file.path,
-                this
-            );
-
-            // 鼠标悬停事件
-            card.addEventListener('mouseenter', async () => {
-                openButton.style.opacity = '1';  // 显示打开按钮
-                title.style.opacity = '0';
-                noteContent.style.display = 'block';
-                
-                // 在预览栏中显示完整内容
-                try {
-                    this.previewContainer.empty();
-                    await MarkdownRenderer.renderMarkdown(
-                        content,
-                        this.previewContainer,
-                        file.path,
-                        this
-                    );
-                } catch (error) {
-                    console.error('预览加载失败:', error);
-                }
-            });
-
-            card.addEventListener('mouseleave', () => {
-                openButton.style.opacity = '0';  // 隐藏打开按钮
-                title.style.opacity = '1';
-                noteContent.style.display = 'none';
-            });
-
-            // 修改事件监听
-            openButton.addEventListener('click', async (e) => {
-                e.stopPropagation();
-                await this.openInAppropriateLeaf(file);
-            });
-
-            // 单击选择
-            card.addEventListener('click', (e) => {
-                this.handleCardSelection(file.path, e);
-            });
-
-            // 双击打开
-            card.addEventListener('dblclick', async () => {
-                await this.openInAppropriateLeaf(file);
-            });
-
-            // 右键菜单
-            card.addEventListener('contextmenu', (e) => {
-                e.preventDefault();
-                this.showContextMenu(e, this.getSelectedFiles());
-            });
-
-        } catch (error) {
-            console.error('笔记加载失败:', error);
-        }
-
-        // 添加卡片悬停事件
-        card.addEventListener('mouseenter', async () => {
-            openButton.style.opacity = '1';  // 显示打开按钮
-            // ... 其他悬停事件代码 ...
-        });
-
-        card.addEventListener('mouseleave', () => {
-            openButton.style.opacity = '0';  // 隐藏打开按钮
-            // ... 其他离开事件代码 ...
-        });
-
-        return card;
-    }
-
+    // 高亮搜索词
     private highlightSearchTerm(content: string, searchTerm: string): string {
         if (!searchTerm) return content;
         
@@ -1305,6 +1160,7 @@ export class CardView extends ItemView {
         }
     }
 
+    // 渲染文件夹卡片
     private renderFolderCard(folder: TFolder): HTMLElement {
         const cardEl = createDiv('card folder-card');
         

@@ -7,13 +7,15 @@
         "dev": "node esbuild.config.mjs",
         "build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
         "version": "node version-bump.mjs && git add manifest.json versions.json",
-        "deploy": "npm run build && node deploy.js"
+        "deploy": "npm run build && node deploy.js",
+        "sass": "sass styles.sass:styles.css --watch",
+        "sass:build": "sass styles.sass:styles.css --style compressed"
     },
     "keywords": [
         "obsidian",
         "plugin"
     ],
-    "author": "你的名字",
+    "author": "Wonvy",
     "license": "MIT",
     "devDependencies": {
         "@types/node": "^16.11.6",
@@ -24,5 +26,8 @@
         "obsidian": "latest",
         "tslib": "2.3.1",
         "typescript": "4.4.4"
+    },
+    "dependencies": {
+        "sass": "^1.80.6"
     }
-} 
+}

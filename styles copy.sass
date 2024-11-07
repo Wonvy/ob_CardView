@@ -1,0 +1,1481 @@
+/* 主容器布局 */
+.card-view-container 
+	display: flex
+    flex-direction: column
+    height: 100%
+    overflow: hidden
+
+
+/* 工具栏样式 */
+.card-view-toolbar 
+    display: flex
+    align-items: center
+    justify-content: space-between
+    gap: 1rem
+    padding: 0.8rem 1rem
+    border-bottom: 1px solid var(--background-modifier-border)
+    background-color: var(--background-secondary)
+    width: 100%
+    flex-shrink: 0
+    height: auto
+    min-height: 48px
+
+
+/* 工具栏左侧区域 */
+.toolbar-left 
+    display: flex
+    align-items: center
+    gap: 8px
+
+
+/* 新建笔记按钮样式 */
+.new-note-button 
+    display: flex
+    align-items: center
+    gap: 0.5rem
+    background-color: var(--interactive-accent)
+    color: var(--text-on-accent)
+    padding: 6px 12px
+    border-radius: 4px
+    border: none
+    cursor: pointer
+    font-weight: 500
+    transition: all 0.2s ease
+
+
+.new-note-button:hover 
+    opacity: 0.9
+    transform: translateY(-1px)
+
+
+.new-note-button svg 
+    width: 16px
+    height: 16px
+
+
+/* 视图切换器样式 */
+.view-switcher 
+    display: flex
+    gap: 0.5rem
+    padding-left: 1rem
+    border-left: 1px solid var(--background-modifier-border)
+
+
+/* 标签过滤器样式 */
+.tag-filter 
+    display: flex
+    flex-wrap: wrap
+    gap: 0.5rem
+    overflow-x: auto
+    max-width: 60%
+    padding-bottom: 4px
+
+
+.tag-filter::-webkit-scrollbar 
+    height: 4px
+
+
+/* 内容区域样式 */
+.card-view-content 
+    flex: 1
+    overflow-y: auto
+    padding: 1rem
+    position: relative
+
+
+/* 卡片容器样式 */
+.card-container 
+    display: grid
+    grid-template-columns: repeat(auto-fill, 280px)
+    gap: 1rem
+    justify-content: center
+    padding: 1rem
+    transition: all 0.2s ease
+
+
+/* 预览容器样式更新 */
+.preview-wrapper 
+    position: absolute  /* 改为 absolute */
+    right: 0
+    top: 0
+    height: 100%
+    display: flex
+    z-index: 100
+
+
+.preview-container 
+    width: 300px
+    height: 100%
+    background-color: var(--background-primary)
+    border-left: 1px solid var(--background-modifier-border)
+    padding: 1rem
+    overflow-y: auto
+    transition: width 0.2s ease
+    resize: horizontal  /* 添加水平调整大小功能 */
+    max-width: 800px   /* 最大宽度 */
+
+
+/* 卡片样式优化 */
+.note-card 
+    position: relative
+    width: 280px
+    height: 200px
+    background-color: var(--background-secondary)
+    border-radius: 8px
+    border: 1px solid var(--background-modifier-border)
+    cursor: pointer
+    transition: all 0.2s ease
+    overflow: hidden
+    transition: width 0.2s ease
+
+
+.note-card:hover 
+    transform: translateY(-2px)
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1)
+    border-color: var(--interactive-accent)
+
+
+.note-title 
+    font-size: 1.1em
+    font-weight: bold
+    color: var(--text-normal)
+
+
+.note-date 
+    font-size: 0.8em
+    color: var(--text-muted)
+
+
+.note-tags 
+    display: flex
+    flex-wrap: wrap
+    gap: 0.3rem
+
+
+.note-tag 
+    background-color: var(--interactive-accent)
+    color: var(--text-on-accent)
+    padding: 2px 6px
+    border-radius: 4px
+    font-size: 0.8em
+
+
+/* 标签过滤器样式修复 */
+.tag-filter 
+    display: flex
+    flex-wrap: wrap
+    gap: 0.5rem
+    padding: 0
+    border: none
+
+
+.tag-filter button 
+    /* background-color: var(--interactive-accent) */
+    color: var(--text-on-accent)
+    border: none
+    border-radius: 4px
+    padding: 4px 8px
+    cursor: pointer
+
+
+.tag-filter button.active-tag 
+    background-color: var(--text-accent)
+    transform: translateY(-1px)
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1)
+
+
+/* 视切换器样式修复 */
+.view-switcher 
+    display: flex
+    gap: 0.5rem
+    padding: 0
+    border-left: 1px solid var(--background-modifier-border)
+    margin-left: 1rem
+    padding-left: 1rem
+
+
+.view-switch-btn 
+    background-color: transparent
+    color: var(--text-muted)
+    border: none
+    border-radius: 4px
+    padding: 6px
+    cursor: pointer
+    display: flex
+    align-items: center
+    justify-content: center
+    transition: all 0.2s ease
+
+
+.view-switch-btn:hover 
+    background-color: var(--background-modifier-hover)
+    color: var(--text-normal)
+
+
+.view-switch-btn.active 
+    background-color: var(--interactive-accent)
+    color: var(--text-on-accent)
+
+
+.view-switch-btn svg 
+    width: 18px
+    height: 18px
+
+
+/* 确保预览容器在暗色主题下也能正常显示 */
+.theme-dark .preview-container 
+    background-color: var(--background-primary-alt)
+
+
+/* 不同视图样式 */
+.card-container[data-view="list"] 
+    display: flex
+    flex-direction: column
+
+
+.card-container[data-view="timeline"] 
+    display: flex
+    flex-direction: column
+
+
+/* 添加预览容器相关样式 */
+.preview-wrapper 
+    position: fixed
+    right: 0
+    top: 0
+    height: 100%
+    display: flex
+    z-index: 100
+
+
+.preview-resizer 
+    width: 4px
+    background-color: var(--background-modifier-border)
+    cursor: col-resize
+    transition: background-color 0.2s ease
+    position: relative
+
+
+.preview-resizer::before 
+    content: ''
+    position: absolute
+    left: -2px
+    right: -2px
+    top: 0
+    bottom: 0
+    cursor: col-resize
+
+
+.preview-resizer:hover,
+.preview-resizer.resizing 
+    background-color: var(--interactive-accent)
+
+
+.preview-resizer.resizing::before 
+    position: fixed
+    left: 0
+    right: 0
+    top: 0
+    bottom: 0
+    z-index: 1000
+
+
+.preview-container 
+    width: 300px
+    height: 100%
+    background-color: var(--background-primary)
+    border-left: 1px solid var(--background-modifier-border)
+    padding: 1rem
+    overflow-y: auto
+    transition: width 0.2s ease
+
+
+.preview-container.collapsed 
+    width: 0
+    padding: 0
+    border-left: none
+
+
+.preview-controls 
+    position: absolute
+    left: -24px
+    top: 50%
+    transform: translateY(-50%)
+
+
+.preview-toggle 
+    background: var(--background-secondary)
+    border: 1px solid var(--background-modifier-border)
+    border-radius: 4px
+    padding: 4px
+    cursor: pointer
+    transition: all 0.2s ease
+
+
+.preview-toggle:hover 
+    background: var(--background-modifier-hover)
+
+
+.preview-container.collapsed + .preview-controls .preview-toggle svg 
+    transform: rotate(180deg)
+
+
+/* 文件夹路径样式 */
+.note-folder 
+    font-size: 0.8em
+    color: var(--text-muted)
+    cursor: pointer
+    padding: 2px 4px
+    border-radius: 4px
+    transition: all 0.2s ease
+    position: absolute
+    top: 0.5rem
+    right: 1rem
+    max-width: 150px
+    overflow: hidden
+    text-overflow: ellipsis
+    white-space: nowrap
+
+
+.note-folder:hover 
+    background-color: var(--background-modifier-hover)
+    color: var(--text-normal)
+    text-decoration: underline
+
+
+.note-folder:active 
+    transform: translateY(1px)
+
+
+/* 文件夹高亮样式 */
+.note-card.folder-highlight 
+    border-color: var(--interactive-accent)
+    background-color: var(--background-primary-alt)
+
+
+/* 调整卡片内部布局 */
+.note-card 
+    display: flex
+    flex-direction: column
+    gap: 0.5rem
+
+
+.note-title 
+    margin-bottom: 0.3rem
+
+
+.note-date, .note-folder 
+    margin-bottom: 0.2rem
+
+
+/* 时间轴视图样式 */
+.timeline-container 
+    padding: 2rem
+    position: relative
+
+
+.timeline-container::before 
+    content: ''
+    position: absolute
+    left: 120px
+    top: 0
+    bottom: 0
+    width: 2px
+    background-color: var(--background-modifier-border)
+
+
+.timeline-date-group 
+    position: relative
+    margin-bottom: 2rem
+
+
+
+.timeline-node-circle 
+    width: 16px
+    height: 16px
+    border: 2px solid var(--interactive-accent)
+    border-radius: 50%
+    background-color: var(--background-primary)
+
+
+.timeline-date-label 
+    margin-left: 2rem
+    font-weight: bold
+    color: var(--text-muted)
+
+
+.timeline-notes-list 
+    margin-left: 160px
+    margin-top: 2rem
+
+
+.timeline-note-item 
+    position: relative
+    margin-bottom: 1rem
+    cursor: pointer
+    display: flex
+    align-items: center
+
+
+.timeline-note-marker 
+    position: absolute
+    left: -40px
+    width: 10px
+    height: 2px
+    background-color: var(--background-modifier-border)
+
+
+.timeline-note-content 
+    background-color: var(--background-secondary)
+    border-radius: 4px
+    padding: 0.5rem 1rem
+    flex: 1
+    transition: all 0.2s ease
+
+
+.timeline-note-item:hover .timeline-note-content 
+    transform: translateX(4px)
+    background-color: var(--background-modifier-hover)
+
+
+/* 视图切换按钮样式更新 */
+.view-switch-btn 
+    display: flex
+    align-items: center
+    gap: 0.5rem
+    padding: 6px 12px
+
+
+
+
+
+/* 标签按钮样式优化 */
+.tag-btn 
+    background-color: transparent  /* 默认透明背景 */
+    color: var(--text-muted)
+    border: 1px solid var(--background-modifier-border)  /* 添加边框 */
+    border-radius: 4px
+    padding: 2px 8px
+    font-size: 0.85em
+    cursor: pointer
+    transition: all 0.2s ease
+    height: 24px
+    line-height: 20px
+    display: inline-flex
+    align-items: center
+
+
+.tag-btn:hover 
+    background-color: var(--background-modifier-hover)
+    color: var(--text-normal)
+
+
+.tag-btn.active 
+    background-color: var(--interactive-accent)
+    color: var(--text-on-accent)
+    border-color: var(--interactive-accent)
+
+
+/* 标签容器样式优化 */
+.tag-filter 
+    display: flex
+    flex-wrap: wrap
+    gap: 4px
+    padding: 8px
+    border-bottom: 1px solid var(--background-modifier-border)
+    background-color: var(--background-primary)
+
+
+/* 卡片内标签样式修改 */
+.note-tag 
+    color: var(--text-muted)
+    border: 1px solid var(--background-modifier-border)
+    background-color: transparent
+    padding: 2px 6px
+    border-radius: 4px
+    font-size: 0.8em
+
+
+/* 卡片布局优化 */
+.note-card 
+    position: relative  /* 为绝对定位的时间做准备 */
+    padding-top: 2rem  /* 为时间留出空间 */
+
+
+.note-date 
+    position: absolute
+    top: 0.5rem
+    left: 1rem
+    font-size: 0.8em
+    color: var(--text-muted)
+
+
+/* 时间轴视图样式修改 */
+.timeline-container 
+    padding: 2rem 2rem 2rem 180px  /* 增加左侧padding */
+    position: relative
+
+
+.timeline-container::before 
+    content: ''
+    position: absolute
+    left: 160px  /* 调整时间轴位置 */
+    top: 0
+    bottom: 0
+    width: 2px
+    background-color: var(--background-modifier-border)
+
+
+.timeline-date-node 
+    display: flex
+    position: absolute
+    left: -147px
+    width: 140px
+    text-align: right
+    display: flex
+    align-items: center
+    justify-content: flex-end
+    gap: 1rem
+    flex-direction: row-reverse
+
+
+.timeline-node-circle 
+    width: 12px
+    height: 12px
+    border: 2px solid var(--interactive-accent)
+    border-radius: 50%
+    background-color: var(--background-primary)
+    margin-right: -6px  /* 调整圆点位置 */
+
+
+.timeline-date-label 
+    font-weight: bold
+    color: var(--text-muted)
+
+
+.timeline-notes-list 
+    margin-left: 22px  /* 调整笔记列表缩进 */
+
+
+/* 卡片内容容器 */
+.note-card-content 
+    border-top: 1px solid var(--background-modifier-border)
+    height: 100%
+    display: flex
+    flex-direction: column
+    gap: 0.5rem
+
+
+/* 缩略图容器 */
+.note-thumbnail 
+    position: relative
+    width: 100%
+    height: 120px
+    overflow: hidden
+    border-radius: 4px
+    background-color: var(--background-primary)
+
+
+.note-thumbnail img 
+    width: 100%
+    height: 100%
+    object-fit: cover
+    opacity: 0.7
+    transition: opacity 0.2s ease
+
+
+/* 笔记容样式 */
+.note-content 
+    position: absolute
+    top: 2rem
+    left: 0
+    right: 0
+    bottom: 0
+    padding: 1rem
+    background-color: var(--background-secondary)
+    overflow-y: auto
+    z-index: 2
+    border-radius: 8px
+
+
+.note-content img 
+    max-width: 100%
+    height: auto
+
+
+/* 缩略图容器样式 */
+.note-thumbnail 
+    width: 100%
+    height: 120px
+    overflow: hidden
+    border-radius: 4px
+    margin-top: 0.5rem
+
+
+.note-thumbnail img 
+    width: 100%
+    height: 100%
+    object-fit: cover
+    opacity: 0.7
+    transition: opacity 0.2s ease
+
+
+/* 卡片布局调整 */
+.note-card-content 
+    position: relative
+    height: calc(100% - 2rem)
+    display: flex
+    flex-direction: column
+
+
+/* 滚动条样式 */
+.note-content::-webkit-scrollbar 
+    width: 4px
+
+
+.note-content::-webkit-scrollbar-thumb 
+    background-color: var(--background-modifier-border)
+    border-radius: 2px
+
+
+.note-content::-webkit-scrollbar-track 
+    background: transparent
+
+
+/* 调整卡片容器布局 */
+.card-container 
+    display: grid
+    grid-template-columns: repeat(auto-fill, 280px)
+    gap: 1rem
+    justify-content: center
+    padding: 1rem
+
+
+/* 卡片内容样式统一 */
+.note-content 
+    font-size: 14px
+    line-height: 1.5
+    color: var(--text-normal)
+
+
+/* 隐藏卡片内容中的标题 */
+.note-content h1:first-child,
+.note-content h2:first-child,
+.note-content h3:first-child,
+.note-content h4:first-child,
+.note-content h5:first-child,
+.note-content h6:first-child 
+    display: none
+
+
+/* 统一卡片内所有文本样式 */
+.note-content p,
+.note-content li,
+.note-content blockquote 
+    font-size: 14px
+    line-height: 1.5
+    margin: 0.5em 0
+
+
+/* 调整预览栏内容样式 */
+.preview-container 
+    font-size: 14px
+    line-height: 1.5
+    padding: 1rem
+
+
+/* 预览栏内保留标题 */
+.preview-container h1,
+.preview-container h2,
+.preview-container h3,
+.preview-container h4,
+.preview-container h5,
+.preview-container h6 
+    margin: 1em 0 0.5em
+    line-height: 1.3
+
+
+/* 优化卡片内容显示 */
+.note-card-content 
+    height: calc(100% - 2rem)
+    overflow: hidden
+    position: relative
+
+
+/* 调整卡片内图片大小 */
+.note-content img 
+    max-width: 100%
+    height: auto
+    margin: 0.5em 0
+
+
+/* 卡片内时间和目录布局 */
+.note-date 
+    position: absolute
+    top: 0.5rem
+    left: 1rem
+    font-size: 0.8em
+    color: var(--text-muted)
+
+
+.note-folder 
+    position: absolute
+    top: 0.5rem
+    right: 1rem
+    font-size: 0.8em
+    color: var(--text-muted)
+    cursor: pointer
+    padding: 2px 4px
+    border-radius: 4px
+    transition: all 0.2s ease
+    max-width: 150px
+    overflow: hidden
+    text-overflow: ellipsis
+    white-space: nowrap
+
+
+.note-folder:hover 
+    background-color: var(--background-modifier-hover)
+    color: var(--text-normal)
+
+
+/* 卡片内预览内容样式统一 */
+.note-content 
+    position: absolute
+    top: 2rem
+    left: 0
+    right: 0
+    bottom: 0
+    padding: 1rem
+    background-color: var(--background-secondary)
+    overflow-y: auto
+    z-index: 2
+
+
+/* 预览内容字号统一 */
+.note-content * 
+    font-size: 14px !important
+    line-height: 1.5
+
+
+/* 保持标题等原有样式 */
+.note-title 
+    font-size: 1.1em
+    font-weight: bold
+    color: var(--text-normal)
+    margin-top: 1.5rem  /* 为顶部的时间和目录留出空间 */
+
+
+.note-tags 
+    display: flex
+    flex-wrap: wrap
+    gap: 0.3rem
+
+
+.note-tag 
+    font-size: 0.8em
+    color: var(--text-muted)
+    border: 1px solid var(--background-modifier-border)
+    background-color: transparent
+    padding: 2px 6px
+    border-radius: 4px
+
+
+/* 卡片基础样式 */
+.note-card 
+    position: relative
+    width: 280px
+    height: 200px
+    background-color: var(--background-secondary)
+    border-radius: 8px
+    border: 1px solid var(--background-modifier-border)
+    cursor: pointer
+    transition: all 0.2s ease
+    overflow: hidden
+    transition: width 0.2s ease
+
+
+/* 卡片头部样式 */
+.note-card-header 
+    position: absolute
+    top: 0
+    left: 0
+    right: 0
+    padding: 0.5rem 1rem
+    background-color: var(--background-secondary)
+    display: flex
+    justify-content: space-between
+    align-items: center
+    z-index: 5  /* 确保在笔记内容之上 */
+
+
+.note-date 
+    font-size: 0.8em
+    color: var(--text-muted)
+
+
+.note-folder 
+    font-size: 0.8em
+    color: var(--text-muted)
+    cursor: pointer
+    max-width: 150px
+    overflow: hidden
+    text-overflow: ellipsis
+    white-space: nowrap
+
+
+/* 卡片内容容器 */
+.note-card-content 
+    position: relative
+    height: 100%
+    padding: 2.5rem 1rem 1rem /* 为头部留出空间 */
+    transition: all 0.2s ease
+
+
+/* 鼠标悬停效果 */
+.note-card:hover .note-card-header,
+.note-card:hover .note-title,
+.note-card:hover .note-tags 
+    opacity: 0
+    pointer-events: none
+
+
+.note-card:hover .note-card-content 
+    padding: 0
+
+
+.note-card:hover .note-content 
+    top: 2.5rem  /* 为头部留出空间 */
+
+
+/* 笔记内容样式 */
+.note-content 
+    position: absolute
+    top: 2.5rem  /* 默认也为头部留出空间 */
+    left: 0
+    right: 0
+    bottom: 0
+    padding: 1rem
+    background-color: var(--background-secondary)
+    overflow-y: auto
+    z-index: 2
+    transition: all 0.2s ease
+    opacity: 0.5  /* 默认 50% 透明度 */
+
+
+/* 笔记内容中的所有元素默认透明度 */
+.note-content .mod-frontmatter,
+.note-content .mod-ui,
+.note-content p,
+.note-content h1,
+.note-content h2,
+.note-content h3,
+.note-content h4,
+.note-content h5,
+.note-content h6,
+.note-content ul,
+.note-content ol,
+.note-content blockquote,
+.note-content pre,
+.note-content table 
+    opacity: 0.5
+    transition: opacity 0.2s ease
+
+
+/* 鼠标悬停时显示完整透明度 */
+.note-card:hover .note-content,
+.note-card:hover .note-content .mod-frontmatter,
+.note-card:hover .note-content .mod-ui,
+.note-card:hover .note-content p,
+.note-card:hover .note-content h1,
+.note-card:hover .note-content h2,
+.note-card:hover .note-content h3,
+.note-card:hover .note-content h4,
+.note-card:hover .note-content h5,
+.note-card:hover .note-content h6,
+.note-card:hover .note-content ul,
+.note-card:hover .note-content ol,
+.note-card:hover .note-content blockquote,
+.note-card:hover .note-content pre,
+.note-card:hover .note-content table 
+    opacity: 1
+
+
+/* 预览内容字号统一 */
+.note-content * 
+    font-size: 14px !important
+    line-height: 1.5
+
+
+/* 标题和标签样式 */
+.note-title 
+    font-size: 1.1em
+    font-weight: bold
+    color: var(--text-normal)
+    transition: opacity 0.2s ease
+
+
+.note-tags 
+    display: flex
+    flex-wrap: wrap
+    gap: 0.3rem
+    margin-top: 0.5rem
+    transition: opacity 0.2s ease
+
+
+.note-tag 
+    font-size: 0.8em
+    color: var(--text-muted)
+    border: 1px solid var(--background-modifier-border)
+    background-color: transparent
+    padding: 2px 6px
+    border-radius: 4px
+
+
+/* 卡片标题样式 */
+.note-title 
+    font-size: 1.2em
+    font-weight: bold
+    color: var(--text-normal)
+    margin: 0.5rem 1rem
+    transition: opacity 0.2s ease
+    white-space: nowrap
+    overflow: hidden
+    text-overflow: ellipsis
+    position: relative
+    z-index: 2
+
+
+/* 卡片内容容器调整 */
+.note-card-content 
+    position: relative
+    height: 100%
+    display: flex
+    flex-direction: column
+
+
+/* 笔记内容样式 */
+.note-content 
+    position: absolute
+    top: 4rem  /* 为标题留出空间 */
+    left: 0
+    right: 0
+    bottom: 0
+    padding: 1rem
+    background-color: var(--background-secondary)
+    overflow-y: auto
+    z-index: 1
+    transition: all 0.2s ease
+
+
+/* 卡片头部样式 */
+.note-card-header 
+    position: absolute
+    top: 0
+    left: 0
+    right: 0
+    padding: 0.5rem 1rem
+    background-color: var(--background-secondary)
+    display: flex
+    justify-content: space-between
+    align-items: center
+    z-index: 3
+    transition: opacity 0.2s ease
+
+
+/* 打开按钮样式修改 */
+.note-open-button 
+    position: absolute
+    bottom: 0.8rem  /* 改为底部定位 */
+    right: 0.8rem   /* 调整右边距 */
+    width: 32px     /* 增大按钮尺寸 */
+    height: 32px    /* 增大按钮尺寸 */
+    display: flex
+    align-items: center
+    justify-content: center
+    background-color: var(--background-secondary)
+    border: 1px solid var(--background-modifier-border)
+    border-radius: 6px
+    cursor: pointer
+    transition: all 0.2s ease
+    opacity: 0
+    z-index: 6
+
+
+.note-open-button svg 
+    width: 20px     /* 增大图标尺寸 */
+    height: 20px    /* 增大图标尺寸 */
+    transition: all 0.2s ease
+
+
+.note-open-button:hover 
+    background-color: var(--interactive-accent)
+    color: var(--text-on-accent)
+    transform: translateY(-2px)
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1)
+
+
+.note-open-button:hover svg 
+    transform: scale(1.1)  /* 悬停时图标稍微放大 */
+
+
+/* 确保打开按钮在悬停时显示 */
+.note-card:hover .note-open-button 
+    opacity: 1
+
+
+/* 选中卡片的样式 */
+.note-card.selected 
+    border: 2px solid var(--interactive-accent)
+    box-shadow: 0 0 8px rgba(var(--interactive-accent-rgb), 0.3)
+    transform: translateY(-2px)
+
+
+.note-card.selected:hover 
+    border: 2px solid var(--interactive-accent)
+
+
+/* 修改卡片悬停效果，保留时间和目录显示 */
+.note-card:hover .note-title,
+.note-card:hover .note-tags 
+    opacity: 0
+    pointer-events: none
+
+
+.note-card:hover .note-card-header 
+    opacity: 1  /* 保持显示 */
+    background-color: var(--background-secondary)  /* 确保背景色 */
+    z-index: 5  /* 确保在内容之上 */
+
+
+.note-card:hover .note-content 
+    top: 2.5rem  /* 为头部留出空间 */
+
+
+/* 文件选择模态框样式 */
+.folder-list 
+    max-height: 300px
+    overflow-y: auto
+    margin: 1rem 0
+    border: 1px solid var(--background-modifier-border)
+    border-radius: 4px
+
+
+.folder-item 
+    display: flex
+    align-items: center
+    gap: 0.5rem
+    padding: 0.5rem
+    cursor: pointer
+    transition: all 0.2s ease
+
+
+.folder-item:hover 
+    background-color: var(--background-modifier-hover)
+
+
+.folder-item.selected 
+    background-color: var(--interactive-accent)
+    color: var(--text-on-accent)
+
+
+.folder-icon 
+    display: flex
+    align-items: center
+    color: var(--text-muted)
+
+
+.folder-name 
+    flex: 1
+
+
+.recent-folders-section 
+    margin: 1rem 0
+
+
+.modal-button-container 
+    display: flex
+    justify-content: flex-end
+    gap: 0.5rem
+    margin-top: 1rem
+    padding-top: 1rem
+    border-top: 1px solid var(--background-modifier-border)
+
+
+.modal-button-container button 
+    padding: 6px 12px
+    border-radius: 4px
+    cursor: pointer
+
+
+.modal-button-container button.mod-cta 
+    background-color: var(--interactive-accent)
+    color: var(--text-on-accent)
+
+
+/* 主布局容器 */
+.main-layout 
+    display: flex
+    width: 100%
+    height: 100%
+    position: relative
+
+
+/* 内容区域 */
+.content-section 
+    flex: 1
+    min-width: 0
+    display: flex
+    flex-direction: column
+    height: 100%
+    transition: width 0.2s ease
+
+
+/* 预览区域容器 */
+.preview-wrapper 
+    display: flex
+    height: 100%
+    position: relative
+
+
+/* 预览容器 */
+.preview-container 
+    width: 300px
+    height: 100%
+    background-color: var(--background-primary)
+    border-left: 1px solid var(--background-modifier-border)
+    padding: 1rem
+    overflow-y: auto
+    transition: width 0.2s ease
+
+
+/* 调整手柄 */
+.preview-resizer 
+    width: 4px
+    background-color: var(--background-modifier-border)
+    cursor: col-resize
+    transition: background-color 0.2s ease
+
+
+.preview-resizer:hover,
+.preview-resizer.resizing 
+    background-color: var(--interactive-accent)
+
+
+/* 卡片容器 */
+.card-container 
+    display: grid
+    gap: 1rem
+    padding: 1rem
+    transition: all 0.2s ease
+
+
+/* 修改日历容器样式 */
+.calendar-container 
+    width: 280px
+    background-color: var(--background-primary)
+    border-right: 1px solid var(--background-modifier-border)
+    padding: 16px
+    z-index: 1000
+    box-shadow: 2px 0 4px rgba(0, 0, 0, 0.1)
+
+
+/* 调整内容区域布局 */
+.content-section 
+    position: relative
+    flex: 1
+    min-width: 0
+    display: flex
+    flex-direction: column
+    height: 100%
+    transition: width 0.2s ease
+
+
+/* 调整卡片视图内容区域 */
+.card-view-content 
+    flex: 1
+    overflow-y: auto
+    padding: 1rem
+    position: relative
+    margin-top: 8px /* 为标签栏添加一些间距 */
+
+
+/* 调整带日历时的卡片容器布局 */
+.content-section.with-calendar .card-container 
+    margin-left: 280px
+    width: calc(100% - 280px)
+    transition: margin-left 0.3s ease
+    padding-top: 8px /* 添加顶部间距 */
+
+
+/* 确保标签栏在滚动时保持可见 */
+.tag-filter 
+    position: sticky
+    top: 0
+    background-color: var(--background-primary)
+    z-index: 1001 /* 确保在日历视图之上 */
+    border-bottom: 1px solid var(--background-modifier-border)
+
+
+/* 添加日历切换动画 */
+.calendar-container 
+    transition: transform 0.3s ease, opacity 0.3s ease
+    opacity: 1
+
+
+.calendar-container[style*="display: none"] 
+    transform: translateX(-100%)
+    opacity: 0
+
+
+/* 确保内容区域相对定位 */
+.content-section 
+    position: relative
+    flex: 1
+    display: flex
+    flex-direction: column
+    height: 100%
+    overflow: hidden
+
+
+/* 调整卡片容器过渡效果 */
+.card-container 
+    transition: margin-left 0.3s ease, width 0.3s ease
+
+
+/* 日历头部样式 */
+.calendar-header 
+    display: flex
+    justify-content: space-between
+    align-items: center
+    margin-bottom: 16px
+    padding: 8px 0
+
+
+.calendar-title 
+    font-size: 1.1em
+    font-weight: bold
+    color: var(--text-normal)
+
+
+/* 日历网格样式 */
+.calendar-weekdays 
+    display: grid
+    grid-template-columns: repeat(7, 1fr)
+    gap: 4px
+    margin-bottom: 8px
+    padding: 8px 0
+    border-bottom: 1px solid var(--background-modifier-border)
+
+
+.weekday 
+    text-align: center
+    font-size: 0.9em
+    color: var(--text-muted)
+    font-weight: 500
+
+
+.calendar-grid 
+    display: grid
+    grid-template-columns: repeat(7, 1fr)
+    gap: 4px
+
+
+.calendar-day 
+    position: relative
+    aspect-ratio: 1
+    display: flex
+    align-items: center
+    justify-content: center
+    border-radius: 4px
+    cursor: pointer
+    background-color: var(--background-secondary)
+    font-size: 0.9em
+    transition: all 0.2s ease
+
+
+.calendar-day:hover 
+    background-color: var(--background-modifier-hover)
+    transform: translateY(-1px)
+
+
+.calendar-day.empty 
+    background-color: transparent
+    cursor: default
+
+
+.calendar-day.selected 
+    background-color: var(--interactive-accent)
+    color: var(--text-on-accent)
+    transform: translateY(-1px)
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1)
+
+
+.calendar-day.selected .note-count 
+    background-color: var(--text-on-accent)
+    color: var(--interactive-accent)
+
+
+.note-count 
+    position: absolute
+    bottom: 2px
+    right: 2px
+    font-size: 0.7em
+    background-color: var(--interactive-accent)
+    color: var(--text-on-accent)
+    padding: 1px 4px
+    border-radius: 8px
+    min-width: 16px
+    text-align: center
+
+
+/* 导航按钮样式 */
+.calendar-nav-btn 
+    background: transparent
+    border: 1px solid var(--background-modifier-border)
+    border-radius: 4px
+    padding: 4px 8px
+    color: var(--text-muted)
+    cursor: pointer
+    transition: all 0.2s ease
+
+
+.calendar-nav-btn:hover 
+    background-color: var(--background-modifier-hover)
+    color: var(--text-normal)
+    border-color: var(--interactive-accent)
+
+
+/* 搜索高亮样式 */
+.search-highlight 
+    background-color: var(--text-highlight-bg)
+    color: var(--text-normal)
+    padding: 0 2px
+    border-radius: 2px
+
+
+/* 日历按钮样式 */
+.calendar-toggle-button 
+    display: flex
+    align-items: center
+    gap: 6px
+    background: transparent
+    border: 1px solid var(--background-modifier-border)
+    color: var(--text-muted)
+    padding: 6px 12px
+    cursor: pointer
+    border-radius: 4px
+    font-size: 14px
+    transition: all 0.2s ease
+
+
+.calendar-toggle-button:hover 
+    color: var(--text-normal)
+    background-color: var(--background-modifier-hover)
+    border-color: var(--interactive-accent)
+
+
+.calendar-toggle-button svg 
+    width: 16px
+    height: 16px
+
+
+/* 调整工具栏左侧间距 */
+.toolbar-left 
+    display: flex
+    align-items: center
+    gap: 8px  /* 增加按钮之间的间距 */
+
+
+/* 日历按钮激活状态样式 */
+.calendar-toggle-button.active 
+    background-color: var(--interactive-accent)
+    color: var(--text-on-accent)
+    border-color: var(--interactive-accent)
+
+
+/* 日期选中状态样式 */
+.calendar-day.selected 
+    background-color: var(--interactive-accent)
+    color: var(--text-on-accent)
+    transform: translateY(-1px)
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1)
+
+
+.calendar-day.selected .note-count 
+    background-color: var(--text-on-accent)
+    color: var(--interactive-accent)
+
+
+/* 主布局容器样式 */
+.main-layout 
+    display: flex
+    width: 100%
+    height: 100%
+    position: relative
+
+
+/* 日历容器样式 */
+.calendar-container 
+    width: 280px
+    background-color: var(--background-primary)
+    border-right: 1px solid var(--background-modifier-border)
+    padding: 16px
+    flex-shrink: 0
+    display: none
+
+
+/* 内容区域样式 */
+.content-section 
+    flex: 1
+    min-width: 0
+    padding: 16px
+    transition: margin-left 0.2s ease
+
+
+/* 当显示日历时的布局调整 */
+.main-layout.with-calendar .calendar-container 
+    display: block
+
+
+/* 日历显示时调整内容区域的边距 */
+.main-layout.with-calendar .content-section 
+    margin-left: 0
+
+
+/* 日历容器中的具体样式保持不变 */
+.calendar-header 
+    /* 现有的日历头部样式 */
+
+
+.calendar-grid 
+    /* 现有的日历网格样式 */
+
+
+/* 添加响应式支持 */
+@media (max-width: 768px) 
+    .calendar-container 
+        width: 240px
+    
+
+
+/* 文件夹样式 */
+.note-folder.clickable 
+    cursor: pointer
+    color: var(--text-muted)
+    transition: all 0.2s ease
+    padding: 2px 6px
+    border-radius: 4px
+
+
+.note-folder.clickable:hover 
+    color: var(--text-normal)
+    background-color: var(--background-modifier-hover)
+
+
+/* 点击效果 */
+.note-folder.folder-clicked 
+    background-color: var(--background-modifier-active)
+    transform: scale(0.95)
+
+  
