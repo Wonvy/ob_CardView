@@ -452,9 +452,9 @@
 
 /* 标签按钮样式优化 */
 .tag-btn {
-    background-color: var(--background-modifier-border);
+    background-color: transparent;  /* 默认透明背景 */
     color: var(--text-muted);
-    border: none;
+    border: 1px solid var(--background-modifier-border);  /* 添加边框 */
     border-radius: 4px;
     padding: 2px 8px;
     font-size: 0.85em;
@@ -474,6 +474,7 @@
 .tag-btn.active {
     background-color: var(--interactive-accent);
     color: var(--text-on-accent);
+    border-color: var(--interactive-accent);
 }
 
 /* 标签容器样式优化 */
@@ -484,4 +485,74 @@
     padding: 8px;
     border-bottom: 1px solid var(--background-modifier-border);
     background-color: var(--background-primary);
-} 
+}
+
+/* 卡片内标签样式修改 */
+.note-tag {
+    color: var(--text-muted);
+    border: 1px solid var(--background-modifier-border);
+    background-color: transparent;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.8em;
+}
+
+/* 卡片布局优化 */
+.note-card {
+    position: relative;  /* 为绝对定位的时间做准备 */
+    padding-top: 2rem;  /* 为时间留出空间 */
+}
+
+.note-date {
+    position: absolute;
+    top: 0.5rem;
+    left: 1rem;
+    font-size: 0.8em;
+    color: var(--text-muted);
+}
+
+/* 时间轴视图样式修改 */
+.timeline-container {
+    padding: 2rem 2rem 2rem 180px;  /* 增加左侧padding */
+    position: relative;
+}
+
+.timeline-container::before {
+    content: '';
+    position: absolute;
+    left: 160px;  /* 调整时间轴位置 */
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background-color: var(--background-modifier-border);
+}
+
+.timeline-date-node {
+    position: absolute;
+    left: 0;  /* 日期靠左对齐 */
+    width: 140px;  /* 固定日期宽度 */
+    text-align: right;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 1rem;
+}
+
+.timeline-node-circle {
+    width: 12px;
+    height: 12px;
+    border: 2px solid var(--interactive-accent);
+    border-radius: 50%;
+    background-color: var(--background-primary);
+    margin-right: -6px;  /* 调整圆点位置 */
+}
+
+.timeline-date-label {
+    font-weight: bold;
+    color: var(--text-muted);
+}
+
+.timeline-notes-list {
+    margin-left: 2rem;  /* 调整笔记列表缩进 */
+}
+  

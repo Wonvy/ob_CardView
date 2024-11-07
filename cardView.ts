@@ -192,7 +192,7 @@ export class CardView extends ItemView {
                 'clock': '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>'
             };
             
-            // 创建图标容器
+            // 创建图��容器
             const iconSpan = btn.createSpan({ cls: 'view-switch-icon' });
             iconSpan.innerHTML = iconHtml[view.icon];
             
@@ -229,25 +229,29 @@ export class CardView extends ItemView {
         const card = document.createElement('div');
         card.addClass('note-card');
         
-        const title = card.createDiv('note-title');
-        title.setText(file.basename);
-
+        // 添加修改时间
         const lastModified = card.createDiv('note-date');
         lastModified.setText(new Date(file.stat.mtime).toLocaleDateString());
 
-        // 添加文件夹路径（添加空值检查）
+        // 处理标题
+        const title = card.createDiv('note-title');
+        let displayTitle = file.basename;
+        
+        // 在卡片视图中处理时间开头的标题
+        if (this.currentView === 'card') {
+            // 匹配常见的时间格式，如：2024-01-07、2024.01.07、2024/01/07 等
+            const timePattern = /^\d{4}[-./]\d{2}[-./]\d{2}/;
+            displayTitle = displayTitle.replace(timePattern, '').trim();
+        }
+        title.setText(displayTitle);
+
+        // 添加文件夹路径
         const folderPath = card.createDiv('note-folder');
         const folder = file.parent ? (file.parent.path === '/' ? '根目录' : file.parent.path) : '根目录';
         folderPath.setText(folder);
         folderPath.setAttribute('title', folder);
         
-        // 点击文件夹路径高亮相同文件夹的笔记
-        folderPath.addEventListener('click', (e) => {
-            e.stopPropagation();
-            this.highlightFolder(folder);
-            this.revealFolderInExplorer(folder);
-        });
-
+        // 添加标签
         const cache = this.app.metadataCache.getFileCache(file);
         if (cache?.tags) {
             const tagContainer = card.createDiv('note-tags');
@@ -258,6 +262,13 @@ export class CardView extends ItemView {
                 });
             });
         }
+
+        // 点击文件夹路径高亮相同文件夹的笔记
+        folderPath.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.highlightFolder(folder);
+            this.revealFolderInExplorer(folder);
+        });
 
         // 修改卡片点击事件
         card.addEventListener('click', async () => {
