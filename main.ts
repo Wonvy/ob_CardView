@@ -32,7 +32,7 @@ class CardViewSettingTab extends PluginSettingTab {
             .setDesc('选择默认的视图模式')
             .addDropdown(dropdown => {
                 dropdown
-                    .addOption('card', '卡片视图')
+                    .addOption('card', '卡片 视图')
                     .addOption('list', '列表视图')
                     .addOption('timeline', '时间轴视图')
                     .setValue(this.plugin.settings.defaultView);

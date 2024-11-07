@@ -915,7 +915,7 @@ export class CardView extends ItemView {
         });
         calendarBtn.innerHTML = `
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-            <span>日历视图</span>
+            <span>日历</span>
         `;
         calendarBtn.addEventListener('click', () => {
             this.toggleCalendar();
@@ -950,20 +950,22 @@ export class CardView extends ItemView {
 
     private showCalendar() {
         if (!this.calendarContainer) {
-            // 修改：将日历容器添加到 content-section 中
+            // 修改：将日历容器添加到 content-section 之前
             const contentSection = this.containerEl.querySelector('.content-section');
             if (!contentSection) return;
             
-            this.calendarContainer = contentSection.createDiv('calendar-container');
+            // 在 content-section 之前插入日历容器
+            this.calendarContainer = createDiv('calendar-container');
+            contentSection.parentElement?.insertBefore(this.calendarContainer, contentSection);
         }
         this.calendarContainer.empty();
         this.renderCalendar();
         this.calendarContainer.style.display = 'block';
         
-        // 修改：将 with-calendar 类添加到 content-section
-        const contentSection = this.containerEl.querySelector('.content-section');
-        if (contentSection) {
-            contentSection.addClass('with-calendar');
+        // 修改：将 with-calendar 类添加到 main-layout
+        const mainLayout = this.containerEl.querySelector('.main-layout');
+        if (mainLayout) {
+            mainLayout.addClass('with-calendar');
         }
     }
 
@@ -972,10 +974,10 @@ export class CardView extends ItemView {
             this.calendarContainer.style.display = 'none';
             this.calendarContainer.empty();
             
-            // 修改：从 content-section 移除 with-calendar 类
-            const contentSection = this.containerEl.querySelector('.content-section');
-            if (contentSection) {
-                contentSection.removeClass('with-calendar');
+            // 修改：从 main-layout 移除 with-calendar 类
+            const mainLayout = this.containerEl.querySelector('.main-layout');
+            if (mainLayout) {
+                mainLayout.removeClass('with-calendar');
             }
         }
     }
