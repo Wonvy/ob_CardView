@@ -112,7 +112,6 @@
     overflow-y: auto;
     transition: width 0.2s ease;
     resize: horizontal;  /* 添加水平调整大小功能 */
-    min-width: 50px;    /* 最小宽度 */
     max-width: 800px;   /* 最大宽度 */
 }
 
@@ -572,6 +571,7 @@
 
 /* 卡片内容容器 */
 .note-card-content {
+    border-top: 1px solid var(--background-modifier-border);
     height: 100%;
     display: flex;
     flex-direction: column;
@@ -815,7 +815,6 @@
     right: 0;
     padding: 0.5rem 1rem;
     background-color: var(--background-secondary);
-    border-bottom: 1px solid var(--background-modifier-border);
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -989,7 +988,6 @@
     right: 0;
     padding: 0.5rem 1rem;
     background-color: var(--background-secondary);
-    border-bottom: 1px solid var(--background-modifier-border);
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -1188,7 +1186,7 @@
 .calendar-container {
     position: absolute;
     left: 0;
-    top: 48px; /* 调整顶部位置，为工具栏留出空间 */
+    top: 98px; /* 调整顶部位置，为工具栏和标签栏留出空间 */
     bottom: 0;
     width: 280px;
     background-color: var(--background-primary);
@@ -1199,10 +1197,40 @@
 }
 
 /* 调整内容区域布局 */
+.content-section {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    transition: width 0.2s ease;
+}
+
+/* 调整卡片视图内容区域 */
+.card-view-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem;
+    position: relative;
+    margin-top: 8px; /* 为标签栏添加一些间距 */
+}
+
+/* 调整带日历时的卡片容器布局 */
 .content-section.with-calendar .card-container {
-    margin-left: 280px; /* 为日历留出空间 */
+    margin-left: 280px;
     width: calc(100% - 280px);
     transition: margin-left 0.3s ease;
+    padding-top: 8px; /* 添加顶部间距 */
+}
+
+/* 确保标签栏在滚动时保持可见 */
+.tag-filter {
+    position: sticky;
+    top: 0;
+    background-color: var(--background-primary);
+    z-index: 1001; /* 确保在日历视图之上 */
+    border-bottom: 1px solid var(--background-modifier-border);
 }
 
 /* 添加日历切换动画 */
