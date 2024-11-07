@@ -192,7 +192,7 @@ export class CardView extends ItemView {
                 'clock': '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>'
             };
             
-            // 创建图��容器
+            // 创建图
             const iconSpan = btn.createSpan({ cls: 'view-switch-icon' });
             iconSpan.innerHTML = iconHtml[view.icon];
             
@@ -214,8 +214,13 @@ export class CardView extends ItemView {
         const files = this.app.vault.getMarkdownFiles();
         this.container.empty();
 
-        files.forEach(file => {
-            const card = this.createNoteCard(file);
+        // 使用 Promise.all 等待所有卡片创建完成
+        const cards = await Promise.all(
+            files.map(file => this.createNoteCard(file))
+        );
+
+        // 添加所有卡片到容器
+        cards.forEach(card => {
             this.container.appendChild(card);
         });
     }
@@ -225,76 +230,76 @@ export class CardView extends ItemView {
      * @param file - 笔记文件
      * @returns 卡片HTML元素
      */
-    private createNoteCard(file: TFile): HTMLElement {
+    private async createNoteCard(file: TFile): Promise<HTMLElement> {
         const card = document.createElement('div');
         card.addClass('note-card');
         
+        // 创建卡片头部
+        const header = card.createDiv('note-card-header');
+        
         // 添加修改时间
-        const lastModified = card.createDiv('note-date');
+        const lastModified = header.createDiv('note-date');
         lastModified.setText(new Date(file.stat.mtime).toLocaleDateString());
 
-        // 处理标题
-        const title = card.createDiv('note-title');
-        let displayTitle = file.basename;
-        
-        // 在卡片视图中处理时间开头的标题
-        if (this.currentView === 'card') {
-            // 匹配常见的时间格式，如：2024-01-07、2024.01.07、2024/01/07 等
-            const timePattern = /^\d{4}[-./]\d{2}[-./]\d{2}/;
-            displayTitle = displayTitle.replace(timePattern, '').trim();
-        }
-        title.setText(displayTitle);
-
         // 添加文件夹路径
-        const folderPath = card.createDiv('note-folder');
+        const folderPath = header.createDiv('note-folder');
         const folder = file.parent ? (file.parent.path === '/' ? '根目录' : file.parent.path) : '根目录';
         folderPath.setText(folder);
         folderPath.setAttribute('title', folder);
-        
-        // 添加标签
-        const cache = this.app.metadataCache.getFileCache(file);
-        if (cache?.tags) {
-            const tagContainer = card.createDiv('note-tags');
-            cache.tags.forEach(tag => {
-                const tagEl = tagContainer.createEl('span', {
-                    text: tag.tag,
-                    cls: 'note-tag'
-                });
+
+        // 创建卡片内容容器
+        const cardContent = card.createDiv('note-card-content');
+
+        try {
+            // 读取笔记内容
+            const content = await this.app.vault.read(file);
+            
+            // 创建笔记内容容器
+            const noteContent = cardContent.createDiv('note-content');
+            
+            // 渲染 Markdown 内容
+            await MarkdownRenderer.renderMarkdown(
+                content,
+                noteContent,
+                file.path,
+                this
+            );
+
+            // 处理滚动事件
+            noteContent.addEventListener('wheel', (e) => {
+                e.stopPropagation();
+                const scrollAmount = e.deltaY;
+                noteContent.scrollTop += scrollAmount;
             });
+
+            // 添加鼠标悬停事件
+            card.addEventListener('mouseenter', async () => {
+                // 在预览栏中显示完整内容
+                try {
+                    this.previewContainer.empty();
+                    await MarkdownRenderer.renderMarkdown(
+                        content,
+                        this.previewContainer,
+                        file.path,
+                        this
+                    );
+                } catch (error) {
+                    console.error('预览加载失败:', error);
+                }
+            });
+
+            // 添加点击事件
+            card.addEventListener('click', async () => {
+                const leaf = this.app.workspace.getLeaf('tab');
+                await leaf.openFile(file);
+            });
+
+            // 添加右键菜单
+            this.addContextMenu(card, file);
+
+        } catch (error) {
+            console.error('笔记加载失败:', error);
         }
-
-        // 点击文件夹路径高亮相同文件夹的笔记
-        folderPath.addEventListener('click', (e) => {
-            e.stopPropagation();
-            this.highlightFolder(folder);
-            this.revealFolderInExplorer(folder);
-        });
-
-        // 修改卡片点击事件
-        card.addEventListener('click', async () => {
-            const leaf = this.app.workspace.getLeaf('tab');
-            await leaf.openFile(file);
-        });
-
-        // 预览功能保持不变
-        card.addEventListener('mouseenter', async () => {
-            try {
-                this.previewContainer.empty();
-                const content = await this.app.vault.read(file);
-                await MarkdownRenderer.renderMarkdown(
-                    content,
-                    this.previewContainer,
-                    file.path,
-                    this
-                );
-            } catch (error) {
-                console.error('预览加载失败:', error);
-                this.previewContainer.setText('预览加载失败');
-            }
-        });
-
-        // 添加右键菜单
-        this.addContextMenu(card, file);
 
         return card;
     }
@@ -319,16 +324,23 @@ export class CardView extends ItemView {
      * 根据标签过滤笔记
      * @param tag - 标签名称
      */
-    private filterByTag(tag: string) {
+    private async filterByTag(tag: string) {
         const files = this.app.vault.getMarkdownFiles();
         this.container.empty();
 
-        files.forEach(file => {
+        const filteredFiles = files.filter(file => {
             const cache = this.app.metadataCache.getFileCache(file);
-            if (cache?.tags && cache.tags.some(t => t.tag === tag)) {
-                const card = this.createNoteCard(file);
-                this.container.appendChild(card);
-            }
+            return cache?.tags?.some(t => t.tag === tag);
+        });
+
+        // 使用 Promise.all 等待所有卡片创建完成
+        const cards = await Promise.all(
+            filteredFiles.map(file => this.createNoteCard(file))
+        );
+
+        // 添加所有卡片到容器
+        cards.forEach(card => {
+            this.container.appendChild(card);
         });
 
         // 高亮选中的标签
@@ -453,7 +465,7 @@ export class CardView extends ItemView {
         }
     }
 
-    private createTimelineView() {
+    private async createTimelineView() {
         const timelineContainer = this.container.createDiv('timeline-container');
         
         // 获取所有笔记并按日期分组
@@ -477,7 +489,7 @@ export class CardView extends ItemView {
         );
 
         // 创建时间轴
-        sortedDates.forEach(date => {
+        for (const date of sortedDates) {
             const dateGroup = timelineContainer.createDiv('timeline-date-group');
             
             // 创建日期节点
@@ -489,7 +501,7 @@ export class CardView extends ItemView {
             const notesList = dateGroup.createDiv('timeline-notes-list');
             const notes = notesByDate.get(date);
             if (notes) {
-                notes.forEach(file => {
+                for (const file of notes) {
                     const noteItem = notesList.createDiv('timeline-note-item');
                     
                     // 创建标记线
@@ -520,9 +532,9 @@ export class CardView extends ItemView {
                             console.error('预览加载失败:', error);
                         }
                     });
-                });
+                }
             }
-        });
+        }
     }
 
     // 添加右键菜单功能
@@ -602,8 +614,13 @@ export class CardView extends ItemView {
             return matchesSearch && matchesTags;
         });
 
-        filteredFiles.forEach(file => {
-            const card = this.createNoteCard(file);
+        // 使用 Promise.all 等待所有卡片创建完成
+        const cards = await Promise.all(
+            filteredFiles.map(file => this.createNoteCard(file))
+        );
+
+        // 添加所有卡片到容器
+        cards.forEach(card => {
             this.container.appendChild(card);
         });
     }
