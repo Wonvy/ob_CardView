@@ -1,4 +1,14 @@
-import { ItemView, WorkspaceLeaf, TFile, MarkdownRenderer } from 'obsidian';
+import {
+    ItemView,
+    WorkspaceLeaf,
+    TFile,
+    MarkdownRenderer,
+    Menu,
+    Modal,
+    TFolder,
+    App,
+    Notice
+} from 'obsidian';
 import CardViewPlugin from './main';
 
 export const VIEW_TYPE_CARD = 'card-view';
@@ -13,6 +23,9 @@ export class CardView extends ItemView {
     private previewResizer: HTMLElement;
     private isPreviewCollapsed: boolean = false;
     private currentFolder: string | null = null;
+    private searchInput: HTMLInputElement;
+    private currentSearchTerm: string = '';
+    private selectedTags: Set<string> = new Set();
 
     /**
      * 构造函数
@@ -53,14 +66,13 @@ export class CardView extends ItemView {
         // 创建工具栏
         const toolbar = containerEl.createDiv('card-view-toolbar');
         
-        // 创建工具栏左侧区域
+        // 左侧工具组
         const leftTools = toolbar.createDiv('toolbar-left');
         
         // 新建笔记按钮
         const newNoteBtn = leftTools.createEl('button', {
             cls: 'new-note-button',
         });
-        // 添加新建笔记按钮的图标和文本
         newNoteBtn.innerHTML = `
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-plus"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
             <span>新建笔记</span>
@@ -70,16 +82,29 @@ export class CardView extends ItemView {
         // 视图切换按钮组
         const viewSwitcher = leftTools.createDiv('view-switcher');
         this.createViewSwitcher(viewSwitcher);
+
+        // 右侧搜索框
+        const searchContainer = toolbar.createDiv('search-container');
+        this.searchInput = searchContainer.createEl('input', {
+            type: 'text',
+            placeholder: '搜索笔记...',
+            cls: 'search-input'
+        });
         
-        // 创建工具栏右侧区域（标签过滤器）
-        this.tagContainer = toolbar.createDiv('tag-filter');
+        this.searchInput.addEventListener('input', () => {
+            this.currentSearchTerm = this.searchInput.value;
+            this.refreshView();
+        });
+
+        // 标签栏
+        this.tagContainer = containerEl.createDiv('tag-filter');
         await this.loadTags();
 
-        // 创建主内容区域
+        // 主内容区域
         const contentArea = containerEl.createDiv('card-view-content');
         this.container = contentArea.createDiv('card-container');
         
-        // 创建预览区域
+        // 预览区域
         const previewWrapper = containerEl.createDiv('preview-wrapper');
         this.previewContainer = previewWrapper.createDiv('preview-container');
         
@@ -104,9 +129,28 @@ export class CardView extends ItemView {
      */
     private async loadTags() {
         const tags = this.getAllTags();
+        
+        // 添加 "All" 标签
+        const allTagBtn = this.tagContainer.createEl('button', { 
+            text: 'All',
+            cls: 'tag-btn active'  // 默认选中
+        });
+        allTagBtn.addEventListener('click', () => {
+            this.clearTagSelection();
+            allTagBtn.addClass('active');
+            this.refreshView();
+        });
+
+        // 添加其他标签
         tags.forEach(tag => {
-            const tagEl = this.tagContainer.createEl('button', { text: tag });
-            tagEl.addEventListener('click', () => this.filterByTag(tag));
+            const tagBtn = this.tagContainer.createEl('button', { 
+                text: tag,
+                cls: 'tag-btn'
+            });
+            tagBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.toggleTag(tag, tagBtn);
+            });
         });
     }
 
@@ -238,6 +282,9 @@ export class CardView extends ItemView {
             }
         });
 
+        // 添加右键菜单
+        this.addContextMenu(card, file);
+
         return card;
     }
 
@@ -302,6 +349,8 @@ export class CardView extends ItemView {
             startWidth = parseInt(getComputedStyle(this.previewContainer).width, 10);
             document.addEventListener('mousemove', resize);
             document.addEventListener('mouseup', stopResize);
+            document.body.style.cursor = 'col-resize';
+            this.previewResizer.addClass('resizing');
         };
 
         const resize = (e: MouseEvent) => {
@@ -318,6 +367,8 @@ export class CardView extends ItemView {
         const stopResize = () => {
             document.removeEventListener('mousemove', resize);
             document.removeEventListener('mouseup', stopResize);
+            document.body.style.cursor = '';
+            this.previewResizer.removeClass('resizing');
         };
 
         this.previewResizer.addEventListener('mousedown', startResize);
@@ -461,5 +512,209 @@ export class CardView extends ItemView {
                 });
             }
         });
+    }
+
+    // 添加右键菜单功能
+    private addContextMenu(card: HTMLElement, file: TFile) {
+        card.addEventListener('contextmenu', (event) => {
+            event.preventDefault();
+            const menu = new Menu(this.app);
+
+            menu.addItem((item) => {
+                item
+                    .setTitle("在新标签页打开")
+                    .setIcon("link")
+                    .onClick(async () => {
+                        const leaf = this.app.workspace.getLeaf('tab');
+                        await leaf.openFile(file);
+                    });
+            });
+
+            menu.addItem((item) => {
+                item
+                    .setTitle("在文件管理器中显示")
+                    .setIcon("folder")
+                    .onClick(() => {
+                        this.revealFolderInExplorer(file.parent?.path || '/');
+                    });
+            });
+
+            menu.addItem((item) => {
+                item
+                    .setTitle("移动笔记")
+                    .setIcon("move")
+                    .onClick(async () => {
+                        const modal = new FileSelectionModal(this.app, file);
+                        modal.open();
+                    });
+            });
+
+            menu.addItem((item) => {
+                item
+                    .setTitle("删除笔记")
+                    .setIcon("trash")
+                    .onClick(async () => {
+                        const confirm = await new ConfirmModal(
+                            this.app,
+                            "确认删除",
+                            `是否确定要删除笔记 "${file.basename}"？`
+                        ).show();
+
+                        if (confirm) {
+                            await this.app.vault.trash(file, true);
+                            this.refreshView();
+                        }
+                    });
+            });
+
+            menu.showAtMouseEvent(event);
+        });
+    }
+
+    // 刷新视图（用于搜索和过滤）
+    private async refreshView() {
+        const files = this.app.vault.getMarkdownFiles();
+        this.container.empty();
+
+        const filteredFiles = files.filter(file => {
+            // 搜索过滤
+            const matchesSearch = !this.currentSearchTerm || 
+                file.basename.toLowerCase().includes(this.currentSearchTerm.toLowerCase());
+
+            // 标签过滤
+            let matchesTags = true;
+            if (this.selectedTags.size > 0) {
+                const cache = this.app.metadataCache.getFileCache(file);
+                matchesTags = cache?.tags?.some(t => this.selectedTags.has(t.tag)) ?? false;
+            }
+
+            return matchesSearch && matchesTags;
+        });
+
+        filteredFiles.forEach(file => {
+            const card = this.createNoteCard(file);
+            this.container.appendChild(card);
+        });
+    }
+
+    // 添加标签切换方法
+    private toggleTag(tag: string, tagBtn: HTMLElement) {
+        if (this.selectedTags.has(tag)) {
+            this.selectedTags.delete(tag);
+            tagBtn.removeClass('active');
+        } else {
+            this.selectedTags.add(tag);
+            tagBtn.addClass('active');
+        }
+
+        // 取消 "All" 标签的选中状态
+        const allBtn = this.tagContainer.querySelector('button');
+        if (allBtn) {
+            allBtn.removeClass('active');
+        }
+
+        this.refreshView();
+    }
+
+    // 添加清除标签选择方法
+    private clearTagSelection() {
+        this.selectedTags.clear();
+        this.tagContainer.querySelectorAll('.tag-btn').forEach(btn => {
+            btn.removeClass('active');
+        });
+    }
+}
+
+// 添加文件选择模态框
+class FileSelectionModal extends Modal {
+    private file: TFile;
+
+    constructor(app: App, file: TFile) {
+        super(app);
+        this.file = file;
+    }
+
+    async onOpen() {
+        const { contentEl } = this;
+        contentEl.createEl('h3', { text: '选择目标文件夹' });
+
+        const folderList = contentEl.createDiv('folder-list');
+        const folders = this.getFolders();
+
+        folders.forEach(folder => {
+            const item = folderList.createDiv('folder-item');
+            item.setText(folder);
+            item.addEventListener('click', async () => {
+                await this.moveFile(folder);
+                this.close();
+            });
+        });
+    }
+
+    private getFolders(): string[] {
+        const folders = new Set<string>();
+        this.app.vault.getAllLoadedFiles().forEach(file => {
+            if (file instanceof TFolder) {
+                folders.add(file.path);
+            }
+        });
+        return Array.from(folders);
+    }
+
+    private async moveFile(targetFolder: string) {
+        const newPath = `${targetFolder}/${this.file.name}`;
+        await this.app.fileManager.renameFile(this.file, newPath);
+    }
+
+    onClose() {
+        const { contentEl } = this;
+        contentEl.empty();
+    }
+}
+
+// 添加确认对话框
+class ConfirmModal extends Modal {
+    private result: boolean = false;
+    private resolvePromise: (value: boolean) => void;
+    private title: string;
+    private message: string;
+
+    constructor(app: App, title: string, message: string) {
+        super(app);
+        this.title = title;
+        this.message = message;
+    }
+
+    async show(): Promise<boolean> {
+        return new Promise((resolve) => {
+            this.resolvePromise = resolve;
+            this.open();
+        });
+    }
+
+    onOpen() {
+        const { contentEl } = this;
+        contentEl.createEl('h3', { text: this.title });
+        contentEl.createEl('p', { text: this.message });
+
+        const buttonContainer = contentEl.createDiv('button-container');
+        
+        const confirmButton = buttonContainer.createEl('button', { text: '确认' });
+        confirmButton.addEventListener('click', () => {
+            this.result = true;
+            this.close();
+        });
+
+        const cancelButton = buttonContainer.createEl('button', { text: '取消' });
+        cancelButton.addEventListener('click', () => {
+            this.result = false;
+            this.close();
+        });
+    }
+
+    onClose() {
+        const { contentEl } = this;
+        contentEl.empty();
+        this.resolvePromise(this.result);
     }
 } 

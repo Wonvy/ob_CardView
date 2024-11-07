@@ -252,10 +252,31 @@
     background-color: var(--background-modifier-border);
     cursor: col-resize;
     transition: background-color 0.2s ease;
+    position: relative;
 }
 
-.preview-resizer:hover {
+.preview-resizer::before {
+    content: '';
+    position: absolute;
+    left: -2px;
+    right: -2px;
+    top: 0;
+    bottom: 0;
+    cursor: col-resize;
+}
+
+.preview-resizer:hover,
+.preview-resizer.resizing {
     background-color: var(--interactive-accent);
+}
+
+.preview-resizer.resizing::before {
+    position: fixed;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    z-index: 1000;
 }
 
 .preview-container {
@@ -427,4 +448,40 @@
 
 .view-switch-text {
     font-size: 0.9em;
+}
+
+/* 标签按钮样式优化 */
+.tag-btn {
+    background-color: var(--background-modifier-border);
+    color: var(--text-muted);
+    border: none;
+    border-radius: 4px;
+    padding: 2px 8px;
+    font-size: 0.85em;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    height: 24px;
+    line-height: 20px;
+    display: inline-flex;
+    align-items: center;
+}
+
+.tag-btn:hover {
+    background-color: var(--background-modifier-hover);
+    color: var(--text-normal);
+}
+
+.tag-btn.active {
+    background-color: var(--interactive-accent);
+    color: var(--text-on-accent);
+}
+
+/* 标签容器样式优化 */
+.tag-filter {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 8px;
+    border-bottom: 1px solid var(--background-modifier-border);
+    background-color: var(--background-primary);
 } 
