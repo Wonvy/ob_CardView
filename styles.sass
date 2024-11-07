@@ -217,6 +217,7 @@
         // 打开按钮样式修改   
         .note-open-button 
           position: absolute
+          z-index: 99
           bottom: 0.8rem  // 改为底部定位   
           right: 0.8rem   // 调整右边距   
           width: 32px   // 增大按钮尺寸   
@@ -230,7 +231,6 @@
           cursor: pointer
           transition: all 0.2s ease
           &:hover 
-            background-color: var(--interactive-accent)
             color: var(--text-on-accent)
             transform: translateY(-2px)
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1)
@@ -590,19 +590,28 @@
 
 
 /* 隐藏卡片内容中的标题 */
-.note-content h1:first-child,
-.note-content h2:first-child,
-.note-content h3:first-child,
-.note-content h4:first-child,
-.note-content h5:first-child,
-.note-content h6:first-child 
+.note-content 
+  h1:first-child,
+  h2:first-child,
+  h3:first-child,
+  h4:first-child,
+  h5:first-child,
+  h6:first-child 
     display: none
 
 
 /* 统一卡片内所有文本样式 */
-.note-content p,
-.note-content li,
-.note-content blockquote 
+.note-content
+  p, li, blockquote, h1, h2, h3, h4, h5, h6
     font-size: 12px
     line-height: 1.5
     margin: 0.5em 0
+
+
+/* 预览栏内保留标题 */
+.preview-container
+  h1, h2, h3, h4, h5, h6
+    margin: 1em 0 0.5em
+    line-height: 1.3
+
+

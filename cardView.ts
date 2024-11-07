@@ -287,12 +287,15 @@ export class CardView extends ItemView {
         
         // 添加点击事件
         folderPath.addEventListener('click', async (e) => {
+            console.log('点击了文件夹',e);
             e.stopPropagation();
             e.preventDefault();
+            console.log('点击了文件夹',e);
             
             // 打开文件夹
             const fileExplorer = this.app.workspace.getLeavesOfType('file-explorer')[0];
             if (fileExplorer) {
+                console.log('fileExplorer',fileExplorer);
                 // 激活文件浏览器视图
                 this.app.workspace.revealLeaf(fileExplorer);
                 
@@ -350,7 +353,8 @@ export class CardView extends ItemView {
             card.addEventListener('mouseenter', async () => {
                 openButton.style.opacity = '1';  // 显示打开按钮
                 title.style.opacity = '0';
-                noteContent.style.display = 'block';
+                title.style.display = 'none'; 
+                noteContent.style.opacity = '1';
                 
                 // 在预览栏中显示完整内容
                 try {
@@ -370,7 +374,9 @@ export class CardView extends ItemView {
             card.addEventListener('mouseleave', () => {
                 openButton.style.opacity = '0';  // 隐藏打开按钮
                 title.style.opacity = '1';
-                noteContent.style.display = 'none';
+                title.style.display = 'block'; 
+                noteContent.style.opacity = '0.3';
+                // noteContent.style.display = 'none';
             });
 
             // 修改事件监听
