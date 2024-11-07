@@ -285,18 +285,31 @@ export class CardView extends ItemView {
         const folder = file.parent ? (file.parent.path === '/' ? '根目录' : file.parent.path) : '根目录';
         folderPath.setText(folder);
         folderPath.setAttribute('title', `打开文件夹: ${folder}`);
+        folderPath.addClass('clickable');
         
         // 添加点击事件
         folderPath.addEventListener('click', async (e) => {
             e.stopPropagation();
+            e.preventDefault();
+            
             // 打开文件夹
             const fileExplorer = this.app.workspace.getLeavesOfType('file-explorer')[0];
             if (fileExplorer) {
+                // 激活文件浏览器视图
+                this.app.workspace.revealLeaf(fileExplorer);
+                
+                // 获取文件浏览器视图实例
                 const fileExplorerView = fileExplorer.view as any;
                 if (fileExplorerView.expandFolder) {
                     await this.revealFolderInExplorer(folder);
                     // 聚焦到文件浏览器
                     fileExplorer.setEphemeralState({ focus: true });
+                    
+                    // 添加视觉反馈
+                    folderPath.addClass('folder-clicked');
+                    setTimeout(() => {
+                        folderPath.removeClass('folder-clicked');
+                    }, 200);
                 }
             }
         });
@@ -829,7 +842,7 @@ export class CardView extends ItemView {
 
             menu.addItem((item) => {
                 item
-                    .setTitle(`在文件管理器中显示`)
+                    .setTitle(`在件管理器中显示`)
                     .setIcon("folder")
                     .onClick(() => {
                         const file = files[0];  // 显示第一个选中文件的位置
@@ -1117,7 +1130,7 @@ export class CardView extends ItemView {
                 day.removeClass('selected');
             });
         }
-        // 刷新视图以显示���有笔记
+        // 刷新视图以显示所有笔记
         this.refreshView();
     }
 
@@ -1290,6 +1303,31 @@ export class CardView extends ItemView {
             const leaf = this.app.workspace.getLeaf('tab');
             await leaf.openFile(file);
         }
+    }
+
+    private renderFolderCard(folder: TFolder): HTMLElement {
+        const cardEl = createDiv('card folder-card');
+        
+        // ... 现有的文件夹卡片渲染代码 ...
+        
+        // 添加点击事件处理
+        cardEl.addEventListener('click', () => {
+            // 获取文件浏览器视图
+            const fileExplorer = this.app.workspace.getLeavesOfType('file-explorer')[0];
+            if (fileExplorer) {
+                // 激活文件浏览器视图
+                this.app.workspace.revealLeaf(fileExplorer);
+                
+                // 获取文件浏览器视图实例
+                const fileExplorerView = fileExplorer.view as any;
+                if (fileExplorerView && fileExplorerView.revealInFolder) {
+                    // 在文件浏览器中定位并高亮显示该文件夹
+                    fileExplorerView.revealInFolder(folder);
+                }
+            }
+        });
+        
+        return cardEl;
     }
 }
 

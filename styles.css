@@ -1465,4 +1465,24 @@
         width: 240px;
     }
 }
+
+/* 文件夹样式 */
+.note-folder.clickable {
+    cursor: pointer;
+    color: var(--text-muted);
+    transition: all 0.2s ease;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.note-folder.clickable:hover {
+    color: var(--text-normal);
+    background-color: var(--background-modifier-hover);
+}
+
+/* 点击效果 */
+.note-folder.folder-clicked {
+    background-color: var(--background-modifier-active);
+    transform: scale(0.95);
+}
   
