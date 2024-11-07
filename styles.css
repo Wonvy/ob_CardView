@@ -1,9 +1,117 @@
-/* 主容器样式 */
+/* 主容器布局 */
+.card-view-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+}
+
+/* 工具栏样式 */
+.card-view-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.8rem 1rem;
+    border-bottom: 1px solid var(--background-modifier-border);
+    background-color: var(--background-secondary);
+    width: 100%;
+    flex-shrink: 0;
+    height: auto;
+    min-height: 48px;
+}
+
+/* 工具栏左侧区域 */
+.toolbar-left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+/* 新建笔记按钮样式 */
+.new-note-button {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background-color: var(--interactive-accent);
+    color: var(--text-on-accent);
+    padding: 6px 12px;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.new-note-button:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
+}
+
+.new-note-button svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* 视图切换器样式 */
+.view-switcher {
+    display: flex;
+    gap: 0.5rem;
+    padding-left: 1rem;
+    border-left: 1px solid var(--background-modifier-border);
+}
+
+/* 标签过滤器样式 */
+.tag-filter {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    overflow-x: auto;
+    max-width: 60%;
+    padding-bottom: 4px;
+}
+
+.tag-filter::-webkit-scrollbar {
+    height: 4px;
+}
+
+/* 内容区域样式 */
+.card-view-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem;
+    position: relative;
+}
+
+/* 卡片容器样式 */
 .card-container {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
     gap: 1rem;
+    padding-bottom: 2rem; /* 确保最后一行卡片可见 */
+}
+
+/* 预览容器样式更新 */
+.preview-wrapper {
+    position: absolute;  /* 改为 absolute */
+    right: 0;
+    top: 0;
+    height: 100%;
+    display: flex;
+    z-index: 100;
+}
+
+.preview-container {
+    width: 300px;
+    height: 100%;
+    background-color: var(--background-primary);
+    border-left: 1px solid var(--background-modifier-border);
     padding: 1rem;
+    overflow-y: auto;
+    transition: width 0.2s ease;
+    resize: horizontal;  /* 添加水平调整大小功能 */
+    min-width: 50px;    /* 最小宽度 */
+    max-width: 800px;   /* 最大宽度 */
 }
 
 /* 卡片样式优化 */
@@ -51,13 +159,13 @@
     font-size: 0.8em;
 }
 
-/* 标签过滤器样式 */
+/* 标签过滤器样式修复 */
 .tag-filter {
     display: flex;
     flex-wrap: wrap;
     gap: 0.5rem;
-    padding: 1rem;
-    border-bottom: 1px solid var(--background-modifier-border);
+    padding: 0;
+    border: none;
 }
 
 .tag-filter button {
@@ -75,26 +183,42 @@
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-/* 视图切换器样式 */
+/* 视图切换器样式修复 */
 .view-switcher {
     display: flex;
     gap: 0.5rem;
-    padding: 1rem;
+    padding: 0;
+    border-left: 1px solid var(--background-modifier-border);
+    margin-left: 1rem;
+    padding-left: 1rem;
 }
 
-/* 预览容器样式优化 */
-.preview-container {
-    position: fixed;
-    right: 0;
-    top: 0;
-    width: 300px;
-    height: 100%;
-    background-color: var(--background-primary);
-    border-left: 1px solid var(--background-modifier-border);
-    padding: 1rem;
-    overflow-y: auto;
-    z-index: 100;
-    box-shadow: -2px 0 8px rgba(0, 0, 0, 0.1);
+.view-switch-btn {
+    background-color: transparent;
+    color: var(--text-muted);
+    border: none;
+    border-radius: 4px;
+    padding: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.view-switch-btn:hover {
+    background-color: var(--background-modifier-hover);
+    color: var(--text-normal);
+}
+
+.view-switch-btn.active {
+    background-color: var(--interactive-accent);
+    color: var(--text-on-accent);
+}
+
+.view-switch-btn svg {
+    width: 18px;
+    height: 18px;
 }
 
 /* 确保预览容器在暗色主题下也能正常显示 */
@@ -111,4 +235,101 @@
 .card-container[data-view="timeline"] {
     display: flex;
     flex-direction: column;
+}
+
+/* 添加预览容器相关样式 */
+.preview-wrapper {
+    position: fixed;
+    right: 0;
+    top: 0;
+    height: 100%;
+    display: flex;
+    z-index: 100;
+}
+
+.preview-resizer {
+    width: 4px;
+    background-color: var(--background-modifier-border);
+    cursor: col-resize;
+    transition: background-color 0.2s ease;
+}
+
+.preview-resizer:hover {
+    background-color: var(--interactive-accent);
+}
+
+.preview-container {
+    width: 300px;
+    height: 100%;
+    background-color: var(--background-primary);
+    border-left: 1px solid var(--background-modifier-border);
+    padding: 1rem;
+    overflow-y: auto;
+    transition: width 0.2s ease;
+}
+
+.preview-container.collapsed {
+    width: 0;
+    padding: 0;
+    border-left: none;
+}
+
+.preview-controls {
+    position: absolute;
+    left: -24px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.preview-toggle {
+    background: var(--background-secondary);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 4px;
+    padding: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.preview-toggle:hover {
+    background: var(--background-modifier-hover);
+}
+
+.preview-container.collapsed + .preview-controls .preview-toggle svg {
+    transform: rotate(180deg);
+}
+
+/* 文件夹路径样式 */
+.note-folder {
+    font-size: 0.8em;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 2px 4px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.note-folder:hover {
+    background-color: var(--background-modifier-hover);
+    color: var(--text-normal);
+}
+
+/* 文件夹高亮样式 */
+.note-card.folder-highlight {
+    border-color: var(--interactive-accent);
+    background-color: var(--background-primary-alt);
+}
+
+/* 调整卡片内部布局 */
+.note-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.note-title {
+    margin-bottom: 0.3rem;
+}
+
+.note-date, .note-folder {
+    margin-bottom: 0.2rem;
 } 
