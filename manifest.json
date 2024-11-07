@@ -4,8 +4,8 @@
     "version": "1.0.0",
     "minAppVersion": "0.15.0",
     "description": "在 Obsidian 中以卡片方式查看笔记，支持标签过滤和多种视图模式。",
-    "author": "你的名字",
-    "authorUrl": "你的网站",
+    "author": "wonvy",
+    "authorUrl": "https://github.com/Wonvy/ob_CardView",
     "isDesktopOnly": false,
     "defaultViewLocation": "tab"
 } 

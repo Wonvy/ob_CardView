@@ -582,7 +582,7 @@
     transition: opacity 0.2s ease;
 }
 
-/* 笔记���容样式 */
+/* 笔记容样式 */
 .note-content {
     position: absolute;
     top: 2rem;
@@ -804,8 +804,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    z-index: 3;
-    transition: opacity 0.2s ease;
+    z-index: 5;  /* 确保在笔记内容之上 */
 }
 
 .note-date {
@@ -844,17 +843,13 @@
 }
 
 .note-card:hover .note-content {
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    border-radius: 8px;
+    top: 2.5rem;  /* 为头部留出空间 */
 }
 
 /* 笔记内容样式 */
 .note-content {
     position: absolute;
-    top: 2.5rem;
+    top: 2.5rem;  /* 默认也为头部留出空间 */
     left: 0;
     right: 0;
     bottom: 0;
@@ -863,6 +858,45 @@
     overflow-y: auto;
     z-index: 2;
     transition: all 0.2s ease;
+    opacity: 0.5;  /* 默认 50% 透明度 */
+}
+
+/* 笔记内容中的所有元素默认透明度 */
+.note-content .mod-frontmatter,
+.note-content .mod-ui,
+.note-content p,
+.note-content h1,
+.note-content h2,
+.note-content h3,
+.note-content h4,
+.note-content h5,
+.note-content h6,
+.note-content ul,
+.note-content ol,
+.note-content blockquote,
+.note-content pre,
+.note-content table {
+    opacity: 0.5;
+    transition: opacity 0.2s ease;
+}
+
+/* 鼠标悬停时显示完整透明度 */
+.note-card:hover .note-content,
+.note-card:hover .note-content .mod-frontmatter,
+.note-card:hover .note-content .mod-ui,
+.note-card:hover .note-content p,
+.note-card:hover .note-content h1,
+.note-card:hover .note-content h2,
+.note-card:hover .note-content h3,
+.note-card:hover .note-content h4,
+.note-card:hover .note-content h5,
+.note-card:hover .note-content h6,
+.note-card:hover .note-content ul,
+.note-card:hover .note-content ol,
+.note-card:hover .note-content blockquote,
+.note-card:hover .note-content pre,
+.note-card:hover .note-content table {
+    opacity: 1;
 }
 
 /* 预览内容字号统一 */
@@ -894,5 +928,187 @@
     background-color: transparent;
     padding: 2px 6px;
     border-radius: 4px;
+}
+
+/* 卡片标题样式 */
+.note-title {
+    font-size: 1.2em;
+    font-weight: bold;
+    color: var(--text-normal);
+    margin: 0.5rem 1rem;
+    transition: opacity 0.2s ease;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    position: relative;
+    z-index: 2;
+}
+
+/* 卡片内容容器调整 */
+.note-card-content {
+    position: relative;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+/* 笔记内容样式 */
+.note-content {
+    position: absolute;
+    top: 4rem;  /* 为标题留出空间 */
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 1rem;
+    background-color: var(--background-secondary);
+    overflow-y: auto;
+    z-index: 1;
+    transition: all 0.2s ease;
+}
+
+/* 卡片头部样式 */
+.note-card-header {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    padding: 0.5rem 1rem;
+    background-color: var(--background-secondary);
+    border-bottom: 1px solid var(--background-modifier-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    z-index: 3;
+    transition: opacity 0.2s ease;
+}
+
+/* 打开按钮样式修改 */
+.note-open-button {
+    position: absolute;
+    bottom: 0.8rem;  /* 改为底部定位 */
+    right: 0.8rem;   /* 调整右边距 */
+    width: 32px;     /* 增大按钮尺寸 */
+    height: 32px;    /* 增大按钮尺寸 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--background-secondary);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    opacity: 0;
+    z-index: 6;
+}
+
+.note-open-button svg {
+    width: 20px;     /* 增大图标尺寸 */
+    height: 20px;    /* 增大图标尺寸 */
+    transition: all 0.2s ease;
+}
+
+.note-open-button:hover {
+    background-color: var(--interactive-accent);
+    color: var(--text-on-accent);
+    transform: translateY(-2px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.note-open-button:hover svg {
+    transform: scale(1.1);  /* 悬停时图标稍微放大 */
+}
+
+/* 确保打开按钮在悬停时显示 */
+.note-card:hover .note-open-button {
+    opacity: 1;
+}
+
+/* 选中卡片的样式 */
+.note-card.selected {
+    border: 2px solid var(--interactive-accent);
+    box-shadow: 0 0 8px rgba(var(--interactive-accent-rgb), 0.3);
+    transform: translateY(-2px);
+}
+
+.note-card.selected:hover {
+    border: 2px solid var(--interactive-accent);
+}
+
+/* 修改卡片悬停效果，保留时间和目录显示 */
+.note-card:hover .note-title,
+.note-card:hover .note-tags {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.note-card:hover .note-card-header {
+    opacity: 1;  /* 保持显示 */
+    background-color: var(--background-secondary);  /* 确保背景色 */
+    z-index: 5;  /* 确保在内容之上 */
+}
+
+.note-card:hover .note-content {
+    top: 2.5rem;  /* 为头部留出空间 */
+}
+
+/* 文件选择模态框样式 */
+.folder-list {
+    max-height: 300px;
+    overflow-y: auto;
+    margin: 1rem 0;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 4px;
+}
+
+.folder-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.folder-item:hover {
+    background-color: var(--background-modifier-hover);
+}
+
+.folder-item.selected {
+    background-color: var(--interactive-accent);
+    color: var(--text-on-accent);
+}
+
+.folder-icon {
+    display: flex;
+    align-items: center;
+    color: var(--text-muted);
+}
+
+.folder-name {
+    flex: 1;
+}
+
+.recent-folders-section {
+    margin: 1rem 0;
+}
+
+.modal-button-container {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--background-modifier-border);
+}
+
+.modal-button-container button {
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.modal-button-container button.mod-cta {
+    background-color: var(--interactive-accent);
+    color: var(--text-on-accent);
 }
   

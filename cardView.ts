@@ -26,6 +26,9 @@ export class CardView extends ItemView {
     private searchInput: HTMLInputElement;
     private currentSearchTerm: string = '';
     private selectedTags: Set<string> = new Set();
+    private selectedNotes: Set<string> = new Set();
+    private lastSelectedNote: string | null = null;
+    private recentFolders: string[] = [];
 
     /**
      * 构造函数
@@ -233,6 +236,7 @@ export class CardView extends ItemView {
     private async createNoteCard(file: TFile): Promise<HTMLElement> {
         const card = document.createElement('div');
         card.addClass('note-card');
+        card.setAttribute('data-path', file.path);
         
         // 创建卡片头部
         const header = card.createDiv('note-card-header');
@@ -247,8 +251,24 @@ export class CardView extends ItemView {
         folderPath.setText(folder);
         folderPath.setAttribute('title', folder);
 
+        // 添加打开按钮
+        const openButton = header.createDiv('note-open-button');
+        openButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>`;
+        openButton.setAttribute('title', '在新标签页中打开');
+        openButton.style.opacity = '0';  // 默认隐藏
+
         // 创建卡片内容容器
         const cardContent = card.createDiv('note-card-content');
+
+        // 处理标题（移到内容区域顶部）
+        const title = cardContent.createDiv('note-title');
+        let displayTitle = file.basename;
+        // 处理日期开头的标题
+        const timePattern = /^\d{4}[-./]\d{2}[-./]\d{2}/;
+        if (timePattern.test(displayTitle)) {
+            displayTitle = displayTitle.replace(timePattern, '').trim();
+        }
+        title.setText(displayTitle);
 
         try {
             // 读取笔记内容
@@ -265,15 +285,12 @@ export class CardView extends ItemView {
                 this
             );
 
-            // 处理滚动事件
-            noteContent.addEventListener('wheel', (e) => {
-                e.stopPropagation();
-                const scrollAmount = e.deltaY;
-                noteContent.scrollTop += scrollAmount;
-            });
-
-            // 添加鼠标悬停事件
+            // 鼠标悬停事件
             card.addEventListener('mouseenter', async () => {
+                openButton.style.opacity = '1';  // 显示打开按钮
+                title.style.opacity = '0';
+                noteContent.style.display = 'block';
+                
                 // 在预览栏中显示完整内容
                 try {
                     this.previewContainer.empty();
@@ -288,18 +305,50 @@ export class CardView extends ItemView {
                 }
             });
 
-            // 添加点击事件
-            card.addEventListener('click', async () => {
+            card.addEventListener('mouseleave', () => {
+                openButton.style.opacity = '0';  // 隐藏打开按钮
+                title.style.opacity = '1';
+                noteContent.style.display = 'none';
+            });
+
+            // 修改事件监听
+            openButton.addEventListener('click', async (e) => {
+                e.stopPropagation();
                 const leaf = this.app.workspace.getLeaf('tab');
                 await leaf.openFile(file);
             });
 
-            // 添加右键菜单
-            this.addContextMenu(card, file);
+            // 单击选择
+            card.addEventListener('click', (e) => {
+                this.handleCardSelection(file.path, e);
+            });
+
+            // 双击打开
+            card.addEventListener('dblclick', async () => {
+                const leaf = this.app.workspace.getLeaf('tab');
+                await leaf.openFile(file);
+            });
+
+            // 右键菜单
+            card.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                this.showContextMenu(e, this.getSelectedFiles());
+            });
 
         } catch (error) {
             console.error('笔记加载失败:', error);
         }
+
+        // 添加卡片悬停事件
+        card.addEventListener('mouseenter', async () => {
+            openButton.style.opacity = '1';  // 显示打开按钮
+            // ... 其他悬停事件代码 ...
+        });
+
+        card.addEventListener('mouseleave', () => {
+            openButton.style.opacity = '0';  // 隐藏打开按钮
+            // ... 其他离开事件代码 ...
+        });
 
         return card;
     }
@@ -541,56 +590,19 @@ export class CardView extends ItemView {
     private addContextMenu(card: HTMLElement, file: TFile) {
         card.addEventListener('contextmenu', (event) => {
             event.preventDefault();
-            const menu = new Menu(this.app);
+            event.stopPropagation();
+            
+            // 如果点击的卡片没有被选中，且没有按住 Ctrl 键，
+            // 则清除其他选择并选中当前卡片
+            const path = card.getAttribute('data-path');
+            if (path && !this.selectedNotes.has(path) && !event.ctrlKey) {
+                this.clearSelection();
+                this.selectedNotes.add(path);
+                card.addClass('selected');
+            }
 
-            menu.addItem((item) => {
-                item
-                    .setTitle("在新标签页打开")
-                    .setIcon("link")
-                    .onClick(async () => {
-                        const leaf = this.app.workspace.getLeaf('tab');
-                        await leaf.openFile(file);
-                    });
-            });
-
-            menu.addItem((item) => {
-                item
-                    .setTitle("在文件管理器中显示")
-                    .setIcon("folder")
-                    .onClick(() => {
-                        this.revealFolderInExplorer(file.parent?.path || '/');
-                    });
-            });
-
-            menu.addItem((item) => {
-                item
-                    .setTitle("移动笔记")
-                    .setIcon("move")
-                    .onClick(async () => {
-                        const modal = new FileSelectionModal(this.app, file);
-                        modal.open();
-                    });
-            });
-
-            menu.addItem((item) => {
-                item
-                    .setTitle("删除笔记")
-                    .setIcon("trash")
-                    .onClick(async () => {
-                        const confirm = await new ConfirmModal(
-                            this.app,
-                            "确认删除",
-                            `是否确定要删除笔记 "${file.basename}"？`
-                        ).show();
-
-                        if (confirm) {
-                            await this.app.vault.trash(file, true);
-                            this.refreshView();
-                        }
-                    });
-            });
-
-            menu.showAtMouseEvent(event);
+            const selectedFiles = this.getSelectedFiles();
+            this.showContextMenu(event, selectedFiles);
         });
     }
 
@@ -650,6 +662,129 @@ export class CardView extends ItemView {
         this.tagContainer.querySelectorAll('.tag-btn').forEach(btn => {
             btn.removeClass('active');
         });
+    }
+
+    // 处理卡片选择
+    private handleCardSelection(path: string, event: MouseEvent) {
+        const card = this.container.querySelector(`[data-path="${path}"]`);
+        if (!card) return;
+
+        if (event.ctrlKey) {
+            // Ctrl + 点击：切换选择
+            if (this.selectedNotes.has(path)) {
+                this.selectedNotes.delete(path);
+                card.removeClass('selected');
+            } else {
+                this.selectedNotes.add(path);
+                card.addClass('selected');
+            }
+        } else if (event.shiftKey && this.lastSelectedNote) {
+            // Shift + 点击：连续选择
+            const cards = Array.from(this.container.querySelectorAll('.note-card'));
+            const lastIndex = cards.findIndex(c => c.getAttribute('data-path') === this.lastSelectedNote);
+            const currentIndex = cards.findIndex(c => c.getAttribute('data-path') === path);
+            
+            const start = Math.min(lastIndex, currentIndex);
+            const end = Math.max(lastIndex, currentIndex);
+
+            cards.forEach((c, i) => {
+                const cardPath = c.getAttribute('data-path');
+                if (i >= start && i <= end && cardPath) {
+                    this.selectedNotes.add(cardPath);
+                    c.addClass('selected');
+                }
+            });
+        } else {
+            // 普通点击：清除其他选择，选中当前
+            this.clearSelection();
+            this.selectedNotes.add(path);
+            card.addClass('selected');
+        }
+
+        this.lastSelectedNote = path;
+    }
+
+    // 清除所有选择
+    private clearSelection() {
+        this.selectedNotes.clear();
+        this.container.querySelectorAll('.note-card.selected').forEach(card => {
+            card.removeClass('selected');
+        });
+    }
+
+    // 获取选中的文件
+    private getSelectedFiles(): TFile[] {
+        return Array.from(this.selectedNotes)
+            .map(path => this.app.vault.getAbstractFileByPath(path))
+            .filter((file): file is TFile => file instanceof TFile);
+    }
+
+    // 显示右键菜单
+    private showContextMenu(event: MouseEvent, files: TFile[]) {
+        const menu = new Menu();
+
+        if (files.length > 0) {
+            menu.addItem((item) => {
+                item
+                    .setTitle(`在新标签页打开`)
+                    .setIcon("link")
+                    .onClick(async () => {
+                        for (const file of files) {
+                            const leaf = this.app.workspace.getLeaf('tab');
+                            await leaf.openFile(file);
+                        }
+                    });
+            });
+
+            menu.addItem((item) => {
+                item
+                    .setTitle(`在文件管理器中显示`)
+                    .setIcon("folder")
+                    .onClick(() => {
+                        const file = files[0];  // 显示第一个选中文件的位置
+                        this.revealFolderInExplorer(file.parent?.path || '/');
+                    });
+            });
+
+            menu.addItem((item) => {
+                item
+                    .setTitle(`移动 ${files.length} 个文件`)
+                    .setIcon("move")
+                    .onClick(() => {
+                        const modal = new EnhancedFileSelectionModal(
+                            this.app,
+                            files,
+                            this.recentFolders,
+                            (folders) => {
+                                this.recentFolders = folders;
+                            }
+                        );
+                        modal.open();
+                    });
+            });
+
+            menu.addItem((item) => {
+                item
+                    .setTitle(`删除 ${files.length} 个文件`)
+                    .setIcon("trash")
+                    .onClick(async () => {
+                        const confirm = await new ConfirmModal(
+                            this.app,
+                            "确认删除",
+                            `是否确定要删除选中的 ${files.length} 个文件？`
+                        ).show();
+
+                        if (confirm) {
+                            for (const file of files) {
+                                await this.app.vault.trash(file, true);
+                            }
+                            this.refreshView();
+                        }
+                    });
+            });
+        }
+
+        menu.showAtMouseEvent(event);
     }
 }
 
@@ -745,4 +880,165 @@ class ConfirmModal extends Modal {
         contentEl.empty();
         this.resolvePromise(this.result);
     }
+}
+
+// 修改增强的文件选择模态框
+class EnhancedFileSelectionModal extends Modal {
+    private files: TFile[];
+    private recentFolders: string[];
+    private onFoldersUpdate: (folders: string[]) => void;
+    private selectedFolder: string | null = null;
+
+    constructor(
+        app: App,
+        files: TFile[],
+        recentFolders: string[],
+        onFoldersUpdate: (folders: string[]) => void
+    ) {
+        super(app);
+        this.files = files;
+        this.recentFolders = recentFolders;
+        this.onFoldersUpdate = onFoldersUpdate;
+    }
+
+    async onOpen() {
+        const { contentEl } = this;
+        contentEl.empty();
+
+        // 标题
+        contentEl.createEl('h3', { 
+            text: `移动 ${this.files.length} 个文件` 
+        });
+
+        // 最近使用的文件夹
+        if (this.recentFolders.length > 0) {
+            const recentSection = contentEl.createDiv('recent-folders-section');
+            recentSection.createEl('h4', { text: '最近使用' });
+            
+            const recentList = recentSection.createDiv('recent-folders-list');
+            this.recentFolders.forEach(folder => {
+                const item = recentList.createDiv('folder-item recent');
+                item.setText(folder);
+                item.addEventListener('click', () => this.selectFolder(item, folder));
+            });
+        }
+
+        // 所有文件夹列表
+        const folderList = contentEl.createDiv('folder-list');
+        const folders = this.getFoldersWithHierarchy();
+        this.createFolderTree(folderList, folders);
+
+        // 添加操作按钮
+        const buttonContainer = contentEl.createDiv('modal-button-container');
+        
+        const confirmButton = buttonContainer.createEl('button', {
+            text: '确认移动',
+            cls: 'mod-cta'
+        });
+        confirmButton.addEventListener('click', () => {
+            if (this.selectedFolder) {
+                this.moveFiles(this.selectedFolder);
+            }
+        });
+
+        const cancelButton = buttonContainer.createEl('button', {
+            text: '取消'
+        });
+        cancelButton.addEventListener('click', () => this.close());
+    }
+
+    private getFoldersWithHierarchy(): FolderItem[] {
+        const folders: FolderItem[] = [];
+        const seen = new Set<string>();
+
+        this.app.vault.getAllLoadedFiles().forEach(file => {
+            if (file instanceof TFolder) {
+                const parts = file.path.split('/');
+                let currentPath = '';
+                let level = 0;
+
+                parts.forEach(part => {
+                    if (part) {
+                        currentPath += (currentPath ? '/' : '') + part;
+                        if (!seen.has(currentPath)) {
+                            seen.add(currentPath);
+                            folders.push({
+                                path: currentPath,
+                                name: part,
+                                level: level
+                            });
+                        }
+                        level++;
+                    }
+                });
+            }
+        });
+
+        return folders.sort((a, b) => a.path.localeCompare(b.path));
+    }
+
+    private createFolderTree(container: HTMLElement, folders: FolderItem[]) {
+        folders.forEach(folder => {
+            const item = container.createDiv({
+                cls: 'folder-item'
+            });
+
+            // 添加缩进
+            item.style.paddingLeft = `${folder.level * 20 + 10}px`;
+
+            // 添加文件夹图标
+            const icon = item.createSpan({
+                cls: 'folder-icon'
+            });
+            icon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>`;
+
+            // 添加文件夹名称
+            const name = item.createSpan({
+                cls: 'folder-name',
+                text: folder.name
+            });
+
+            item.addEventListener('click', () => this.selectFolder(item, folder.path));
+        });
+    }
+
+    private selectFolder(element: HTMLElement, path: string) {
+        // 移除其他选中状态
+        this.contentEl.querySelectorAll('.folder-item').forEach(item => {
+            item.removeClass('selected');
+        });
+
+        // 添加选中状态
+        element.addClass('selected');
+        this.selectedFolder = path;
+    }
+
+    private async moveFiles(targetFolder: string) {
+        const confirmModal = new ConfirmModal(
+            this.app,
+            "确认移动",
+            `是否将选中的 ${this.files.length} 个文件移动到 "${targetFolder}"？`
+        );
+
+        if (await confirmModal.show()) {
+            for (const file of this.files) {
+                const newPath = `${targetFolder}/${file.name}`;
+                await this.app.fileManager.renameFile(file, newPath);
+            }
+
+            // 更新最近使用的文件夹
+            this.recentFolders = [targetFolder, ...this.recentFolders.filter(f => f !== targetFolder)]
+                .slice(0, 5);
+            this.onFoldersUpdate(this.recentFolders);
+
+            this.close();
+        }
+    }
+}
+
+// 添加文件夹项接口
+interface FolderItem {
+    path: string;
+    name: string;
+    level: number;
 } 
