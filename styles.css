@@ -25,7 +25,7 @@
 .toolbar-left {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: 8px;
 }
 
 /* 新建笔记按钮样式 */
@@ -171,7 +171,7 @@
 }
 
 .tag-filter button {
-    background-color: var(--interactive-accent);
+    /* background-color: var(--interactive-accent); */
     color: var(--text-on-accent);
     border: none;
     border-radius: 4px;
@@ -1184,5 +1184,214 @@
     transition: all 0.2s ease;
 }
 
-/* 其他现有样式保持不变... */
+/* 修改日历容器样式 */
+.calendar-container {
+    position: absolute;
+    left: 0;
+    top: 48px; /* 调整顶部位置，为工具栏留出空间 */
+    bottom: 0;
+    width: 280px;
+    background-color: var(--background-primary);
+    border-right: 1px solid var(--background-modifier-border);
+    padding: 16px;
+    z-index: 1000;
+    box-shadow: 2px 0 4px rgba(0, 0, 0, 0.1);
+}
+
+/* 调整内容区域布局 */
+.content-section.with-calendar .card-container {
+    margin-left: 280px; /* 为日历留出空间 */
+    width: calc(100% - 280px);
+    transition: margin-left 0.3s ease;
+}
+
+/* 添加日历切换动画 */
+.calendar-container {
+    transition: transform 0.3s ease, opacity 0.3s ease;
+    opacity: 1;
+}
+
+.calendar-container[style*="display: none"] {
+    transform: translateX(-100%);
+    opacity: 0;
+}
+
+/* 确保内容区域相对定位 */
+.content-section {
+    position: relative;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+}
+
+/* 调整卡片容器过渡效果 */
+.card-container {
+    transition: margin-left 0.3s ease, width 0.3s ease;
+}
+
+/* 日历头部样式 */
+.calendar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    padding: 8px 0;
+}
+
+.calendar-title {
+    font-size: 1.1em;
+    font-weight: bold;
+    color: var(--text-normal);
+}
+
+/* 日历网格样式 */
+.calendar-weekdays {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+    margin-bottom: 8px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.weekday {
+    text-align: center;
+    font-size: 0.9em;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+}
+
+.calendar-day {
+    position: relative;
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    cursor: pointer;
+    background-color: var(--background-secondary);
+    font-size: 0.9em;
+    transition: all 0.2s ease;
+}
+
+.calendar-day:hover {
+    background-color: var(--background-modifier-hover);
+    transform: translateY(-1px);
+}
+
+.calendar-day.empty {
+    background-color: transparent;
+    cursor: default;
+}
+
+.calendar-day.selected {
+    background-color: var(--interactive-accent);
+    color: var(--text-on-accent);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.calendar-day.selected .note-count {
+    background-color: var(--text-on-accent);
+    color: var(--interactive-accent);
+}
+
+.note-count {
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    font-size: 0.7em;
+    background-color: var(--interactive-accent);
+    color: var(--text-on-accent);
+    padding: 1px 4px;
+    border-radius: 8px;
+    min-width: 16px;
+    text-align: center;
+}
+
+/* 导航按钮样式 */
+.calendar-nav-btn {
+    background: transparent;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 4px;
+    padding: 4px 8px;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.calendar-nav-btn:hover {
+    background-color: var(--background-modifier-hover);
+    color: var(--text-normal);
+    border-color: var(--interactive-accent);
+}
+
+/* 搜索高亮样式 */
+.search-highlight {
+    background-color: var(--text-highlight-bg);
+    color: var(--text-normal);
+    padding: 0 2px;
+    border-radius: 2px;
+}
+
+/* 日历按钮样式 */
+.calendar-toggle-button {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: transparent;
+    border: 1px solid var(--background-modifier-border);
+    color: var(--text-muted);
+    padding: 6px 12px;
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 14px;
+    transition: all 0.2s ease;
+}
+
+.calendar-toggle-button:hover {
+    color: var(--text-normal);
+    background-color: var(--background-modifier-hover);
+    border-color: var(--interactive-accent);
+}
+
+.calendar-toggle-button svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* 调整工具栏左侧间距 */
+.toolbar-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;  /* 增加按钮之间的间距 */
+}
+
+/* 日历按钮激活状态样式 */
+.calendar-toggle-button.active {
+    background-color: var(--interactive-accent);
+    color: var(--text-on-accent);
+    border-color: var(--interactive-accent);
+}
+
+/* 日期选中状态样式 */
+.calendar-day.selected {
+    background-color: var(--interactive-accent);
+    color: var(--text-on-accent);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.calendar-day.selected .note-count {
+    background-color: var(--text-on-accent);
+    color: var(--interactive-accent);
+}
   

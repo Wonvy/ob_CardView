@@ -32,6 +32,10 @@ export class CardView extends ItemView {
     private cardSize: number = 280;  // 默认卡片宽度
     private readonly MIN_CARD_SIZE = 280;  // 最小卡片宽度
     private readonly MAX_CARD_SIZE = 600;  // 最大卡片宽度
+    private calendarContainer: HTMLElement;
+    private isCalendarVisible: boolean = false;
+    private currentDate: Date = new Date();
+    private currentFilter: { type: 'date' | 'none', value?: string } = { type: 'none' };
 
     /**
      * 构造函数
@@ -90,6 +94,9 @@ export class CardView extends ItemView {
             <span>新建笔记</span>
         `;
         newNoteBtn.addEventListener('click', () => this.createNewNote());
+
+        // 添加日历按钮 - 在视图切换按钮之前添加
+        this.createCalendarButton(leftTools);
 
         // 视图切换按钮组
         const viewSwitcher = leftTools.createDiv('view-switcher');
@@ -561,7 +568,7 @@ export class CardView extends ItemView {
     private async createNewNote() {
         // 获取当前日期作为默认文件名
         const date = new Date();
-        const fileName = `未命名笔记 ${date.toLocaleString().replace(/[/:]/g, '-')}`;
+        const fileName = ` ${date.toLocaleString().replace(/[/:]/g, '-')}未命名笔记`;
         
         try {
             // 创建新笔记
@@ -690,11 +697,27 @@ export class CardView extends ItemView {
                 matchesTags = cache?.tags?.some(t => this.selectedTags.has(t.tag)) ?? false;
             }
 
-            return matchesSearch && matchesTags;
+            // 日期过滤
+            let matchesDate = true;
+            if (this.currentFilter.type === 'date') {
+                const fileDate = new Date(file.stat.mtime);
+                const fileDateStr = fileDate.toISOString().split('T')[0];
+                
+                if (this.currentFilter.value.length === 7) {
+                    // 按月份过滤
+                    matchesDate = fileDateStr.startsWith(this.currentFilter.value);
+                } else {
+                    // 按具体日期过滤
+                    matchesDate = fileDateStr === this.currentFilter.value;
+                }
+            }
+
+            return matchesSearch && matchesTags && matchesDate;
         });
 
+        // 创建卡片并高亮搜索词
         const cards = await Promise.all(
-            filteredFiles.map(file => this.createNoteCard(file))
+            filteredFiles.map(file => this.createNoteCard(file, this.currentSearchTerm))
         );
 
         cards.forEach(card => {
@@ -704,7 +727,6 @@ export class CardView extends ItemView {
             }
         });
 
-        // 确保容器使用正确的网格列宽度
         this.container.style.gridTemplateColumns = `repeat(auto-fill, ${this.cardSize}px)`;
     }
 
@@ -886,6 +908,366 @@ export class CardView extends ItemView {
         // 更新容器的网格列宽度
         this.container.style.gridTemplateColumns = `repeat(auto-fill, ${width}px)`;
     }
+
+    private createCalendarButton(leftTools: HTMLElement) {
+        const calendarBtn = leftTools.createEl('button', {
+            cls: 'calendar-toggle-button',
+        });
+        calendarBtn.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+            <span>日历视图</span>
+        `;
+        calendarBtn.addEventListener('click', () => {
+            this.toggleCalendar();
+            // 切换按钮高亮状态
+            calendarBtn.toggleClass('active', this.isCalendarVisible);
+        });
+    }
+
+    private toggleCalendar() {
+        this.isCalendarVisible = !this.isCalendarVisible;
+        if (this.isCalendarVisible) {
+            this.showCalendar();
+            // 显示当前月份的所有笔记
+            this.filterNotesByMonth(this.currentDate);
+        } else {
+            this.hideCalendar();
+            // 清除日期过滤
+            this.clearDateFilter();
+        }
+    }
+
+    // 添加按月份过滤的方法
+    private filterNotesByMonth(date: Date) {
+        const year = date.getFullYear();
+        const month = date.getMonth();
+        this.currentFilter = { 
+            type: 'date', 
+            value: `${year}-${(month + 1).toString().padStart(2, '0')}` 
+        };
+        this.refreshView();
+    }
+
+    private showCalendar() {
+        if (!this.calendarContainer) {
+            // 修改：将日历容器添加到 content-section 中
+            const contentSection = this.containerEl.querySelector('.content-section');
+            if (!contentSection) return;
+            
+            this.calendarContainer = contentSection.createDiv('calendar-container');
+        }
+        this.calendarContainer.empty();
+        this.renderCalendar();
+        this.calendarContainer.style.display = 'block';
+        
+        // 修改：将 with-calendar 类添加到 content-section
+        const contentSection = this.containerEl.querySelector('.content-section');
+        if (contentSection) {
+            contentSection.addClass('with-calendar');
+        }
+    }
+
+    private hideCalendar() {
+        if (this.calendarContainer) {
+            this.calendarContainer.style.display = 'none';
+            this.calendarContainer.empty();
+            
+            // 修改：从 content-section 移除 with-calendar 类
+            const contentSection = this.containerEl.querySelector('.content-section');
+            if (contentSection) {
+                contentSection.removeClass('with-calendar');
+            }
+        }
+    }
+
+    private renderCalendar() {
+        if (!this.calendarContainer) {
+            return;
+        }
+        
+        this.calendarContainer.empty();
+        
+        const year = this.currentDate.getFullYear();
+        const month = this.currentDate.getMonth();
+        
+        // 创建日历头部
+        const header = this.calendarContainer.createDiv('calendar-header');
+        
+        // 上个月按钮
+        const prevBtn = header.createEl('button', { cls: 'calendar-nav-btn' });
+        prevBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>';
+        prevBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.currentDate = new Date(year, month - 1, 1);
+            this.renderCalendar();
+            // 显示新月份的笔记
+            this.filterNotesByMonth(this.currentDate);
+        });
+        
+        // 显示年月
+        header.createDiv('calendar-title').setText(
+            `${year}年${month + 1}月`
+        );
+        
+        // 下个月按钮
+        const nextBtn = header.createEl('button', { cls: 'calendar-nav-btn' });
+        nextBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>';
+        nextBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.currentDate = new Date(year, month + 1, 1);
+            this.renderCalendar();
+            // 显示新月份的笔记
+            this.filterNotesByMonth(this.currentDate);
+        });
+
+        // 创建星头部
+        const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
+        const weekHeader = this.calendarContainer.createDiv('calendar-weekdays');
+        weekdays.forEach(day => {
+            weekHeader.createDiv('weekday').setText(day);
+        });
+
+        // 创建日期网格
+        const grid = this.calendarContainer.createDiv('calendar-grid');
+        
+        // 获取当月第一天是星期几
+        const firstDay = new Date(year, month, 1).getDay();
+        
+        // 获取当月天数
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        
+        // 获取每天的笔记数量
+        const notesCount = this.getNotesCountByDate(year, month);
+
+        // 填充日期格子
+        for (let i = 0; i < firstDay; i++) {
+            grid.createDiv('calendar-day empty');
+        }
+
+        for (let day = 1; day <= daysInMonth; day++) {
+            const dayEl = grid.createDiv('calendar-day');
+            const dateStr = `${year}-${(month + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+            
+            dayEl.setText(day.toString());
+            dayEl.setAttribute('data-date', dateStr);
+            
+            // 如果是当前过滤的日期，添加选中样式
+            if (this.currentFilter.type === 'date' && this.currentFilter.value === dateStr) {
+                dayEl.addClass('selected');
+            }
+            
+            // 添加笔记数量标记
+            const count = notesCount[dateStr] || 0;
+            if (count > 0) {
+                dayEl.createDiv('note-count').setText(count.toString());
+            }
+
+            // 添加点击事件
+            dayEl.addEventListener('click', () => {
+                this.filterNotesByDate(dateStr);
+            });
+        }
+    }
+
+    private getNotesCountByDate(year: number, month: number): Record<string, number> {
+        const counts: Record<string, number> = {};
+        const files = this.app.vault.getMarkdownFiles();
+
+        files.forEach(file => {
+            const date = new Date(file.stat.mtime);
+            if (date.getFullYear() === year && date.getMonth() === month) {
+                const dateStr = date.toISOString().split('T')[0];
+                counts[dateStr] = (counts[dateStr] || 0) + 1;
+            }
+        });
+
+        return counts;
+    }
+
+    private filterNotesByDate(dateStr: string) {
+        // 如果已经选中了这个日期，则清除过滤
+        if (this.currentFilter.type === 'date' && this.currentFilter.value === dateStr) {
+            this.clearDateFilter();
+            return;
+        }
+
+        // 清除其他日期的选中状态
+        this.calendarContainer.querySelectorAll('.calendar-day').forEach(day => {
+            day.removeClass('selected');
+        });
+
+        // 设置新的过滤条件
+        this.currentFilter = { type: 'date', value: dateStr };
+        
+        // 高亮选中的日期
+        const selectedDay = this.calendarContainer.querySelector(`.calendar-day[data-date="${dateStr}"]`);
+        if (selectedDay) {
+            selectedDay.addClass('selected');
+        }
+
+        this.refreshView();
+    }
+
+    // 添加清除日期过滤的方法
+    private clearDateFilter() {
+        this.currentFilter = { type: 'none' };
+        // 清除所有日期的选中状态
+        if (this.calendarContainer) {
+            this.calendarContainer.querySelectorAll('.calendar-day').forEach(day => {
+                day.removeClass('selected');
+            });
+        }
+        // 刷新视图以显示所有笔记
+        this.refreshView();
+    }
+
+    private async createNoteCard(file: TFile, searchTerm: string = ''): Promise<HTMLElement> {
+        const card = document.createElement('div');
+        card.addClass('note-card');
+        card.setAttribute('data-path', file.path);
+        
+        // 创建卡片头部
+        const header = card.createDiv('note-card-header');
+        
+        // 添加修改时间
+        const lastModified = header.createDiv('note-date');
+        lastModified.setText(new Date(file.stat.mtime).toLocaleDateString());
+
+        // 修改文件夹路径的创建和样式
+        const folderPath = header.createDiv('note-folder');
+        const folder = file.parent ? (file.parent.path === '/' ? '根目录' : file.parent.path) : '根目录';
+        folderPath.setText(folder);
+        folderPath.setAttribute('title', `打开文件夹: ${folder}`);
+        
+        // 添加点击事件
+        folderPath.addEventListener('click', async (e) => {
+            e.stopPropagation();
+            // 打开文件夹
+            const fileExplorer = this.app.workspace.getLeavesOfType('file-explorer')[0];
+            if (fileExplorer) {
+                const fileExplorerView = fileExplorer.view as any;
+                if (fileExplorerView.expandFolder) {
+                    await this.revealFolderInExplorer(folder);
+                    // 聚焦到文件浏览器
+                    fileExplorer.setEphemeralState({ focus: true });
+                }
+            }
+        });
+
+        // 添加打开按钮
+        const openButton = header.createDiv('note-open-button');
+        openButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>`;
+        openButton.setAttribute('title', '在新标签页中打开');
+        openButton.style.opacity = '0';  // 默认隐藏
+
+        // 创建卡片内容容器
+        const cardContent = card.createDiv('note-card-content');
+
+        // 处理标题（移到内容区域顶部）
+        const title = cardContent.createDiv('note-title');
+        let displayTitle = file.basename;
+        // 处理日期开头的标题
+        const timePattern = /^\d{4}[-./]\d{2}[-./]\d{2}/;
+        if (timePattern.test(displayTitle)) {
+            displayTitle = displayTitle.replace(timePattern, '').trim();
+        }
+        title.setText(displayTitle);
+
+        try {
+            // 读取笔记内容
+            const content = await this.app.vault.read(file);
+            
+            // 创建笔记内容容器
+            const noteContent = cardContent.createDiv('note-content');
+            
+            // 在渲染内容之前，添加高亮处理
+            if (searchTerm) {
+                const highlightedContent = this.highlightSearchTerm(content, searchTerm);
+                noteContent.innerHTML = highlightedContent;
+            }
+
+            // 渲染 Markdown 内容
+            await MarkdownRenderer.renderMarkdown(
+                content,
+                noteContent,
+                file.path,
+                this
+            );
+
+            // 鼠标悬停事件
+            card.addEventListener('mouseenter', async () => {
+                openButton.style.opacity = '1';  // 显示打开按钮
+                title.style.opacity = '0';
+                noteContent.style.display = 'block';
+                
+                // 在预览栏中显示完整内容
+                try {
+                    this.previewContainer.empty();
+                    await MarkdownRenderer.renderMarkdown(
+                        content,
+                        this.previewContainer,
+                        file.path,
+                        this
+                    );
+                } catch (error) {
+                    console.error('预览加载失败:', error);
+                }
+            });
+
+            card.addEventListener('mouseleave', () => {
+                openButton.style.opacity = '0';  // 隐藏打开按钮
+                title.style.opacity = '1';
+                noteContent.style.display = 'none';
+            });
+
+            // 修改事件监听
+            openButton.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                const leaf = this.app.workspace.getLeaf('tab');
+                await leaf.openFile(file);
+            });
+
+            // 单击选择
+            card.addEventListener('click', (e) => {
+                this.handleCardSelection(file.path, e);
+            });
+
+            // 双击打开
+            card.addEventListener('dblclick', async () => {
+                const leaf = this.app.workspace.getLeaf('tab');
+                await leaf.openFile(file);
+            });
+
+            // 右键菜单
+            card.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                this.showContextMenu(e, this.getSelectedFiles());
+            });
+
+        } catch (error) {
+            console.error('笔记加载失败:', error);
+        }
+
+        // 添加卡片悬停事件
+        card.addEventListener('mouseenter', async () => {
+            openButton.style.opacity = '1';  // 显示打开按钮
+            // ... 其他悬停事件代码 ...
+        });
+
+        card.addEventListener('mouseleave', () => {
+            openButton.style.opacity = '0';  // 隐藏打开按钮
+            // ... 其他离开事件代码 ...
+        });
+
+        return card;
+    }
+
+    private highlightSearchTerm(content: string, searchTerm: string): string {
+        if (!searchTerm) return content;
+        
+        const regex = new RegExp(searchTerm, 'gi');
+        return content.replace(regex, match => `<span class="search-highlight">${match}</span>`);
+    }
 }
 
 // 添加文件选择模态框
@@ -1013,7 +1395,7 @@ class EnhancedFileSelectionModal extends Modal {
         // 最近使用的文件夹
         if (this.recentFolders.length > 0) {
             const recentSection = contentEl.createDiv('recent-folders-section');
-            recentSection.createEl('h4', { text: '最近使用' });
+            recentSection.createEl('h4', { text: '最使用' });
             
             const recentList = recentSection.createDiv('recent-folders-list');
             this.recentFolders.forEach(folder => {
