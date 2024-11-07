@@ -131,7 +131,7 @@ export class CardView extends ItemView {
      */
     private createViewSwitcher(container: HTMLElement) {
         const views = [
-            { id: 'card', icon: 'grid-2x2', text: '卡片视图' },
+            { id: 'card', icon: 'grid', text: '卡片视图' },
             { id: 'list', icon: 'list', text: '列表视图' },
             { id: 'timeline', icon: 'clock', text: '时间轴视图' }
         ];
@@ -139,14 +139,23 @@ export class CardView extends ItemView {
         views.forEach(view => {
             const btn = container.createEl('button', {
                 cls: `view-switch-btn ${view.id === this.currentView ? 'active' : ''}`,
-                attr: { 'aria-label': view.text }
             });
             
-            // 添加图标
-            btn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide ${view.icon}"></svg>`;
+            // 直接使用 SVG 图标
+            const iconHtml = {
+                'grid': '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>',
+                'list': '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>',
+                'clock': '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>'
+            };
+            
+            // 创建图标容器
+            const iconSpan = btn.createSpan({ cls: 'view-switch-icon' });
+            iconSpan.innerHTML = iconHtml[view.icon];
+            
+            // 添加文字
+            btn.createSpan({ text: view.text, cls: 'view-switch-text' });
             
             btn.addEventListener('click', () => {
-                // 移除其他按钮的活动状态
                 container.querySelectorAll('.view-switch-btn').forEach(b => b.removeClass('active'));
                 btn.addClass('active');
                 this.switchView(view.id as 'card' | 'list' | 'timeline');
@@ -182,9 +191,9 @@ export class CardView extends ItemView {
         const lastModified = card.createDiv('note-date');
         lastModified.setText(new Date(file.stat.mtime).toLocaleDateString());
 
-        // 添加文件夹路径
+        // 添加文件夹路径（添加空值检查）
         const folderPath = card.createDiv('note-folder');
-        const folder = file.parent.path === '/' ? '根目录' : file.parent.path;
+        const folder = file.parent ? (file.parent.path === '/' ? '根目录' : file.parent.path) : '根目录';
         folderPath.setText(folder);
         folderPath.setAttribute('title', folder);
         
@@ -192,7 +201,6 @@ export class CardView extends ItemView {
         folderPath.addEventListener('click', (e) => {
             e.stopPropagation();
             this.highlightFolder(folder);
-            // 在文件浏览器中定位并展开文件夹
             this.revealFolderInExplorer(folder);
         });
 
@@ -240,7 +248,13 @@ export class CardView extends ItemView {
     private switchView(view: 'card' | 'list' | 'timeline') {
         this.currentView = view;
         this.container.setAttribute('data-view', view);
-        this.loadNotes();
+        this.container.empty();
+        
+        if (view === 'timeline') {
+            this.createTimelineView();
+        } else {
+            this.loadNotes();
+        }
     }
 
     /**
@@ -269,11 +283,21 @@ export class CardView extends ItemView {
         });
     }
 
+    private togglePreview() {
+        this.isPreviewCollapsed = !this.isPreviewCollapsed;
+        if (this.isPreviewCollapsed) {
+            this.previewContainer.addClass('collapsed');
+        } else {
+            this.previewContainer.removeClass('collapsed');
+        }
+    }
+
     private setupResizer() {
         let startX: number;
         let startWidth: number;
 
         const startResize = (e: MouseEvent) => {
+            e.preventDefault();
             startX = e.pageX;
             startWidth = parseInt(getComputedStyle(this.previewContainer).width, 10);
             document.addEventListener('mousemove', resize);
@@ -282,15 +306,12 @@ export class CardView extends ItemView {
 
         const resize = (e: MouseEvent) => {
             const width = startWidth - (e.pageX - startX);
-            if (width >= 50) {
+            if (width >= 50 && width <= 800) {
                 this.previewContainer.style.width = `${width}px`;
                 if (this.isPreviewCollapsed) {
                     this.isPreviewCollapsed = false;
                     this.previewContainer.removeClass('collapsed');
                 }
-            } else if (!this.isPreviewCollapsed) {
-                this.isPreviewCollapsed = true;
-                this.previewContainer.addClass('collapsed');
             }
         };
 
@@ -302,16 +323,14 @@ export class CardView extends ItemView {
         this.previewResizer.addEventListener('mousedown', startResize);
     }
 
-    private togglePreview() {
-        this.isPreviewCollapsed = !this.isPreviewCollapsed;
-        this.previewContainer.toggleClass('collapsed');
-    }
-
     private highlightFolder(folder: string) {
         this.currentFolder = this.currentFolder === folder ? null : folder;
         this.container.querySelectorAll('.note-card').forEach(card => {
-            const cardFolder = card.querySelector('.note-folder').textContent;
-            card.toggleClass('folder-highlight', cardFolder === folder);
+            const folderElement = card.querySelector('.note-folder');
+            const cardFolder = folderElement ? folderElement.textContent : null;
+            if (cardFolder) {
+                card.toggleClass('folder-highlight', cardFolder === folder);
+            }
         });
     }
 
@@ -370,5 +389,77 @@ export class CardView extends ItemView {
         } catch (error) {
             console.error('创建笔记失败:', error);
         }
+    }
+
+    private createTimelineView() {
+        const timelineContainer = this.container.createDiv('timeline-container');
+        
+        // 获取所有笔记并按日期分组
+        const files = this.app.vault.getMarkdownFiles();
+        const notesByDate = new Map<string, TFile[]>();
+        
+        files.forEach(file => {
+            const date = new Date(file.stat.mtime).toLocaleDateString();
+            if (!notesByDate.has(date)) {
+                notesByDate.set(date, []);
+            }
+            const notes = notesByDate.get(date);
+            if (notes) {
+                notes.push(file);
+            }
+        });
+
+        // 按日期排序
+        const sortedDates = Array.from(notesByDate.keys()).sort((a, b) => 
+            new Date(b).getTime() - new Date(a).getTime()
+        );
+
+        // 创建时间轴
+        sortedDates.forEach(date => {
+            const dateGroup = timelineContainer.createDiv('timeline-date-group');
+            
+            // 创建日期节点
+            const dateNode = dateGroup.createDiv('timeline-date-node');
+            dateNode.createDiv('timeline-node-circle');
+            dateNode.createDiv('timeline-date-label').setText(date);
+
+            // 创建笔记列表
+            const notesList = dateGroup.createDiv('timeline-notes-list');
+            const notes = notesByDate.get(date);
+            if (notes) {
+                notes.forEach(file => {
+                    const noteItem = notesList.createDiv('timeline-note-item');
+                    
+                    // 创建标记线
+                    noteItem.createDiv('timeline-note-marker');
+                    
+                    // 创建笔记内容
+                    const noteContent = noteItem.createDiv('timeline-note-content');
+                    noteContent.createDiv('timeline-note-title').setText(file.basename);
+                    
+                    // 添加点击事件
+                    noteItem.addEventListener('click', async () => {
+                        const leaf = this.app.workspace.getLeaf('tab');
+                        await leaf.openFile(file);
+                    });
+
+                    // 添加预览功能
+                    noteItem.addEventListener('mouseenter', async () => {
+                        try {
+                            this.previewContainer.empty();
+                            const content = await this.app.vault.read(file);
+                            await MarkdownRenderer.renderMarkdown(
+                                content,
+                                this.previewContainer,
+                                file.path,
+                                this
+                            );
+                        } catch (error) {
+                            console.error('预览加载失败:', error);
+                        }
+                    });
+                });
+            }
+        });
     }
 } 

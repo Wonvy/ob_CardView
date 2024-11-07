@@ -332,4 +332,99 @@
 
 .note-date, .note-folder {
     margin-bottom: 0.2rem;
+}
+
+/* 时间轴视图样式 */
+.timeline-container {
+    padding: 2rem;
+    position: relative;
+}
+
+.timeline-container::before {
+    content: '';
+    position: absolute;
+    left: 120px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background-color: var(--background-modifier-border);
+}
+
+.timeline-date-group {
+    position: relative;
+    margin-bottom: 2rem;
+}
+
+.timeline-date-node {
+    position: absolute;
+    left: 112px;
+    display: flex;
+    align-items: center;
+}
+
+.timeline-node-circle {
+    width: 16px;
+    height: 16px;
+    border: 2px solid var(--interactive-accent);
+    border-radius: 50%;
+    background-color: var(--background-primary);
+}
+
+.timeline-date-label {
+    margin-left: 2rem;
+    font-weight: bold;
+    color: var(--text-muted);
+}
+
+.timeline-notes-list {
+    margin-left: 160px;
+    margin-top: 2rem;
+}
+
+.timeline-note-item {
+    position: relative;
+    padding: 0.5rem 1rem;
+    margin-bottom: 1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+}
+
+.timeline-note-marker {
+    position: absolute;
+    left: -40px;
+    width: 20px;
+    height: 2px;
+    background-color: var(--background-modifier-border);
+}
+
+.timeline-note-content {
+    background-color: var(--background-secondary);
+    border-radius: 4px;
+    padding: 0.5rem 1rem;
+    flex: 1;
+    transition: all 0.2s ease;
+}
+
+.timeline-note-item:hover .timeline-note-content {
+    transform: translateX(4px);
+    background-color: var(--background-modifier-hover);
+}
+
+/* 视图切换按钮样式更新 */
+.view-switch-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 6px 12px;
+}
+
+.view-switch-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.view-switch-text {
+    font-size: 0.9em;
 } 
