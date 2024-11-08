@@ -313,6 +313,11 @@ var CardView = class extends import_obsidian.ItemView {
         e.stopPropagation();
         await this.openInAppropriateLeaf(file);
         card.addClass("selected");
+        this.container.querySelectorAll(".note-card").forEach((cardElement) => {
+          if (cardElement !== card) {
+            cardElement.removeClass("selected");
+          }
+        });
       });
       card.addEventListener("click", (e) => {
         this.handleCardSelection(file.path, e);
@@ -981,6 +986,10 @@ var EnhancedFileSelectionModal = class extends import_obsidian.Modal {
         cls: "folder-icon"
       });
       icon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>`;
+      const nameSpan = item.createSpan({
+        cls: "folder-name"
+      });
+      nameSpan.textContent = folder.name;
       item.addEventListener("click", () => this.selectFolder(item, folder.path));
     });
   }

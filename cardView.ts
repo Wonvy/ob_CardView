@@ -397,6 +397,12 @@ export class CardView extends ItemView {
                 e.stopPropagation();
                 await this.openInAppropriateLeaf(file);
                 card.addClass('selected'); // 给该卡片添加selected类
+                // 移除其余卡片的selected类
+                this.container.querySelectorAll('.note-card').forEach(cardElement => {
+                    if (cardElement !== card) {
+                        cardElement.removeClass('selected');
+                    }
+                });
             });
 
             // 单击选择
@@ -1306,7 +1312,6 @@ class EnhancedFileSelectionModal extends Modal {
 
         return folders.sort((a, b) => a.path.localeCompare(b.path));
     }
-
     private createFolderTree(container: HTMLElement, folders: FolderItem[]) {
         folders.forEach(folder => {
             const item = container.createDiv({
@@ -1316,11 +1321,15 @@ class EnhancedFileSelectionModal extends Modal {
             // 添加缩进
             item.style.paddingLeft = `${folder.level * 20 + 10}px`;
 
-            // 添加文件夹图标
+            // 添加文件夹图标和名称
             const icon = item.createSpan({
                 cls: 'folder-icon'
             });
             icon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>`;
+            const nameSpan = item.createSpan({
+                cls: 'folder-name'
+            });
+            nameSpan.textContent = folder.name;
 
             item.addEventListener('click', () => this.selectFolder(item, folder.path));
         });
