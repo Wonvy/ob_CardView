@@ -99,6 +99,7 @@ var CardView = class extends import_obsidian.ItemView {
     const viewSwitcher = leftTools.createDiv("view-switcher");
     this.createViewSwitcher(viewSwitcher);
     const searchContainer = toolbar.createDiv("search-container");
+    this.createCommandButton(searchContainer);
     this.searchInput = searchContainer.createEl("input", {
       type: "text",
       placeholder: "\u641C\u7D22\u7B14\u8BB0...",
@@ -928,6 +929,75 @@ var CardView = class extends import_obsidian.ItemView {
       this.currentSearchTerm = this.searchInput.value.trim();
       this.refreshView();
     }, 200));
+  }
+  // 修改创建命令按钮的方法
+  createCommandButton(toolbar) {
+    const commandContainer = toolbar.createDiv("command-container");
+    const commandBtn = commandContainer.createEl("button", {
+      cls: "command-button"
+    });
+    commandBtn.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
+        `;
+    commandBtn.setAttribute("title", "\u547D\u4EE4\u83DC\u5355");
+    const menu = commandContainer.createDiv("command-menu");
+    menu.style.display = "none";
+    const deleteEmptyNotesItem = menu.createDiv("command-menu-item");
+    deleteEmptyNotesItem.setText("\u5220\u9664\u6240\u9009\u7A7A\u767D\u7B14\u8BB0");
+    deleteEmptyNotesItem.addEventListener("click", () => {
+      menu.style.display = "none";
+      this.deleteEmptyNotes();
+    });
+    const batchRenameItem = menu.createDiv("command-menu-item");
+    batchRenameItem.setText("\u6279\u91CF\u91CD\u547D\u540D");
+    batchRenameItem.addEventListener("click", () => {
+      menu.style.display = "none";
+      console.log("\u6279\u91CF\u91CD\u547D\u540D\u529F\u80FD\u5F85\u5B9E\u73B0");
+    });
+    let isMenuVisible = false;
+    commandBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      isMenuVisible = !isMenuVisible;
+      menu.style.display = isMenuVisible ? "block" : "none";
+    });
+    document.addEventListener("click", (e) => {
+      if (!commandContainer.contains(e.target)) {
+        isMenuVisible = false;
+        menu.style.display = "none";
+      }
+    });
+  }
+  // 添加删除空白笔记的方法
+  async deleteEmptyNotes() {
+    const selectedFiles = this.getSelectedFiles();
+    if (selectedFiles.length === 0) {
+      new import_obsidian.Notice("\u8BF7\u5148\u9009\u62E9\u8981\u68C0\u67E5\u7684\u7B14\u8BB0");
+      return;
+    }
+    const emptyNotes = [];
+    for (const file of selectedFiles) {
+      const content = await this.app.vault.read(file);
+      if (!content.trim()) {
+        emptyNotes.push(file);
+      }
+    }
+    if (emptyNotes.length === 0) {
+      new import_obsidian.Notice("\u6240\u9009\u7B14\u8BB0\u4E2D\u6CA1\u6709\u7A7A\u767D\u7B14\u8BB0");
+      return;
+    }
+    const confirmModal = new ConfirmModal(
+      this.app,
+      "\u786E\u8BA4\u5220\u9664\u7A7A\u767D\u7B14\u8BB0",
+      `\u662F\u5426\u5220\u9664\u4EE5\u4E0B ${emptyNotes.length} \u4E2A\u7A7A\u767D\u7B14\u8BB0\uFF1F
+${emptyNotes.map((file) => file.basename).join("\n")}`
+    );
+    if (await confirmModal.show()) {
+      for (const file of emptyNotes) {
+        await this.app.vault.trash(file, true);
+      }
+      this.refreshView();
+      new import_obsidian.Notice(`\u5DF2\u5220\u9664 ${emptyNotes.length} \u4E2A\u7A7A\u767D\u7B14\u8BB0`);
+    }
   }
 };
 var ConfirmModal = class extends import_obsidian.Modal {

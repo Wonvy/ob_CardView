@@ -7,6 +7,7 @@ import {
     Modal,
     TFolder,
     App,
+    Notice,
 } from 'obsidian';
 import CardViewPlugin from './main';
 
@@ -99,6 +100,10 @@ export class CardView extends ItemView {
 
         // 右侧搜索框
         const searchContainer = toolbar.createDiv('search-container');
+        
+        // 添加命令按钮（在搜索框之前）
+        this.createCommandButton(searchContainer);
+        
         this.searchInput = searchContainer.createEl('input', {
             type: 'text',
             placeholder: '搜索笔记...',
@@ -1168,7 +1173,7 @@ export class CardView extends ItemView {
                 day.removeClass('selected');
             });
         }
-        // 刷新视图以显示所有笔记
+        // 刷新视图显示所有笔记
         this.refreshView();
     }
 
@@ -1247,6 +1252,99 @@ export class CardView extends ItemView {
             this.currentSearchTerm = this.searchInput.value.trim();
             this.refreshView();
         }, 200));
+    }
+
+    // 修改创建命令按钮的方法
+    private createCommandButton(toolbar: HTMLElement) {
+        const commandContainer = toolbar.createDiv('command-container');
+        
+        // 创建命令按钮
+        const commandBtn = commandContainer.createEl('button', {
+            cls: 'command-button',
+        });
+        commandBtn.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
+        `;
+        commandBtn.setAttribute('title', '命令菜单');
+
+        // 创建菜单容器
+        const menu = commandContainer.createDiv('command-menu');
+        menu.style.display = 'none';
+
+        // 添加菜单项
+        const deleteEmptyNotesItem = menu.createDiv('command-menu-item');
+        deleteEmptyNotesItem.setText('删除所选空白笔记');
+        deleteEmptyNotesItem.addEventListener('click', () => {
+            menu.style.display = 'none';  // 点击后隐藏菜单
+            this.deleteEmptyNotes();
+        });
+
+        const batchRenameItem = menu.createDiv('command-menu-item');
+        batchRenameItem.setText('批量重命名');
+        batchRenameItem.addEventListener('click', () => {
+            menu.style.display = 'none';  // 点击后隐藏菜单
+            console.log('批量重命名功能待实现');
+        });
+
+        // 使用点击事件替代鼠标悬停事件
+        let isMenuVisible = false;
+        
+        // 点击按钮时切换菜单显示状态
+        commandBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            isMenuVisible = !isMenuVisible;
+            menu.style.display = isMenuVisible ? 'block' : 'none';
+        });
+
+        // 点击其他地方时隐藏菜单
+        document.addEventListener('click', (e) => {
+            if (!commandContainer.contains(e.target as Node)) {
+                isMenuVisible = false;
+                menu.style.display = 'none';
+            }
+        });
+    }
+
+    // 添加删除空白笔记的方法
+    private async deleteEmptyNotes() {
+        const selectedFiles = this.getSelectedFiles();
+        if (selectedFiles.length === 0) {
+            // 如果没有选中的笔记，提示用户
+            new Notice('请先选择要检查的笔记');
+            return;
+        }
+
+        // 检查空白笔记
+        const emptyNotes: TFile[] = [];
+        for (const file of selectedFiles) {
+            const content = await this.app.vault.read(file);
+            // 移除所有空白字符后检查是否为空
+            if (!content.trim()) {
+                emptyNotes.push(file);
+            }
+        }
+
+        if (emptyNotes.length === 0) {
+            new Notice('所选笔记中没有空白笔记');
+            return;
+        }
+
+        // 显示确认对话框
+        const confirmModal = new ConfirmModal(
+            this.app,
+            "确认删除空白笔记",
+            `是否删除以下 ${emptyNotes.length} 个空白笔记？\n${emptyNotes.map(file => file.basename).join('\n')}`
+        );
+
+        if (await confirmModal.show()) {
+            // 执行删除
+            for (const file of emptyNotes) {
+                await this.app.vault.trash(file, true);
+            }
+            // 刷新视图
+            this.refreshView();
+            new Notice(`已删除 ${emptyNotes.length} 个空白笔记`);
+        }
     }
 
 }
