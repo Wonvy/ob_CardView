@@ -671,7 +671,7 @@ var CardView = class extends import_obsidian.ItemView {
         });
       });
       menu.addItem((item) => {
-        item.setTitle(`\u79FB\u52A8 ${files.length} \u4E2A\u6587\uFFFD\uFFFD\uFFFD`).setIcon("move").onClick(() => {
+        item.setTitle(`\u79FB\u52A8 ${files.length} \u4E2A\u6587`).setIcon("move").onClick(() => {
           const modal = new EnhancedFileSelectionModal(
             this.app,
             files,
@@ -1036,26 +1036,36 @@ ${emptyNotes.map((file) => file.basename).join("\n")}`
       new import_obsidian.Notice(`\u5DF2\u5220\u9664 ${emptyNotes.length} \u4E2A\u7A7A\u767D\u7B14\u8BB0`);
     }
   }
-  // 修改 createMonthView 方法中的头部创建部分
+  // 修改 createMonthView 方法中的年份显示部分
   createMonthView() {
     if (!this.container.querySelector(".month-view")) {
       const monthContainer = this.container.createDiv("month-view");
       const header = monthContainer.createDiv("month-header");
-      const navGroup = header.createDiv("month-nav-group");
-      const prevBtn = navGroup.createEl("button", { cls: "month-nav-btn" });
-      prevBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>';
-      const monthTitle = navGroup.createDiv("month-title");
-      monthTitle.setText(this.formatMonthTitle(this.currentDate));
-      const nextBtn = navGroup.createEl("button", { cls: "month-nav-btn" });
-      nextBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>';
+      const yearGroup = header.createDiv("year-group");
+      const prevYearBtn = yearGroup.createEl("button", { cls: "year-nav-btn" });
+      prevYearBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>';
+      const yearDisplay = yearGroup.createDiv("year-display");
+      yearDisplay.setText(this.currentDate.getFullYear().toString());
+      const nextYearBtn = yearGroup.createEl("button", { cls: "year-nav-btn" });
+      nextYearBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>';
+      prevYearBtn.addEventListener("click", () => this.navigateYear(-1));
+      nextYearBtn.addEventListener("click", () => this.navigateYear(1));
+      const monthSelector = header.createDiv("month-selector");
+      for (let i = 1; i <= 12; i++) {
+        const monthBtn = monthSelector.createDiv({
+          cls: `month-btn ${i === this.currentDate.getMonth() + 1 ? "active" : ""}`,
+          text: i.toString()
+        });
+        monthBtn.addEventListener("click", () => {
+          this.selectMonth(i - 1);
+        });
+      }
       const todayBtn = header.createEl("button", {
         cls: "today-btn",
         text: "\u4ECA\u5929"
       });
-      prevBtn.addEventListener("click", () => this.navigateMonth(-1));
-      nextBtn.addEventListener("click", () => this.navigateMonth(1));
       todayBtn.addEventListener("click", () => this.goToToday());
-      header.addEventListener("wheel", (e) => {
+      monthSelector.addEventListener("wheel", (e) => {
         e.preventDefault();
         this.navigateMonth(e.deltaY > 0 ? 1 : -1);
       });
@@ -1068,23 +1078,39 @@ ${emptyNotes.map((file) => file.basename).join("\n")}`
     }
     this.updateMonthView();
   }
-  // 添加更新月视图的方法
+  // 修改月份选择方法
+  selectMonth(month) {
+    this.currentDate = new Date(this.currentDate.getFullYear(), month);
+    this.updateMonthView();
+  }
+  // 修改更新月视图的方法
   updateMonthView() {
     const monthView = this.container.querySelector(".month-view");
     if (!monthView) return;
-    const monthTitle = monthView.querySelector(".month-title");
-    if (monthTitle) {
-      monthTitle.setText(this.formatMonthTitle(this.currentDate));
+    const yearDisplay = monthView.querySelector(".year-display");
+    if (yearDisplay) {
+      yearDisplay.setText(this.currentDate.getFullYear().toString());
     }
+    const monthBtns = monthView.querySelectorAll(".month-btn");
+    monthBtns.forEach((btn, index) => {
+      btn.toggleClass("active", index === this.currentDate.getMonth());
+    });
     const grid = monthView.querySelector(".month-grid");
     if (grid) {
       grid.empty();
       this.renderMonthGrid(grid);
     }
   }
-  // 添加月份导航方法
+  // 修改月份导航方法
   navigateMonth(delta) {
-    this.currentDate = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth() + delta);
+    const newDate = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth() + delta);
+    if (newDate.getFullYear() !== this.currentDate.getFullYear()) {
+      const yearDisplay = this.container.querySelector(".year-display");
+      if (yearDisplay) {
+        yearDisplay.setText(newDate.getFullYear().toString());
+      }
+    }
+    this.currentDate = newDate;
     this.updateMonthView();
   }
   // 添加跳转到今天的方法
@@ -1159,6 +1185,11 @@ ${emptyNotes.map((file) => file.basename).join("\n")}`
   // 添加格式化月份标题的方法
   formatMonthTitle(date) {
     return `${date.getFullYear()}\u5E74${date.getMonth() + 1}\u6708`;
+  }
+  // 添加年份导航方法
+  navigateYear(delta) {
+    this.currentDate = new Date(this.currentDate.getFullYear() + delta, this.currentDate.getMonth());
+    this.updateMonthView();
   }
 };
 var ConfirmModal = class extends import_obsidian.Modal {

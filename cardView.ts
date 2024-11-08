@@ -888,7 +888,7 @@ async onOpen() {
 
             menu.addItem((item) => {
                 item
-                    .setTitle(`移动 ${files.length} 个文���`)
+                    .setTitle(`移动 ${files.length} 个文`)
                     .setIcon("move")
                     .onClick(() => {
                         const modal = new EnhancedFileSelectionModal(
@@ -926,7 +926,7 @@ async onOpen() {
                                     const card = this.container.querySelector(`[data-path="${file.path}"]`);
                                     if (card instanceof HTMLElement) {
                                         card.addClass('removing');
-                                        // ���待动画完成后移除DOM元素
+                                        // 待动画完成后移除DOM元素
                                         setTimeout(() => {
                                             card.remove();
                                             this.selectedNotes.delete(file.path);
@@ -1003,7 +1003,7 @@ async onOpen() {
             this.filterNotesByMonth(this.currentDate);
         } else {
             this.hideCalendar();
-            // 清除日期过滤
+            // 清除日期��滤
             this.clearDateFilter();
         }
         
@@ -1142,7 +1142,7 @@ async onOpen() {
         // 获取当月天数
         const daysInMonth = new Date(year, month + 1, 0).getDate();
         
-        // 获取每天的笔记数量
+        // 取每天的笔记数量
         const notesCount = this.getNotesCountByDate(year, month);
 
         // 填充日期格子
@@ -1399,7 +1399,7 @@ async onOpen() {
         }
     }
 
-    // 修改 createMonthView 方法中的头部创建部分
+    // 修改 createMonthView 方法中的年份显示部分
     private createMonthView() {
         if (!this.container.querySelector('.month-view')) {
             const monthContainer = this.container.createDiv('month-view');
@@ -1407,32 +1407,50 @@ async onOpen() {
             // 创建月视图头部
             const header = monthContainer.createDiv('month-header');
             
-            // 创建左侧导航区域
-            const navGroup = header.createDiv('month-nav-group');
+            // 创建年份显示区域
+            const yearGroup = header.createDiv('year-group');
             
-            // 添加月份导航按钮
-            const prevBtn = navGroup.createEl('button', { cls: 'month-nav-btn' });
-            prevBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>';
+            // 添加上一年按钮
+            const prevYearBtn = yearGroup.createEl('button', { cls: 'year-nav-btn' });
+            prevYearBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>';
             
-            const monthTitle = navGroup.createDiv('month-title');
-            monthTitle.setText(this.formatMonthTitle(this.currentDate));
+            // 创建年份显示
+            const yearDisplay = yearGroup.createDiv('year-display');
+            yearDisplay.setText(this.currentDate.getFullYear().toString());
             
-            const nextBtn = navGroup.createEl('button', { cls: 'month-nav-btn' });
-            nextBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>';
+            // 添加下一年按钮
+            const nextYearBtn = yearGroup.createEl('button', { cls: 'year-nav-btn' });
+            nextYearBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>';
+            
+            // 添加年份切换事件
+            prevYearBtn.addEventListener('click', () => this.navigateYear(-1));
+            nextYearBtn.addEventListener('click', () => this.navigateYear(1));
+
+            // 创建月份选择器
+            const monthSelector = header.createDiv('month-selector');
+            
+            // 创建12个月份按钮
+            for (let i = 1; i <= 12; i++) {
+                const monthBtn = monthSelector.createDiv({
+                    cls: `month-btn ${i === this.currentDate.getMonth() + 1 ? 'active' : ''}`,
+                    text: i.toString()
+                });
+                
+                // 添加点击事件
+                monthBtn.addEventListener('click', () => {
+                    this.selectMonth(i - 1);
+                });
+            }
             
             // 添加今天按钮
             const todayBtn = header.createEl('button', { 
                 cls: 'today-btn',
                 text: '今天'
             });
-            
-            // 添加导航按钮事件
-            prevBtn.addEventListener('click', () => this.navigateMonth(-1));
-            nextBtn.addEventListener('click', () => this.navigateMonth(1));
             todayBtn.addEventListener('click', () => this.goToToday());
             
             // 添加滚轮事件
-            header.addEventListener('wheel', (e) => {
+            monthSelector.addEventListener('wheel', (e) => {
                 e.preventDefault();
                 this.navigateMonth(e.deltaY > 0 ? 1 : -1);
             });
@@ -1448,20 +1466,31 @@ async onOpen() {
             monthContainer.createDiv('month-grid');
         }
         
-        // 更新月视图内容
         this.updateMonthView();
     }
 
-    // 添加更新月视图的方法
+    // 修改月份选择方法
+    private selectMonth(month: number) {
+        this.currentDate = new Date(this.currentDate.getFullYear(), month);
+        this.updateMonthView();
+    }
+
+    // 修改更新月视图的方法
     private updateMonthView() {
         const monthView = this.container.querySelector('.month-view');
         if (!monthView) return;
 
-        // 更新标题
-        const monthTitle = monthView.querySelector('.month-title');
-        if (monthTitle) {
-            monthTitle.setText(this.formatMonthTitle(this.currentDate));
+        // 更新年份显示
+        const yearDisplay = monthView.querySelector('.year-display');
+        if (yearDisplay) {
+            yearDisplay.setText(this.currentDate.getFullYear().toString());
         }
+
+        // 更新月份选择器
+        const monthBtns = monthView.querySelectorAll('.month-btn');
+        monthBtns.forEach((btn, index) => {
+            btn.toggleClass('active', index === this.currentDate.getMonth());
+        });
 
         // 更新网格
         const grid = monthView.querySelector('.month-grid');
@@ -1471,9 +1500,19 @@ async onOpen() {
         }
     }
 
-    // 添加月份导航方法
+    // 修改月份导航方法
     private navigateMonth(delta: number) {
-        this.currentDate = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth() + delta);
+        const newDate = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth() + delta);
+        
+        // 如果年份变化，需要更新年份显示
+        if (newDate.getFullYear() !== this.currentDate.getFullYear()) {
+            const yearDisplay = this.container.querySelector('.year-display');
+            if (yearDisplay) {
+                yearDisplay.setText(newDate.getFullYear().toString());
+            }
+        }
+        
+        this.currentDate = newDate;
         this.updateMonthView();
     }
 
@@ -1574,6 +1613,12 @@ async onOpen() {
     // 添加格式化月份标题的方法
     private formatMonthTitle(date: Date): string {
         return `${date.getFullYear()}年${date.getMonth() + 1}月`;
+    }
+
+    // 添加年份导航方法
+    private navigateYear(delta: number) {
+        this.currentDate = new Date(this.currentDate.getFullYear() + delta, this.currentDate.getMonth());
+        this.updateMonthView();
     }
 
 }
