@@ -792,7 +792,7 @@ async onOpen() {
         this.refreshView();
     }
 
-    // 添加清除标签选择方法
+    // 添加清除标签选择法
     private clearTagSelection() {
         this.selectedTags.clear();
         this.tagContainer.querySelectorAll('.tag-btn').forEach(btn => {
@@ -800,7 +800,7 @@ async onOpen() {
         });
     }
 
-    // 处理卡片选择
+    // 处理卡片择
     private handleCardSelection(path: string, event: MouseEvent) {
         const card = this.container.querySelector(`[data-path="${path}"]`);
         if (!card) {
@@ -932,7 +932,7 @@ async onOpen() {
                                         }, 300);
                                     }
                                 });
-                                // 显示���除成功提示
+                                // 显示除成功提示
                                 console.error(`已删除 ${files.length} 个文件`);
                             } catch (error) {
                                 console.error('删除文件失败:', error);
@@ -1540,7 +1540,7 @@ async onOpen() {
             grid.createDiv('month-day empty');
         }
         
-        // 填充日期格子
+        // 填充日期���子
         for (let day = 1; day <= lastDay.getDate(); day++) {
             const dateCell = grid.createDiv('month-day');
             const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
@@ -1620,96 +1620,161 @@ async onOpen() {
         this.updateMonthView();
     }
 
-    // 添加创建列表视图的方法
+    // 修改 createListView 方法
     private async createListView() {
         // 获取所有笔记并按文件夹分组
         const files = this.app.vault.getMarkdownFiles();
         const notesByFolder = new Map<string, TFile[]>();
+        const folderStructure = new Map<string, Map<string, TFile[]>>();
         
-        // 按文件夹分组并按修改时间排序
+        // 构建文件夹结构和分组笔记
         files.forEach(file => {
-            const folderPath = file.parent ? file.parent.path : '/';
-            if (!notesByFolder.has(folderPath)) {
-                notesByFolder.set(folderPath, []);
+            const pathParts = file.path.split('/');
+            if (pathParts[0] === '' || !pathParts[0]) {
+                // 根目录下的笔记放入"未分类"
+                if (!folderStructure.has('未分类')) {
+                    folderStructure.set('未分类', new Map([['', []]]));
+                }
+                folderStructure.get('未分类')?.get('')?.push(file);
+            } else {
+                const rootFolder = pathParts[0];
+                const subFolder = pathParts.length > 2 ? pathParts[1] : '';
+                
+                // 初始化根文件夹结构
+                if (!folderStructure.has(rootFolder)) {
+                    folderStructure.set(rootFolder, new Map());
+                }
+                
+                // 将笔记添加到对应的文件夹中
+                if (subFolder) {
+                    if (!folderStructure.get(rootFolder)?.has(subFolder)) {
+                        folderStructure.get(rootFolder)?.set(subFolder, []);
+                    }
+                    folderStructure.get(rootFolder)?.get(subFolder)?.push(file);
+                } else {
+                    if (!folderStructure.get(rootFolder)?.has('')) {
+                        folderStructure.get(rootFolder)?.set('', []);
+                    }
+                    folderStructure.get(rootFolder)?.get('')?.push(file);
+                }
             }
-            notesByFolder.get(folderPath)?.push(file);
         });
         
-        // 对每个文件夹中的笔记按修改时间排序
-        notesByFolder.forEach(notes => {
-            notes.sort((a, b) => b.stat.mtime - a.stat.mtime);
-        });
-
-        // 创建文件夹组
-        for (const [folderPath, notes] of notesByFolder) {
+        // 创建文件夹视图
+        for (const [rootFolder, subFolders] of folderStructure) {
             const folderGroup = this.container.createDiv('folder-group');
             
-            // 创建文件夹标题
-            const folderTitle = folderGroup.createDiv('folder-title');
+            // 创建文件夹组标题
+            const folderHeader = folderGroup.createDiv('folder-header');
             
             // 添加文件夹图标
-            const folderIcon = folderTitle.createDiv('folder-icon');
+            const folderIcon = folderHeader.createDiv('folder-icon');
             folderIcon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>`;
             
             // 添加文件夹名称
-            const folderName = folderTitle.createDiv('folder-name');
-            folderName.setText(folderPath === '/' ? '根目录' : folderPath);
+            const folderName = folderHeader.createDiv('folder-name');
+            folderName.setText(rootFolder);
             
-            // 添加笔记数量
-            const noteCount = folderTitle.createDiv('note-count');
-            noteCount.setText(`${notes.length} 个笔记`);
+            // 创建内容区域
+            const contentArea = folderGroup.createDiv('folder-content-area');
             
-            // 创建笔记列表容器
-            const notesContainer = folderGroup.createDiv('notes-container');
+            // 创建左侧子文件夹导航
+            const sideNav = contentArea.createDiv('folder-sidebar');
             
-            // 添加笔记项
-            for (const note of notes) {
-                const noteItem = notesContainer.createDiv('note-item');
-                noteItem.setAttribute('data-path', note.path);
-                
-                // 添加笔记标题
-                const noteTitle = noteItem.createDiv('note-title');
-                noteTitle.setText(note.basename);
-                
-                // 添加修改日期
-                const noteDate = noteItem.createDiv('note-date');
-                noteDate.setText(new Date(note.stat.mtime).toLocaleString());
-                
-                // 添加点击事件
-                noteItem.addEventListener('click', async (e) => {
-                    // 处理笔记选择
-                    this.handleCardSelection(note.path, e);
-                    
-                    // 双击打开笔记
-                    if (e.detail === 2) {
-                        await this.openInAppropriateLeaf(note);
-                    }
-                });
-                
-                // 添加右键菜单
-                noteItem.addEventListener('contextmenu', (e) => {
-                    e.preventDefault();
-                    this.showContextMenu(e, this.getSelectedFiles());
-                });
-                
-                // 添加预览功能
-                noteItem.addEventListener('mouseenter', async () => {
-                    try {
-                        this.previewContainer.empty();
-                        const content = await this.app.vault.read(note);
-                        await MarkdownRenderer.render(
-                            this.app,
-                            content,
-                            this.previewContainer,
-                            note.path,
-                            this
-                        );
-                    } catch (error) {
-                        console.error('预览加载失败:', error);
-                    }
+            // 创建根文件夹的笔记选项
+            const rootNotes = subFolders.get('') || [];
+            if (rootNotes.length > 0) {
+                const rootTitle = sideNav.createDiv('folder-title root');
+                rootTitle.setText('当前目录');
+                rootTitle.addEventListener('click', () => {
+                    this.showFolderContent(notesArea, rootNotes);
+                    sideNav.querySelectorAll('.folder-title').forEach(el => el.removeClass('active'));
+                    rootTitle.addClass('active');
                 });
             }
+            
+            // 创建子文件夹列表
+            for (const [subFolder, notes] of subFolders) {
+                if (subFolder !== '') {
+                    const subTitle = sideNav.createDiv('folder-title sub');
+                    subTitle.setText(subFolder);
+                    subTitle.addEventListener('mouseenter', () => {
+                        this.showFolderContent(notesArea, notes);
+                        sideNav.querySelectorAll('.folder-title').forEach(el => el.removeClass('active'));
+                        subTitle.addClass('active');
+                    });
+                }
+            }
+            
+            // 创建右侧笔记区域
+            const notesArea = contentArea.createDiv('folder-content');
+            
+            // 默认显示根文件夹的笔记
+            this.showFolderContent(notesArea, rootNotes);
         }
+    }
+
+    private showFolderContent(container: HTMLElement, notes: TFile[]) {
+        container.empty();
+        
+        // 按修改时间排序
+        notes.sort((a, b) => b.stat.mtime - a.stat.mtime);
+        
+        // 创建笔记列表
+        const notesList = container.createDiv('notes-list');
+        
+        // 遍历所有笔记创建笔记项
+        notes.forEach(note => {
+            const noteItem = notesList.createDiv('note-item');
+            noteItem.setAttribute('data-path', note.path);
+            
+            // 添加笔记标题
+            const noteTitle = noteItem.createDiv('note-title');
+            noteTitle.setText(note.basename);
+            
+            // 添加修改日期
+            const noteDate = noteItem.createDiv('note-date');
+            noteDate.setText(new Date(note.stat.mtime).toLocaleString());
+            
+            // 添加事件监听
+            this.addNoteItemEvents(noteItem, note);
+        });
+    }
+
+    // 添加 addNoteItemEvents 方法
+    private addNoteItemEvents(noteItem: HTMLElement, note: TFile) {
+        // 单击选择
+        noteItem.addEventListener('click', (e) => {
+            this.handleCardSelection(note.path, e);
+        });
+
+        // 双击打开
+        noteItem.addEventListener('dblclick', async () => {
+            await this.openInAppropriateLeaf(note);
+        });
+
+        // 右键菜单
+        noteItem.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            this.showContextMenu(e, this.getSelectedFiles());
+        });
+
+        // 悬停预览
+        noteItem.addEventListener('mouseenter', async () => {
+            try {
+                this.previewContainer.empty();
+                const content = await this.app.vault.read(note);
+                await MarkdownRenderer.render(
+                    this.app,
+                    content,
+                    this.previewContainer,
+                    note.path,
+                    this
+                );
+            } catch (error) {
+                console.error('预览加载失败:', error);
+            }
+        });
     }
 
 }

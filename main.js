@@ -600,14 +600,14 @@ var CardView = class extends import_obsidian.ItemView {
     }
     this.refreshView();
   }
-  // 添加清除标签选择方法
+  // 添加清除标签选择法
   clearTagSelection() {
     this.selectedTags.clear();
     this.tagContainer.querySelectorAll(".tag-btn").forEach((btn) => {
       btn.removeClass("active");
     });
   }
-  // 处理卡片选择
+  // 处理卡片择
   handleCardSelection(path, event) {
     const card = this.container.querySelector(`[data-path="${path}"]`);
     if (!card) {
@@ -1193,65 +1193,113 @@ ${emptyNotes.map((file) => file.basename).join("\n")}`
     this.currentDate = new Date(this.currentDate.getFullYear() + delta, this.currentDate.getMonth());
     this.updateMonthView();
   }
-  // 添加创建列表视图的方法
+  // 修改 createListView 方法
   async createListView() {
     const files = this.app.vault.getMarkdownFiles();
     const notesByFolder = /* @__PURE__ */ new Map();
+    const folderStructure = /* @__PURE__ */ new Map();
     files.forEach((file) => {
-      var _a;
-      const folderPath = file.parent ? file.parent.path : "/";
-      if (!notesByFolder.has(folderPath)) {
-        notesByFolder.set(folderPath, []);
+      var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j;
+      const pathParts = file.path.split("/");
+      if (pathParts[0] === "" || !pathParts[0]) {
+        if (!folderStructure.has("\u672A\u5206\u7C7B")) {
+          folderStructure.set("\u672A\u5206\u7C7B", /* @__PURE__ */ new Map([["", []]]));
+        }
+        (_b = (_a = folderStructure.get("\u672A\u5206\u7C7B")) == null ? void 0 : _a.get("")) == null ? void 0 : _b.push(file);
+      } else {
+        const rootFolder = pathParts[0];
+        const subFolder = pathParts.length > 2 ? pathParts[1] : "";
+        if (!folderStructure.has(rootFolder)) {
+          folderStructure.set(rootFolder, /* @__PURE__ */ new Map());
+        }
+        if (subFolder) {
+          if (!((_c = folderStructure.get(rootFolder)) == null ? void 0 : _c.has(subFolder))) {
+            (_d = folderStructure.get(rootFolder)) == null ? void 0 : _d.set(subFolder, []);
+          }
+          (_f = (_e = folderStructure.get(rootFolder)) == null ? void 0 : _e.get(subFolder)) == null ? void 0 : _f.push(file);
+        } else {
+          if (!((_g = folderStructure.get(rootFolder)) == null ? void 0 : _g.has(""))) {
+            (_h = folderStructure.get(rootFolder)) == null ? void 0 : _h.set("", []);
+          }
+          (_j = (_i = folderStructure.get(rootFolder)) == null ? void 0 : _i.get("")) == null ? void 0 : _j.push(file);
+        }
       }
-      (_a = notesByFolder.get(folderPath)) == null ? void 0 : _a.push(file);
     });
-    notesByFolder.forEach((notes) => {
-      notes.sort((a, b) => b.stat.mtime - a.stat.mtime);
-    });
-    for (const [folderPath, notes] of notesByFolder) {
+    for (const [rootFolder, subFolders] of folderStructure) {
       const folderGroup = this.container.createDiv("folder-group");
-      const folderTitle = folderGroup.createDiv("folder-title");
-      const folderIcon = folderTitle.createDiv("folder-icon");
+      const folderHeader = folderGroup.createDiv("folder-header");
+      const folderIcon = folderHeader.createDiv("folder-icon");
       folderIcon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>`;
-      const folderName = folderTitle.createDiv("folder-name");
-      folderName.setText(folderPath === "/" ? "\u6839\u76EE\u5F55" : folderPath);
-      const noteCount = folderTitle.createDiv("note-count");
-      noteCount.setText(`${notes.length} \u4E2A\u7B14\u8BB0`);
-      const notesContainer = folderGroup.createDiv("notes-container");
-      for (const note of notes) {
-        const noteItem = notesContainer.createDiv("note-item");
-        noteItem.setAttribute("data-path", note.path);
-        const noteTitle = noteItem.createDiv("note-title");
-        noteTitle.setText(note.basename);
-        const noteDate = noteItem.createDiv("note-date");
-        noteDate.setText(new Date(note.stat.mtime).toLocaleString());
-        noteItem.addEventListener("click", async (e) => {
-          this.handleCardSelection(note.path, e);
-          if (e.detail === 2) {
-            await this.openInAppropriateLeaf(note);
-          }
-        });
-        noteItem.addEventListener("contextmenu", (e) => {
-          e.preventDefault();
-          this.showContextMenu(e, this.getSelectedFiles());
-        });
-        noteItem.addEventListener("mouseenter", async () => {
-          try {
-            this.previewContainer.empty();
-            const content = await this.app.vault.read(note);
-            await import_obsidian.MarkdownRenderer.render(
-              this.app,
-              content,
-              this.previewContainer,
-              note.path,
-              this
-            );
-          } catch (error) {
-            console.error("\u9884\u89C8\u52A0\u8F7D\u5931\u8D25:", error);
-          }
+      const folderName = folderHeader.createDiv("folder-name");
+      folderName.setText(rootFolder);
+      const contentArea = folderGroup.createDiv("folder-content-area");
+      const sideNav = contentArea.createDiv("folder-sidebar");
+      const rootNotes = subFolders.get("") || [];
+      if (rootNotes.length > 0) {
+        const rootTitle = sideNav.createDiv("folder-title root");
+        rootTitle.setText("\u5F53\u524D\u76EE\u5F55");
+        rootTitle.addEventListener("click", () => {
+          this.showFolderContent(notesArea, rootNotes);
+          sideNav.querySelectorAll(".folder-title").forEach((el) => el.removeClass("active"));
+          rootTitle.addClass("active");
         });
       }
+      for (const [subFolder, notes] of subFolders) {
+        if (subFolder !== "") {
+          const subTitle = sideNav.createDiv("folder-title sub");
+          subTitle.setText(subFolder);
+          subTitle.addEventListener("mouseenter", () => {
+            this.showFolderContent(notesArea, notes);
+            sideNav.querySelectorAll(".folder-title").forEach((el) => el.removeClass("active"));
+            subTitle.addClass("active");
+          });
+        }
+      }
+      const notesArea = contentArea.createDiv("folder-content");
+      this.showFolderContent(notesArea, rootNotes);
     }
+  }
+  showFolderContent(container, notes) {
+    container.empty();
+    notes.sort((a, b) => b.stat.mtime - a.stat.mtime);
+    const notesList = container.createDiv("notes-list");
+    notes.forEach((note) => {
+      const noteItem = notesList.createDiv("note-item");
+      noteItem.setAttribute("data-path", note.path);
+      const noteTitle = noteItem.createDiv("note-title");
+      noteTitle.setText(note.basename);
+      const noteDate = noteItem.createDiv("note-date");
+      noteDate.setText(new Date(note.stat.mtime).toLocaleString());
+      this.addNoteItemEvents(noteItem, note);
+    });
+  }
+  // 添加 addNoteItemEvents 方法
+  addNoteItemEvents(noteItem, note) {
+    noteItem.addEventListener("click", (e) => {
+      this.handleCardSelection(note.path, e);
+    });
+    noteItem.addEventListener("dblclick", async () => {
+      await this.openInAppropriateLeaf(note);
+    });
+    noteItem.addEventListener("contextmenu", (e) => {
+      e.preventDefault();
+      this.showContextMenu(e, this.getSelectedFiles());
+    });
+    noteItem.addEventListener("mouseenter", async () => {
+      try {
+        this.previewContainer.empty();
+        const content = await this.app.vault.read(note);
+        await import_obsidian.MarkdownRenderer.render(
+          this.app,
+          content,
+          this.previewContainer,
+          note.path,
+          this
+        );
+      } catch (error) {
+        console.error("\u9884\u89C8\u52A0\u8F7D\u5931\u8D25:", error);
+      }
+    });
   }
 };
 var ConfirmModal = class extends import_obsidian.Modal {

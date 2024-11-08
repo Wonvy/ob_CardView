@@ -592,7 +592,7 @@
         border: 2px solid var(--interactive-accent)
         border-radius: 50%
         background-color: var(--background-primary)
-        margin-right: -6px  // 调整圆点位置   
+        margin-right: -6px  // 调整位置   
 
       .timeline-date-label 
         font-weight: bold
@@ -696,7 +696,7 @@
     line-height: 1.3
 
 
-// 添加搜索高亮样式
+// 添搜索高亮样式
 .search-highlight 
     background-color: var(--text-highlight-bg)
     color: var(--text-normal)
@@ -901,116 +901,103 @@
     padding: 20px
     height: 100%
     overflow: auto
-    background: var(--background-primary)
     
     .card-container
       display: grid
       grid-template-columns: repeat(auto-fill, minmax(400px, 1fr))
       gap: 24px
-      padding: 0
-      height: auto
-
-      // 文件夹组容器
+      
+      // 文件夹组
       .folder-group
+        display: flex
+        flex-direction: column
         background: var(--background-secondary)
         border-radius: 12px
         border: 1px solid var(--background-modifier-border)
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05)
-        transition: all 0.2s ease
         overflow: hidden
-
-        &:hover
-          transform: translateY(-2px)
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1)
-
+        height: 400px
+        
         // 文件夹标题
-        .folder-title
-          background: var(--background-secondary-alt)
-          padding: 12px 16px
-          border-bottom: 1px solid var(--background-modifier-border)
+        .folder-header
           display: flex
           align-items: center
-          gap: 12px
-
+          gap: 8px
+          padding: 12px 16px
+          background: var(--background-secondary-alt)
+          border-bottom: 1px solid var(--background-modifier-border)
+          
           .folder-icon
             color: var(--text-muted)
             display: flex
             align-items: center
-            svg
-              width: 18px
-              height: 18px
-
+            
           .folder-name
-            flex: 1
             font-size: 1.1em
             font-weight: 600
             color: var(--text-normal)
-            overflow: hidden
-            text-overflow: ellipsis
-            white-space: nowrap
-
-          .note-count
-            background: var(--background-modifier-hover)
-            color: var(--text-muted)
-            padding: 2px 8px
-            border-radius: 12px
-            font-size: 0.85em
-
-        // 笔记列表容器  
-        .notes-container
-          max-height: 400px
-          overflow-y: auto
-          padding: 12px
-
-          &::-webkit-scrollbar
-            width: 8px
+        
+        // 内容区域
+        .folder-content-area
+          display: flex
+          flex: 1
+          overflow: hidden
           
-          &::-webkit-scrollbar-track
-            background: var(--background-primary)
-            border-radius: 4px
-          
-          &::-webkit-scrollbar-thumb
-            background-color: var(--background-modifier-border)
-            border-radius: 4px
-            border: 2px solid var(--background-primary)
-
-            &:hover
-              background-color: var(--interactive-accent)
-
-          // 笔记项
-          .note-item
-            padding: 10px 14px
-            border-radius: 8px
-            margin-bottom: 8px
-            cursor: pointer
-            display: flex
-            align-items: center
-            gap: 12px
-            color: var(--text-normal)
-            transition: all 0.2s ease
-            border: 1px solid transparent
-
-            &:hover
-              background: var(--background-modifier-hover)
-              border-color: var(--background-modifier-border)
-              transform: translateX(4px)
-
-            &.selected
-              background: var(--background-primary-alt)
-              border-left: 3px solid var(--interactive-accent)
-
-            .note-title
-              flex: 1
-              font-size: 0.95em
-              font-weight: 500
-              white-space: nowrap
-              overflow: hidden
-              text-overflow: ellipsis
+          // 左侧子文件夹导航
+          .folder-sidebar
+            width: 180px
+            min-width: 180px
+            background: var(--background-secondary-alt)
+            border-right: 1px solid var(--background-modifier-border)
+            padding: 12px 0
+            
+            .folder-title
+              padding: 8px 16px
+              cursor: pointer
               color: var(--text-normal)
-              line-height: 1.4
-
-            .note-date
-              color: var(--text-muted)
-              font-size: 0.85em
-              white-space: nowrap
-              opacity: 0.8
+              transition: all 0.2s ease
+              
+              &.root
+                font-weight: 500
+                border-bottom: 1px solid var(--background-modifier-border)
+                margin-bottom: 8px
+              
+              &.sub
+                font-size: 0.9em
+                padding-left: 24px
+              
+              &:hover
+                background: var(--background-modifier-hover)
+              
+              &.active
+                background: var(--background-primary-alt)
+                color: var(--interactive-accent)
+          
+          // 右侧笔记区域
+          .folder-content
+            flex: 1
+            padding: 16px
+            overflow-y: auto
+            
+            .notes-list
+              display: flex
+              flex-direction: column
+              gap: 8px
+              
+              .note-item
+                padding: 10px
+                border-radius: 6px
+                background: var(--background-primary)
+                cursor: pointer
+                transition: all 0.2s ease
+                
+                &:hover
+                  background: var(--background-modifier-hover)
+                  transform: translateX(4px)
+                
+                .note-title
+                  font-size: 0.95em
+                  margin-bottom: 4px
+                
+                .note-date
+                  font-size: 0.8em
+                  color: var(--text-muted)
