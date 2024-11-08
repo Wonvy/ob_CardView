@@ -7,7 +7,6 @@ import {
     Modal,
     TFolder,
     App,
-    Notice
 } from 'obsidian';
 import CardViewPlugin from './main';
 
@@ -17,12 +16,10 @@ export class CardView extends ItemView {
     private plugin: CardViewPlugin;
     private currentView: 'card' | 'list' | 'timeline';
     private container: HTMLElement = createDiv();  
-    private tagContainer: HTMLElement = createDiv();  
-    private contentContainer: HTMLElement = createDiv();  
+    private tagContainer: HTMLElement = createDiv();    
     private previewContainer: HTMLElement = createDiv();  
     private previewResizer: HTMLElement = createDiv();  
     private isPreviewCollapsed: boolean = false;
-    private currentFolder: string | null = null;
     private searchInput: HTMLInputElement = createEl('input');  
     private currentSearchTerm: string = '';
     private selectedTags: Set<string> = new Set();
@@ -30,8 +27,6 @@ export class CardView extends ItemView {
     private lastSelectedNote: string | null = null;
     private recentFolders: string[] = [];
     private cardSize: number = 280;  // 默认卡片宽度
-    private readonly MIN_CARD_SIZE = 280;  // 最小卡片宽度
-    private readonly MAX_CARD_SIZE = 600;  // 最大卡片宽度
     private calendarContainer: HTMLElement = createDiv();
     private isCalendarVisible: boolean = false;
     private currentDate: Date = new Date();
@@ -435,39 +430,7 @@ export class CardView extends ItemView {
         }
     }
 
-    /**
-     * 根据标签过滤笔记
-     * @param tag - 标签名称
-     */
-    private async filterByTag(tag: string) {
-        const files = this.app.vault.getMarkdownFiles();
-        this.container.empty();
-
-        const filteredFiles = files.filter(file => {
-            const cache = this.app.metadataCache.getFileCache(file);
-            return cache?.tags?.some(t => t.tag === tag);
-        });
-
-        // 使用 Promise.all 等待所有卡片创建完成
-        const cards = await Promise.all(
-            filteredFiles.map(file => this.createNoteCard(file))
-        );
-
-        // 添加所有卡片到容器
-        cards.forEach(card => {
-            this.container.appendChild(card);
-        });
-
-        // 高亮选中的标签
-        this.tagContainer.querySelectorAll('button').forEach(btn => {
-            if (btn.textContent === tag) {
-                btn.addClass('active-tag');
-            } else {
-                btn.removeClass('active-tag');
-            }
-        });
-    }
-
+  
     // 切换预览栏的显示状态
     private togglePreview() {
         this.isPreviewCollapsed = !this.isPreviewCollapsed;
@@ -537,18 +500,7 @@ export class CardView extends ItemView {
         }
     }
 
-    // 高亮文件夹
-    private highlightFolder(folder: string) {
-        this.currentFolder = this.currentFolder === folder ? null : folder;
-        this.container.querySelectorAll('.note-card').forEach(card => {
-            const folderElement = card.querySelector('.note-folder');
-            const cardFolder = folderElement ? folderElement.textContent : null;
-            if (cardFolder) {
-                card.toggleClass('folder-highlight', cardFolder === folder);
-            }
-        });
-    }
-
+  
     private async revealFolderInExplorer(folder: string) {
         // 获取文件浏览器视图
         const fileExplorer = this.app.workspace.getLeavesOfType('file-explorer')[0];
@@ -1133,13 +1085,6 @@ export class CardView extends ItemView {
         this.refreshView();
     }
 
-    // 高亮搜索词
-    private highlightSearchTerm(content: string, searchTerm: string): string {
-        if (!searchTerm) return content;
-        
-        const regex = new RegExp(searchTerm, 'gi');
-        return content.replace(regex, match => `<span class="search-highlight">${match}</span>`);
-    }
 
     // 修改方法名以更好地反映其功能
     private async openInAppropriateLeaf(file: TFile) {
@@ -1166,78 +1111,6 @@ export class CardView extends ItemView {
         }
     }
 
-    // 渲染文件夹卡片
-    private renderFolderCard(folder: TFolder): HTMLElement {
-        const cardEl = createDiv('card folder-card');
-        
-        // ... 现有的文件夹卡片渲染代码 ...
-        
-        // 添加点击事件处理
-        cardEl.addEventListener('click', () => {
-            // 获取文件浏览器视图
-            const fileExplorer = this.app.workspace.getLeavesOfType('file-explorer')[0];
-            if (fileExplorer) {
-                // 激活文件浏览器视图
-                this.app.workspace.revealLeaf(fileExplorer);
-                
-                // 获取文件浏览器视图实例
-                const fileExplorerView = fileExplorer.view as any;
-                if (fileExplorerView && fileExplorerView.revealInFolder) {
-                    // 在文件浏览器中定位并高亮显示该文件夹
-                    fileExplorerView.revealInFolder(folder);
-                }
-            }
-        });
-        
-        return cardEl;
-    }
-}
-
-// 添加文件选择模态框
-class FileSelectionModal extends Modal {
-    private file: TFile;
-
-    constructor(app: App, file: TFile) {
-        super(app);
-        this.file = file;
-    }
-
-    async onOpen() {
-        const { contentEl } = this;
-        contentEl.createEl('h3', { text: '选择目标文件夹' });
-
-        const folderList = contentEl.createDiv('folder-list');
-        const folders = this.getFolders();
-
-        folders.forEach(folder => {
-            const item = folderList.createDiv('folder-item');
-            item.setText(folder);
-            item.addEventListener('click', async () => {
-                await this.moveFile(folder);
-                this.close();
-            });
-        });
-    }
-
-    private getFolders(): string[] {
-        const folders = new Set<string>();
-        this.app.vault.getAllLoadedFiles().forEach(file => {
-            if (file instanceof TFolder) {
-                folders.add(file.path);
-            }
-        });
-        return Array.from(folders);
-    }
-
-    private async moveFile(targetFolder: string) {
-        const newPath = `${targetFolder}/${this.file.name}`;
-        await this.app.fileManager.renameFile(this.file, newPath);
-    }
-
-    onClose() {
-        const { contentEl } = this;
-        contentEl.empty();
-    }
 }
 
 // 添加确认对话框
@@ -1396,12 +1269,6 @@ class EnhancedFileSelectionModal extends Modal {
                 cls: 'folder-icon'
             });
             icon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>`;
-
-            // 添加文件夹名称
-            const name = item.createSpan({
-                cls: 'folder-name',
-                text: folder.name
-            });
 
             item.addEventListener('click', () => this.selectFolder(item, folder.path));
         });

@@ -1,4 +1,4 @@
-import { App, PluginManifest,Plugin, PluginSettingTab, Setting, TFile, TFolder,WorkspaceLeaf } from 'obsidian';
+import { App, PluginManifest,Plugin, PluginSettingTab, Setting, TFile, WorkspaceLeaf } from 'obsidian';
 import { CardView, VIEW_TYPE_CARD } from './cardView';
 
 interface CardViewPluginSettings {
@@ -29,7 +29,7 @@ class CardViewSettingTab extends PluginSettingTab {
 
         new Setting(containerEl)
             .setName('默认视图')
-            .setDesc('选择默认的视图模式')
+            .setDesc('选择默认的视图1模式')
             .addDropdown(dropdown => {
                 dropdown
                     .addOption('card', '卡片视图')
@@ -123,7 +123,7 @@ export default class CardViewPlugin extends Plugin {
 
     handleFileOpen(file: TFile) {
         // 处理文件打开事件
-        console.log(`文件 ${file.path} 被打开`);
+        console.log(`文件 ${file.path} 被1打开`);
         // 在这里可以添加您想要的逻辑，例如更新视图或显示相关信息
     }
 
