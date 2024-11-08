@@ -105,10 +105,8 @@ export class CardView extends ItemView {
             cls: 'search-input'
         });
         
-        this.searchInput.addEventListener('input', () => {
-            this.currentSearchTerm = this.searchInput.value;
-            this.refreshView();
-        });
+        // 初始化搜索处理
+        this.setupSearch();
 
         // 标签栏
         this.tagContainer = contentSection.createDiv('tag-filter');
@@ -344,7 +342,13 @@ export class CardView extends ItemView {
         if (timePattern.test(displayTitle)) {
             displayTitle = displayTitle.replace(timePattern, '').trim();
         }
-        title.setText(displayTitle);
+        
+        // 高亮标题中的搜索词
+        if (this.currentSearchTerm) {
+            title.innerHTML = this.highlightText(displayTitle, this.currentSearchTerm);
+        } else {
+            title.setText(displayTitle);
+        }
 
         try {
             // 读取笔记内容
@@ -352,14 +356,36 @@ export class CardView extends ItemView {
             
             // 创建笔记内容容器
             const noteContent = cardContent.createDiv('note-content');
-            // 修改渲染选项以支持图片
-            await MarkdownRenderer.render(
-                this.app,
-                content,
-                noteContent,
-                file.path,
-                this
-            )
+            
+            // 如果有搜索词，先处理内容中的搜索词高亮
+            if (this.currentSearchTerm) {
+                // 将 Markdown 转换为 HTML
+                await MarkdownRenderer.render(
+                    this.app,
+                    content,
+                    noteContent,
+                    file.path,
+                    this
+                );
+                
+                // 高亮搜索词
+                const contentElements = noteContent.querySelectorAll('p, li, h1, h2, h3, h4, h5, h6');
+                contentElements.forEach(element => {
+                    const originalText = element.textContent || '';
+                    if (originalText.toLowerCase().includes(this.currentSearchTerm.toLowerCase())) {
+                        element.innerHTML = this.highlightText(originalText, this.currentSearchTerm);
+                    }
+                });
+            } else {
+                // 没有搜索词时正常渲染
+                await MarkdownRenderer.render(
+                    this.app,
+                    content,
+                    noteContent,
+                    file.path,
+                    this
+                );
+            }
 
             // 鼠标悬停事件
             card.addEventListener('mouseenter', async () => {
@@ -662,10 +688,12 @@ export class CardView extends ItemView {
         const files = this.app.vault.getMarkdownFiles();
         this.container.empty();
 
-        const filteredFiles = files.filter(file => {
-            // 搜索过滤
-            const matchesSearch = !this.currentSearchTerm || 
-                file.basename.toLowerCase().includes(this.currentSearchTerm.toLowerCase());
+        // 先进行搜索过滤
+        const searchTerm = this.currentSearchTerm?.trim().toLowerCase();
+        const filteredFiles = await Promise.all(files.map(async file => {
+            const matchesSearch = !searchTerm || 
+                file.basename.toLowerCase().includes(searchTerm) ||
+                await this.fileContentContainsSearch(file);
 
             // 标签过滤
             let matchesTags = true;
@@ -680,21 +708,22 @@ export class CardView extends ItemView {
                 const fileDate = new Date(file.stat.mtime);
                 const fileDateStr = fileDate.toISOString().split('T')[0];
                 
-               if (this.currentFilter.value?.length === 7) {
-                    // 按月份过滤
+                if (this.currentFilter.value?.length === 7) {
                     matchesDate = fileDateStr.startsWith(this.currentFilter.value);
                 } else {
-                    // 按具体日期过滤
                     matchesDate = fileDateStr === this.currentFilter.value;
                 }
             }
 
-            return matchesSearch && matchesTags && matchesDate;
-        });
+            return matchesSearch && matchesTags && matchesDate ? file : null;
+        }));
 
-        // 创建卡片并高亮搜索词
+        // 过滤掉不匹配的文件
+        const matchedFiles = filteredFiles.filter((file): file is TFile => file !== null);
+
+        // 创建卡片
         const cards = await Promise.all(
-            filteredFiles.map(file => this.createNoteCard(file))  
+            matchedFiles.map(file => this.createNoteCard(file))
         );
 
         cards.forEach(card => {
@@ -1133,7 +1162,7 @@ export class CardView extends ItemView {
     // 添加清除日期过滤的方法
     private clearDateFilter() {
         this.currentFilter = { type: 'none' };
-        // 清除所有日期的选中状态
+        // 清除所有日期选中状态
         if (this.calendarContainer) {
             this.calendarContainer.querySelectorAll('.calendar-day').forEach(day => {
                 day.removeClass('selected');
@@ -1167,6 +1196,57 @@ export class CardView extends ItemView {
             const leaf = this.app.workspace.getLeaf('tab');
             await leaf.openFile(file);
         }
+    }
+
+    // 在类的开头添加一个高亮文本的辅助方法
+    private highlightText(text: string, searchTerm: string): string {
+        if (!searchTerm || searchTerm.trim() === '') {
+            return text; // 如果搜索词为空，直接返回原文本
+        }
+        
+        const escapedSearchTerm = searchTerm
+            .replace(/[.*+?^${}()|[\]\\]/g, '\\$&') // 转义特殊字符
+            .trim(); // 确保去除空格
+        
+        const regex = new RegExp(`(${escapedSearchTerm})`, 'gi');
+        return text.replace(regex, '<span class="search-highlight">$1</span>');
+    }
+
+    // 添加内容搜索方法
+    private async fileContentContainsSearch(file: TFile): Promise<boolean> {
+        if (!this.currentSearchTerm || this.currentSearchTerm.trim() === '') {
+            return true;
+        }
+
+        try {
+            const content = await this.app.vault.cachedRead(file);
+            const searchTerm = this.currentSearchTerm.trim().toLowerCase();
+            const fileContent = content.toLowerCase();
+            
+            // 检查文件内容是否包含搜索词
+            return fileContent.includes(searchTerm);
+        } catch (error) {
+            console.error('读取文件内容失败:', error);
+            return false;
+        }
+    }
+
+    // 在 CardView 类中添加搜索处理方法
+    private setupSearch() {
+        // 使用防抖来处理快速输入
+        const debounce = (fn: Function, delay: number) => {
+            let timeoutId: NodeJS.Timeout;
+            return function (...args: any[]) {
+                clearTimeout(timeoutId);
+                timeoutId = setTimeout(() => fn.apply(this, args), delay);
+            };
+        };
+
+        // 处理搜索输入
+        this.searchInput.addEventListener('input', debounce(() => {
+            this.currentSearchTerm = this.searchInput.value.trim();
+            this.refreshView();
+        }, 200));
     }
 
 }

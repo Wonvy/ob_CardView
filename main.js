@@ -104,10 +104,7 @@ var CardView = class extends import_obsidian.ItemView {
       placeholder: "\u641C\u7D22\u7B14\u8BB0...",
       cls: "search-input"
     });
-    this.searchInput.addEventListener("input", () => {
-      this.currentSearchTerm = this.searchInput.value;
-      this.refreshView();
-    });
+    this.setupSearch();
     this.tagContainer = contentSection.createDiv("tag-filter");
     await this.loadTags();
     const contentArea = contentSection.createDiv("card-view-content");
@@ -274,17 +271,38 @@ var CardView = class extends import_obsidian.ItemView {
     if (timePattern.test(displayTitle)) {
       displayTitle = displayTitle.replace(timePattern, "").trim();
     }
-    title.setText(displayTitle);
+    if (this.currentSearchTerm) {
+      title.innerHTML = this.highlightText(displayTitle, this.currentSearchTerm);
+    } else {
+      title.setText(displayTitle);
+    }
     try {
       const content = await this.app.vault.read(file);
       const noteContent = cardContent.createDiv("note-content");
-      await import_obsidian.MarkdownRenderer.render(
-        this.app,
-        content,
-        noteContent,
-        file.path,
-        this
-      );
+      if (this.currentSearchTerm) {
+        await import_obsidian.MarkdownRenderer.render(
+          this.app,
+          content,
+          noteContent,
+          file.path,
+          this
+        );
+        const contentElements = noteContent.querySelectorAll("p, li, h1, h2, h3, h4, h5, h6");
+        contentElements.forEach((element) => {
+          const originalText = element.textContent || "";
+          if (originalText.toLowerCase().includes(this.currentSearchTerm.toLowerCase())) {
+            element.innerHTML = this.highlightText(originalText, this.currentSearchTerm);
+          }
+        });
+      } else {
+        await import_obsidian.MarkdownRenderer.render(
+          this.app,
+          content,
+          noteContent,
+          file.path,
+          this
+        );
+      }
       card.addEventListener("mouseenter", async () => {
         openButton.style.opacity = "1";
         title.style.opacity = "0";
@@ -505,15 +523,17 @@ var CardView = class extends import_obsidian.ItemView {
   }
   // 刷新视图（用于搜索和过滤）
   async refreshView() {
+    var _a;
     const files = this.app.vault.getMarkdownFiles();
     this.container.empty();
-    const filteredFiles = files.filter((file) => {
-      var _a, _b, _c;
-      const matchesSearch = !this.currentSearchTerm || file.basename.toLowerCase().includes(this.currentSearchTerm.toLowerCase());
+    const searchTerm = (_a = this.currentSearchTerm) == null ? void 0 : _a.trim().toLowerCase();
+    const filteredFiles = await Promise.all(files.map(async (file) => {
+      var _a2, _b, _c;
+      const matchesSearch = !searchTerm || file.basename.toLowerCase().includes(searchTerm) || await this.fileContentContainsSearch(file);
       let matchesTags = true;
       if (this.selectedTags.size > 0) {
         const cache = this.app.metadataCache.getFileCache(file);
-        matchesTags = (_b = (_a = cache == null ? void 0 : cache.tags) == null ? void 0 : _a.some((t) => this.selectedTags.has(t.tag))) != null ? _b : false;
+        matchesTags = (_b = (_a2 = cache == null ? void 0 : cache.tags) == null ? void 0 : _a2.some((t) => this.selectedTags.has(t.tag))) != null ? _b : false;
       }
       let matchesDate = true;
       if (this.currentFilter.type === "date") {
@@ -525,10 +545,11 @@ var CardView = class extends import_obsidian.ItemView {
           matchesDate = fileDateStr === this.currentFilter.value;
         }
       }
-      return matchesSearch && matchesTags && matchesDate;
-    });
+      return matchesSearch && matchesTags && matchesDate ? file : null;
+    }));
+    const matchedFiles = filteredFiles.filter((file) => file !== null);
     const cards = await Promise.all(
-      filteredFiles.map((file) => this.createNoteCard(file))
+      matchedFiles.map((file) => this.createNoteCard(file))
     );
     cards.forEach((card) => {
       if (card instanceof HTMLElement) {
@@ -869,6 +890,44 @@ var CardView = class extends import_obsidian.ItemView {
       const leaf = this.app.workspace.getLeaf("tab");
       await leaf.openFile(file);
     }
+  }
+  // 在类的开头添加一个高亮文本的辅助方法
+  highlightText(text, searchTerm) {
+    if (!searchTerm || searchTerm.trim() === "") {
+      return text;
+    }
+    const escapedSearchTerm = searchTerm.replace(/[.*+?^${}()|[\]\\]/g, "\\$&").trim();
+    const regex = new RegExp(`(${escapedSearchTerm})`, "gi");
+    return text.replace(regex, '<span class="search-highlight">$1</span>');
+  }
+  // 添加内容搜索方法
+  async fileContentContainsSearch(file) {
+    if (!this.currentSearchTerm || this.currentSearchTerm.trim() === "") {
+      return true;
+    }
+    try {
+      const content = await this.app.vault.cachedRead(file);
+      const searchTerm = this.currentSearchTerm.trim().toLowerCase();
+      const fileContent = content.toLowerCase();
+      return fileContent.includes(searchTerm);
+    } catch (error) {
+      console.error("\u8BFB\u53D6\u6587\u4EF6\u5185\u5BB9\u5931\u8D25:", error);
+      return false;
+    }
+  }
+  // 在 CardView 类中添加搜索处理方法
+  setupSearch() {
+    const debounce = (fn, delay) => {
+      let timeoutId;
+      return function(...args) {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => fn.apply(this, args), delay);
+      };
+    };
+    this.searchInput.addEventListener("input", debounce(() => {
+      this.currentSearchTerm = this.searchInput.value.trim();
+      this.refreshView();
+    }, 200));
   }
 };
 var ConfirmModal = class extends import_obsidian.Modal {
