@@ -1010,7 +1010,7 @@
     async moveFiles(targetFolder) {
       const confirmModal = new ConfirmModal(
         this.app,
-        "\u786E\u8BA4\u79FB\u52A8",
+        "\u786E\u8BA4 \u79FB\u52A8",
         `\u662F\u5426\u5C06\u9009\u4E2D\u7684 ${this.files.length} \u4E2A\u6587\u4EF6\u79FB\u52A8\u5230 "${targetFolder}"\uFF1F`
       );
       if (await confirmModal.show()) {
@@ -1028,7 +1028,7 @@
   // main.ts
   var DEFAULT_SETTINGS = {
     defaultView: "card",
-    cardWidth: 280,
+    cardWidth: 281,
     minCardWidth: 280,
     maxCardWidth: 600
   };

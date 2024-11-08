@@ -10,7 +10,7 @@ interface CardViewPluginSettings {
 
 const DEFAULT_SETTINGS: CardViewPluginSettings = {
     defaultView: 'card',
-    cardWidth: 280,
+    cardWidth: 281,
     minCardWidth: 280,
     maxCardWidth: 600
 }
@@ -129,7 +129,7 @@ export default class CardViewPlugin extends Plugin {
 
     handleFolderOpen(folder: string) { // 新增处理文件夹打开的函数
         console.log(`文件夹 ${folder} 被打开`);
-        // 在这里可以添加您想要的逻辑，例如更新视图或显示相关信息
+        // 在这里可以添加您想要的逻辑，例如更新视图或显示 相关信息
     }
 
     async loadSettings() {

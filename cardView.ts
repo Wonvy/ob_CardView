@@ -1421,7 +1421,7 @@ class EnhancedFileSelectionModal extends Modal {
     private async moveFiles(targetFolder: string) {
         const confirmModal = new ConfirmModal(
             this.app,
-            "确认移动",
+            "确认 移动",
             `是否将选中的 ${this.files.length} 个文件移动到 "${targetFolder}"？`
         );
 
@@ -1431,7 +1431,7 @@ class EnhancedFileSelectionModal extends Modal {
                 await this.app.fileManager.renameFile(file, newPath);
             }
 
-            // 更新最近使用的文件夹
+            // 更新最近使用 的文件夹
             this.recentFolders = [targetFolder, ...this.recentFolders.filter(f => f !== targetFolder)]
                 .slice(0, 5);
             this.onFoldersUpdate(this.recentFolders);

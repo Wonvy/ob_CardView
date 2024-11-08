@@ -2,9 +2,9 @@ import esbuild from 'esbuild';
 import sassPlugin from 'esbuild-plugin-sass';
 
 esbuild.build({
-  entryPoints: ['main.ts'],
+  entryPoints: ['main.ts', 'cardView.ts', 'styles.sass'], 
     bundle: true,
-    outdir: '.',
+    outdir: './',
     external:[
       "obsidian",
       "electron"], 

@@ -29,4 +29,3 @@ filesToCopy.forEach(file => {
     }
 });
 
-console.log('部署完成！'); 
