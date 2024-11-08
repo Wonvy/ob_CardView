@@ -99,6 +99,7 @@ export default class CardViewPlugin extends Plugin {
     }
     
     async onload() {
+        // debugger; // 这里会在调试时自动停住
         await this.loadSettings();
 
         this.registerView(
