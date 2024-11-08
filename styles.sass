@@ -452,7 +452,7 @@
 
 
 
-// 文件选择模态框样式   
+// 文件选择模态框
 .folder-list 
   max-height: 300px
   overflow-y: auto
@@ -537,7 +537,7 @@
   position: relative 
 
 
-// 内容区域样式   
+// 内区域样式   
 .content-section 
   flex: 1
   min-width: 0
@@ -714,6 +714,194 @@
                 font-weight: bold
                 display: inline-block
                 line-height: 1.2
+
+
+
+
+.main-layout .content-section.view-month
+  .card-view-content
+    padding: 0  
+    height: 100%
+    overflow: hidden
+    
+    .card-container
+      display: flex
+      padding: 0
+      flex-direction: column
+      height: 100%
+      overflow: hidden
+
+.month-view 
+    display: flex
+    flex-direction: column
+    width: 100%
+    height: 100%
+    padding: 20px
+    box-sizing: border-box
+    background-color: var(--background-primary)
+
+    // 月视图头部
+    .month-header 
+        display: flex
+        justify-content: space-between
+        align-items: center
+        padding: 10px 0
+        margin-bottom: 20px
+
+        // 导航组
+        .month-nav-group
+            display: flex
+            align-items: center
+            gap: 4px
+
+            .month-nav-btn 
+                background: transparent
+                border: none
+                padding: 4px
+                cursor: pointer
+                color: var(--text-muted)
+                transition: all 0.2s ease
+                
+                &:hover 
+                    color: var(--text-normal)
+
+            .month-title 
+                font-size: 1.2em
+                font-weight: 500
+                color: var(--text-normal)
+                margin: 0 8px
+
+        // 今天按钮
+        .today-btn
+            background: var(--interactive-accent)
+            color: var(--text-on-accent)
+            border: none
+            border-radius: 4px
+            padding: 4px 12px
+            cursor: pointer
+            font-size: 0.9em
+            transition: all 0.2s ease
+            
+            &:hover
+                opacity: 0.9
+
+    // 星期头部
+    .month-weekdays 
+        display: grid
+        grid-template-columns: repeat(7, 1fr)
+        border-bottom: 1px solid var(--background-modifier-border)
+        margin-bottom: 1px
+
+        .weekday 
+            padding: 8px
+            text-align: center
+            font-size: 0.9em
+            color: var(--text-muted)
+            font-weight: 500
+
+    // 日历网格
+    .month-grid 
+        display: grid
+        grid-template-columns: repeat(7, 1fr)
+        gap: 1px
+        flex: 1
+        background-color: var(--background-modifier-border)
+        border: 1px solid var(--background-modifier-border)
+
+        // 日期格子
+        .month-day 
+            background-color: var(--background-primary)
+            padding: 8px
+            min-height: 100px
+            display: flex
+            flex-direction: column
+
+            &.empty 
+                background-color: var(--background-primary-alt)
+
+            &.today 
+                background-color: var(--background-modifier-hover)
+                
+                .day-number 
+                    color: var(--interactive-accent)
+                    font-weight: bold
+
+            // 日期数字
+            .day-number 
+                font-size: 0.9em
+                color: var(--text-muted)
+                margin-bottom: 4px
+
+            // 笔记列表
+            .day-notes 
+                flex: 1
+                overflow-y: auto
+                
+                &::-webkit-scrollbar 
+                    width: 4px
+                
+                &::-webkit-scrollbar-thumb 
+                    background-color: var(--background-modifier-border)
+                    border-radius: 2px
+
+                // 笔记项
+                .day-note-item 
+                    padding: 2px 4px
+                    margin-bottom: 2px
+                    font-size: 0.85em
+                    color: var(--text-muted)
+                    cursor: pointer
+                    white-space: nowrap
+                    overflow: hidden
+                    text-overflow: ellipsis
+                    border-radius: 2px
+                    
+                    &:hover 
+                        background-color: var(--background-modifier-hover)
+                        color: var(--text-normal)
+
+
+
+
+
+
+// 添加提示框样式
+.note-tooltip 
+    position: fixed
+    z-index: 9999
+    background-color: var(--background-primary)
+    border: 1px solid var(--background-modifier-border)
+    border-radius: 4px
+    padding: 8px 12px
+    font-size: 14px
+    color: var(--text-normal)
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15)
+    pointer-events: none
+    max-width: 300px
+    word-wrap: break-word
+    animation: tooltip-fade-in 0.2s ease
+
+    .tooltip-note-item 
+        padding: 4px 0
+        &:not(:last-child)
+            border-bottom: 1px solid var(--background-modifier-border)
+
+@keyframes tooltip-fade-in 
+    from 
+        opacity: 0
+        transform: translateY(5px)
+    to 
+        opacity: 1
+        transform: translateY(0)
+
+// 修改月视图中笔记项的样式，确保有足够的空间显示提示框
+.month-view 
+    .month-grid 
+        .month-day 
+            .day-notes 
+                .day-note-item 
+                    position: relative
+                    z-index: 1
 
 
 

@@ -58,6 +58,8 @@ var CardView = class extends import_obsidian.ItemView {
     this.isCalendarVisible = false;
     this.currentDate = /* @__PURE__ */ new Date();
     this.currentFilter = { type: "none" };
+    this.monthViewContainer = createDiv();
+    this.isMonthViewVisible = false;
     this.plugin = plugin;
     this.currentView = plugin.settings.defaultView;
   }
@@ -138,20 +140,36 @@ var CardView = class extends import_obsidian.ItemView {
       mainLayoutElement.insertBefore(this.calendarContainer, mainLayoutElement.firstChild);
     }
     const cardContainer = containerEl.querySelector(".card-container");
-    cardContainer.addEventListener("click", (e) => {
-      if (e.target === cardContainer) {
-        const cards = cardContainer.querySelectorAll(".note-card");
-        cards.forEach((card) => {
-          card.classList.remove("selected");
-        });
+    if (cardContainer) {
+      cardContainer.addEventListener("click", (e) => {
+        if (e.target === cardContainer) {
+          const cards = cardContainer.querySelectorAll(".note-card");
+          cards.forEach((card) => {
+            card.classList.remove("selected");
+          });
+        }
+      });
+    }
+  }
+  /**
+   * 获取所有笔记中的标签
+   * @returns 去重后的标签组
+   */
+  getAllTags() {
+    const tags = /* @__PURE__ */ new Set();
+    this.app.vault.getMarkdownFiles().forEach((file) => {
+      const cache = this.app.metadataCache.getFileCache(file);
+      if (cache == null ? void 0 : cache.tags) {
+        cache.tags.forEach((tag) => tags.add(tag.tag));
       }
     });
+    return Array.from(tags);
   }
   /**
    * 加载所有标签并创建标签过滤器
    */
   async loadTags() {
-    const tags = this.getAllTags();
+    const tags = await this.getAllTags();
     const allTagBtn = this.tagContainer.createEl("button", {
       text: "All",
       cls: "tag-btn active"
@@ -173,20 +191,7 @@ var CardView = class extends import_obsidian.ItemView {
       });
     });
   }
-  /**
-   * 获取所有笔记中的标签
-   * @returns 去重后的标签数组
-   */
-  getAllTags() {
-    const tags = /* @__PURE__ */ new Set();
-    this.app.vault.getMarkdownFiles().forEach((file) => {
-      const cache = this.app.metadataCache.getFileCache(file);
-      if (cache == null ? void 0 : cache.tags) {
-        cache.tags.forEach((tag) => tags.add(tag.tag));
-      }
-    });
-    return Array.from(tags);
-  }
+  // 确保方法结束
   /**
    * 创建视图切换按钮
    * @param container - 按钮容器元素
@@ -195,7 +200,8 @@ var CardView = class extends import_obsidian.ItemView {
     const views = [
       { id: "card", icon: "grid", text: "\u5361\u7247\u89C6\u56FE" },
       { id: "list", icon: "list", text: "\u5217\u8868\u89C6\u56FE" },
-      { id: "timeline", icon: "clock", text: "\u65F6\u95F4\u8F74\u89C6\u56FE" }
+      { id: "timeline", icon: "clock", text: "\u65F6\u95F4\u8F74\u89C6\u56FE" },
+      { id: "month", icon: "calendar", text: "\u6708\u89C6\u56FE" }
     ];
     views.forEach((view) => {
       const btn = container.createEl("button", {
@@ -204,7 +210,8 @@ var CardView = class extends import_obsidian.ItemView {
       const iconHtml = {
         "grid": '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>',
         "list": '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>',
-        "clock": '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>'
+        "clock": '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>',
+        "calendar": '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>'
       };
       const iconSpan = btn.createSpan({ cls: "view-switch-icon" });
       iconSpan.innerHTML = iconHtml[view.icon];
@@ -252,7 +259,7 @@ var CardView = class extends import_obsidian.ItemView {
       console.log("\u70B9\u51FB\u4E86\u6587\u4EF6\u5939", e);
       e.stopPropagation();
       e.preventDefault();
-      console.log("\u70B9\u51FB\u4E86\u6587\u4EF6\u5939", e);
+      console.log("\u70B9\u4E86\u6587\u4EF6\u5939", e);
       console.log(`\u5F53\u524D\u5206\u5C4F\u9875\u7684\u6570\u91CF: ${this.app.workspace.getLeavesOfType("file-explorer").length}`);
       console.log(`workspace:`, this.app.workspace);
       const fileExplorer = this.app.workspace.getLeavesOfType("file-explorer")[0];
@@ -376,8 +383,15 @@ var CardView = class extends import_obsidian.ItemView {
     this.currentView = view;
     this.container.setAttribute("data-view", view);
     this.container.empty();
+    const contentSection = this.containerEl.querySelector(".content-section");
+    if (contentSection) {
+      contentSection.removeClass("view-card", "view-list", "view-timeline", "view-month");
+      contentSection.addClass(`view-${view}`);
+    }
     if (view === "timeline") {
       this.createTimelineView();
+    } else if (view === "month") {
+      this.createMonthView();
     } else {
       this.loadNotes();
     }
@@ -423,7 +437,7 @@ var CardView = class extends import_obsidian.ItemView {
     };
     this.previewResizer.addEventListener("mousedown", startResize);
   }
-  // 添加内��区域宽度调整方法
+  // 添加内区域宽度调整方法
   adjustContentWidth() {
     const mainLayout = this.containerEl.querySelector(".main-layout");
     const previewWidth = this.previewContainer.offsetWidth;
@@ -657,7 +671,7 @@ var CardView = class extends import_obsidian.ItemView {
         });
       });
       menu.addItem((item) => {
-        item.setTitle(`\u79FB\u52A8 ${files.length} \u4E2A\u6587\u4EF6`).setIcon("move").onClick(() => {
+        item.setTitle(`\u79FB\u52A8 ${files.length} \u4E2A\u6587\uFFFD\uFFFD\uFFFD`).setIcon("move").onClick(() => {
           const modal = new EnhancedFileSelectionModal(
             this.app,
             files,
@@ -677,10 +691,24 @@ var CardView = class extends import_obsidian.ItemView {
             `\u662F\u5426\u786E\u5B9A\u8981\u5220\u9664\u9009\u4E2D\u7684 ${files.length} \u4E2A\u6587\u4EF6\uFF1F`
           ).show();
           if (confirm) {
-            for (const file of files) {
-              await this.app.vault.trash(file, true);
+            try {
+              for (const file of files) {
+                await this.app.vault.trash(file, true);
+              }
+              files.forEach((file) => {
+                const card = this.container.querySelector(`[data-path="${file.path}"]`);
+                if (card instanceof HTMLElement) {
+                  card.addClass("removing");
+                  setTimeout(() => {
+                    card.remove();
+                    this.selectedNotes.delete(file.path);
+                  }, 300);
+                }
+              });
+              console.error(`\u5DF2\u5220\u9664 ${files.length} \u4E2A\u6587\u4EF6`);
+            } catch (error) {
+              console.error("\u5220\u9664\u6587\u4EF6\u5931\u8D25:", error);
             }
-            this.refreshView();
           }
         });
       });
@@ -976,7 +1004,7 @@ var CardView = class extends import_obsidian.ItemView {
       }
     });
   }
-  // 添加删除空白笔记的方法
+  // 添加删除白笔记的方法
   async deleteEmptyNotes() {
     const selectedFiles = this.getSelectedFiles();
     if (selectedFiles.length === 0) {
@@ -1007,6 +1035,130 @@ ${emptyNotes.map((file) => file.basename).join("\n")}`
       this.refreshView();
       new import_obsidian.Notice(`\u5DF2\u5220\u9664 ${emptyNotes.length} \u4E2A\u7A7A\u767D\u7B14\u8BB0`);
     }
+  }
+  // 修改 createMonthView 方法中的头部创建部分
+  createMonthView() {
+    if (!this.container.querySelector(".month-view")) {
+      const monthContainer = this.container.createDiv("month-view");
+      const header = monthContainer.createDiv("month-header");
+      const navGroup = header.createDiv("month-nav-group");
+      const prevBtn = navGroup.createEl("button", { cls: "month-nav-btn" });
+      prevBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>';
+      const monthTitle = navGroup.createDiv("month-title");
+      monthTitle.setText(this.formatMonthTitle(this.currentDate));
+      const nextBtn = navGroup.createEl("button", { cls: "month-nav-btn" });
+      nextBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>';
+      const todayBtn = header.createEl("button", {
+        cls: "today-btn",
+        text: "\u4ECA\u5929"
+      });
+      prevBtn.addEventListener("click", () => this.navigateMonth(-1));
+      nextBtn.addEventListener("click", () => this.navigateMonth(1));
+      todayBtn.addEventListener("click", () => this.goToToday());
+      header.addEventListener("wheel", (e) => {
+        e.preventDefault();
+        this.navigateMonth(e.deltaY > 0 ? 1 : -1);
+      });
+      const weekdays = ["\u65E5", "\u4E00", "\u4E8C", "\u4E09", "\u56DB", "\u4E94", "\u516D"];
+      const weekHeader = monthContainer.createDiv("month-weekdays");
+      weekdays.forEach((day) => {
+        weekHeader.createDiv("weekday").setText(day);
+      });
+      monthContainer.createDiv("month-grid");
+    }
+    this.updateMonthView();
+  }
+  // 添加更新月视图的方法
+  updateMonthView() {
+    const monthView = this.container.querySelector(".month-view");
+    if (!monthView) return;
+    const monthTitle = monthView.querySelector(".month-title");
+    if (monthTitle) {
+      monthTitle.setText(this.formatMonthTitle(this.currentDate));
+    }
+    const grid = monthView.querySelector(".month-grid");
+    if (grid) {
+      grid.empty();
+      this.renderMonthGrid(grid);
+    }
+  }
+  // 添加月份导航方法
+  navigateMonth(delta) {
+    this.currentDate = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth() + delta);
+    this.updateMonthView();
+  }
+  // 添加跳转到今天的方法
+  goToToday() {
+    this.currentDate = /* @__PURE__ */ new Date();
+    this.updateMonthView();
+  }
+  // 修改 renderMonthGrid 方法中的日期格子创建部分
+  renderMonthGrid(grid) {
+    const year = this.currentDate.getFullYear();
+    const month = this.currentDate.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const today = /* @__PURE__ */ new Date();
+    const isCurrentMonth = today.getFullYear() === year && today.getMonth() === month;
+    const notesByDate = this.getNotesByDate(year, month);
+    for (let i = 0; i < firstDay.getDay(); i++) {
+      grid.createDiv("month-day empty");
+    }
+    for (let day = 1; day <= lastDay.getDate(); day++) {
+      const dateCell = grid.createDiv("month-day");
+      const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+      if (isCurrentMonth && today.getDate() === day) {
+        dateCell.addClass("today");
+      }
+      dateCell.createDiv("day-number").setText(String(day));
+      const dayNotes = notesByDate[dateStr] || [];
+      if (dayNotes.length > 0) {
+        const notesList = dateCell.createDiv("day-notes");
+        dayNotes.forEach((note) => {
+          const noteItem = notesList.createDiv("day-note-item");
+          noteItem.setText(note.basename);
+          noteItem.addEventListener("click", async (e) => {
+            e.stopPropagation();
+            await this.openInAppropriateLeaf(note);
+          });
+          noteItem.addEventListener("mouseenter", async () => {
+            try {
+              this.previewContainer.empty();
+              const content = await this.app.vault.read(note);
+              await import_obsidian.MarkdownRenderer.render(
+                this.app,
+                content,
+                this.previewContainer,
+                note.path,
+                this
+              );
+            } catch (error) {
+              console.error("\u9884\u89C8\u52A0\u8F7D\u5931\u8D25:", error);
+            }
+          });
+        });
+      }
+    }
+  }
+  // 添加获取指定月份笔记的方法
+  getNotesByDate(year, month) {
+    const notesByDate = {};
+    const files = this.app.vault.getMarkdownFiles();
+    files.forEach((file) => {
+      const fileDate = new Date(file.stat.mtime);
+      if (fileDate.getFullYear() === year && fileDate.getMonth() === month) {
+        const dateStr = fileDate.toISOString().split("T")[0];
+        if (!notesByDate[dateStr]) {
+          notesByDate[dateStr] = [];
+        }
+        notesByDate[dateStr].push(file);
+      }
+    });
+    return notesByDate;
+  }
+  // 添加格式化月份标题的方法
+  formatMonthTitle(date) {
+    return `${date.getFullYear()}\u5E74${date.getMonth() + 1}\u6708`;
   }
 };
 var ConfirmModal = class extends import_obsidian.Modal {
@@ -1188,7 +1340,7 @@ var CardViewSettingTab = class extends import_obsidian2.PluginSettingTab {
         this.plugin.updateAllCardViews();
       }
     }));
-    new import_obsidian2.Setting(containerEl).setName("\u6700\u5C0F \u5BBD\u5EA6").setDesc("\u8BBE\u7F6E\u5361\u7247\u7684\u6700\u5C0F\u5BBD\u5EA6\uFF08\u50CF\u7D20\uFF09").addText((text) => text.setPlaceholder("280").setValue(this.plugin.settings.minCardWidth.toString()).onChange(async (value) => {
+    new import_obsidian2.Setting(containerEl).setName("\u6700\u5C0F\u5BBD\u5EA6").setDesc("\u8BBE\u7F6E\u5361\u7247\u7684\u6700\u5C0F\u5BBD\u5EA6\uFF08\u50CF\u7D20\uFF09").addText((text) => text.setPlaceholder("280").setValue(this.plugin.settings.minCardWidth.toString()).onChange(async (value) => {
       const width = Number(value);
       if (!isNaN(width) && width >= 200) {
         this.plugin.settings.minCardWidth = width;

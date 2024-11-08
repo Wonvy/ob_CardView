@@ -15,7 +15,7 @@ export const VIEW_TYPE_CARD = 'card-view';
 
 export class CardView extends ItemView {
     private plugin: CardViewPlugin;
-    private currentView: 'card' | 'list' | 'timeline';
+    private currentView: 'card' | 'list' | 'timeline' | 'month';
     private container: HTMLElement = createDiv();  
     private tagContainer: HTMLElement = createDiv();    
     private previewContainer: HTMLElement = createDiv();  
@@ -32,6 +32,8 @@ export class CardView extends ItemView {
     private isCalendarVisible: boolean = false;
     private currentDate: Date = new Date();
     private currentFilter: { type: 'date' | 'none', value?: string } = { type: 'none' };
+    private monthViewContainer: HTMLElement = createDiv();
+    private isMonthViewVisible: boolean = false;
 
     /**
      * 构造函数
@@ -64,7 +66,7 @@ export class CardView extends ItemView {
      * 视图打开时的初始化函数
      * 创建标签过滤器、视图切换按钮和容器
      */
-    async onOpen() {
+async onOpen() {
         const { containerEl } = this;
         containerEl.empty();
         containerEl.addClass('card-view-container');
@@ -169,22 +171,40 @@ export class CardView extends ItemView {
         if (cardContainer) {
             cardContainer.addEventListener('click', (e) => {
                 // 如果点击的是容器本身(而不是卡片)
-                if(e.target === cardContainer) {
+                if (e.target === cardContainer) {
                     // 移除所有卡片的selected类
                     const cards = cardContainer.querySelectorAll('.note-card');
-                cards.forEach(card => {
-                    card.classList.remove('selected');
-                });
+                    cards.forEach(card => {
+                        card.classList.remove('selected');
+                    });
+                } // 这里添加了缺失的闭合括号
+            });
+        }
+    }
+
+    /**
+     * 获取所有笔记中的标签
+     * @returns 去重后的标签组
+     */
+    private getAllTags(): string[] {
+        const tags = new Set<string>();
+        this.app.vault.getMarkdownFiles().forEach(file => {
+            const cache = this.app.metadataCache.getFileCache(file);
+            if (cache?.tags) {
+                cache.tags.forEach(tag => tags.add(tag.tag));
             }
         });
+        return Array.from(tags);
     }
+
+
 
     /**
      * 加载所有标签并创建标签过滤器
      */
     private async loadTags() {
-        const tags = this.getAllTags();
-        
+        const tags = await this.getAllTags();  // 确保使用 await
+
         // 添加 "All" 标签
         const allTagBtn = this.tagContainer.createEl('button', {
             text: 'All',
@@ -207,22 +227,8 @@ export class CardView extends ItemView {
                 this.toggleTag(tag, tagBtn);
             });
         });
-    }
+    } // 确保方法结束
 
-    /**
-     * 获取所有笔记中的标签
-     * @returns 去重后的标签组
-     */
-    private getAllTags(): string[] {
-        const tags = new Set<string>();
-        this.app.vault.getMarkdownFiles().forEach(file => {
-            const cache = this.app.metadataCache.getFileCache(file);
-            if (cache?.tags) {
-                cache.tags.forEach(tag => tags.add(tag.tag));
-            }
-        });
-        return Array.from(tags);
-    }
 
     /**
      * 创建视图切换按钮
@@ -232,7 +238,8 @@ export class CardView extends ItemView {
         const views = [
             { id: 'card', icon: 'grid', text: '卡片视图' },
             { id: 'list', icon: 'list', text: '列表视图' },
-            { id: 'timeline', icon: 'clock', text: '时间轴视图' }
+            { id: 'timeline', icon: 'clock', text: '时间轴视图' },
+            { id: 'month', icon: 'calendar', text: '月视图' }
         ];
         
         views.forEach(view => {
@@ -244,7 +251,8 @@ export class CardView extends ItemView {
             const iconHtml = {
                 'grid': '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>',
                 'list': '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>',
-                'clock': '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>'
+                'clock': '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>',
+                'calendar': '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>'
             };
             
             // 创建图
@@ -257,7 +265,7 @@ export class CardView extends ItemView {
             btn.addEventListener('click', () => {
                 container.querySelectorAll('.view-switch-btn').forEach(b => b.removeClass('active'));
                 btn.addClass('active');
-                this.switchView(view.id as 'card' | 'list' | 'timeline');
+                this.switchView(view.id as 'card' | 'list' | 'timeline' | 'month');
             });
         });
     }
@@ -297,7 +305,7 @@ export class CardView extends ItemView {
         // 创建卡片头部
         const header = card.createDiv('note-card-header');
         
-        // 添加修改时间
+        // 添加修改
         const lastModified = header.createDiv('note-date');
         lastModified.setText(new Date(file.stat.mtime).toLocaleDateString());
 
@@ -488,13 +496,24 @@ export class CardView extends ItemView {
      * 切换视图模式
      * @param view - 目标视图模式
      */
-    private switchView(view: 'card' | 'list' | 'timeline') {
+    private switchView(view: 'card' | 'list' | 'timeline' | 'month') {
         this.currentView = view;
         this.container.setAttribute('data-view', view);
         this.container.empty();
         
+        // 获取 content-section 元素
+        const contentSection = this.containerEl.querySelector('.content-section');
+        if (contentSection) {
+            // 移除所有视图相关的类名
+            contentSection.removeClass('view-card', 'view-list', 'view-timeline', 'view-month');
+            // 添加当前视图的类名
+            contentSection.addClass(`view-${view}`);
+        }
+        
         if (view === 'timeline') {
             this.createTimelineView();
+        } else if (view === 'month') {
+            this.createMonthView();
         } else {
             this.loadNotes();
         }
@@ -869,7 +888,7 @@ export class CardView extends ItemView {
 
             menu.addItem((item) => {
                 item
-                    .setTitle(`移动 ${files.length} 个文件`)
+                    .setTitle(`移动 ${files.length} 个文���`)
                     .setIcon("move")
                     .onClick(() => {
                         const modal = new EnhancedFileSelectionModal(
@@ -907,7 +926,7 @@ export class CardView extends ItemView {
                                     const card = this.container.querySelector(`[data-path="${file.path}"]`);
                                     if (card instanceof HTMLElement) {
                                         card.addClass('removing');
-                                        // 等待动画完成后移除DOM元素
+                                        // ���待动画完成后移除DOM元素
                                         setTimeout(() => {
                                             card.remove();
                                             this.selectedNotes.delete(file.path);
@@ -1378,6 +1397,183 @@ export class CardView extends ItemView {
             this.refreshView();
             new Notice(`已删除 ${emptyNotes.length} 个空白笔记`);
         }
+    }
+
+    // 修改 createMonthView 方法中的头部创建部分
+    private createMonthView() {
+        if (!this.container.querySelector('.month-view')) {
+            const monthContainer = this.container.createDiv('month-view');
+            
+            // 创建月视图头部
+            const header = monthContainer.createDiv('month-header');
+            
+            // 创建左侧导航区域
+            const navGroup = header.createDiv('month-nav-group');
+            
+            // 添加月份导航按钮
+            const prevBtn = navGroup.createEl('button', { cls: 'month-nav-btn' });
+            prevBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>';
+            
+            const monthTitle = navGroup.createDiv('month-title');
+            monthTitle.setText(this.formatMonthTitle(this.currentDate));
+            
+            const nextBtn = navGroup.createEl('button', { cls: 'month-nav-btn' });
+            nextBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>';
+            
+            // 添加今天按钮
+            const todayBtn = header.createEl('button', { 
+                cls: 'today-btn',
+                text: '今天'
+            });
+            
+            // 添加导航按钮事件
+            prevBtn.addEventListener('click', () => this.navigateMonth(-1));
+            nextBtn.addEventListener('click', () => this.navigateMonth(1));
+            todayBtn.addEventListener('click', () => this.goToToday());
+            
+            // 添加滚轮事件
+            header.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                this.navigateMonth(e.deltaY > 0 ? 1 : -1);
+            });
+            
+            // 创建星期头部
+            const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
+            const weekHeader = monthContainer.createDiv('month-weekdays');
+            weekdays.forEach(day => {
+                weekHeader.createDiv('weekday').setText(day);
+            });
+            
+            // 创建日历网格
+            monthContainer.createDiv('month-grid');
+        }
+        
+        // 更新月视图内容
+        this.updateMonthView();
+    }
+
+    // 添加更新月视图的方法
+    private updateMonthView() {
+        const monthView = this.container.querySelector('.month-view');
+        if (!monthView) return;
+
+        // 更新标题
+        const monthTitle = monthView.querySelector('.month-title');
+        if (monthTitle) {
+            monthTitle.setText(this.formatMonthTitle(this.currentDate));
+        }
+
+        // 更新网格
+        const grid = monthView.querySelector('.month-grid');
+        if (grid) {
+            grid.empty();
+            this.renderMonthGrid(grid as HTMLElement);
+        }
+    }
+
+    // 添加月份导航方法
+    private navigateMonth(delta: number) {
+        this.currentDate = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth() + delta);
+        this.updateMonthView();
+    }
+
+    // 添加跳转到今天的方法
+    private goToToday() {
+        this.currentDate = new Date();
+        this.updateMonthView();
+    }
+
+    // 修改 renderMonthGrid 方法中的日期格子创建部分
+    private renderMonthGrid(grid: HTMLElement) {
+        const year = this.currentDate.getFullYear();
+        const month = this.currentDate.getMonth();
+        const firstDay = new Date(year, month, 1);
+        const lastDay = new Date(year, month + 1, 0);
+        
+        // 获取今天的日期
+        const today = new Date();
+        const isCurrentMonth = today.getFullYear() === year && today.getMonth() === month;
+        
+        // 获取当月的笔记
+        const notesByDate = this.getNotesByDate(year, month);
+        
+        // 填充前置空白日期
+        for (let i = 0; i < firstDay.getDay(); i++) {
+            grid.createDiv('month-day empty');
+        }
+        
+        // 填充日期格子
+        for (let day = 1; day <= lastDay.getDate(); day++) {
+            const dateCell = grid.createDiv('month-day');
+            const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            
+            // 检查是否是今天
+            if (isCurrentMonth && today.getDate() === day) {
+                dateCell.addClass('today');
+            }
+            
+            // 添加日期数字
+            dateCell.createDiv('day-number').setText(String(day));
+            
+            // 添加笔记列表
+            const dayNotes = notesByDate[dateStr] || [];
+            if (dayNotes.length > 0) {
+                const notesList = dateCell.createDiv('day-notes');
+                
+                // 显示所有笔记
+                dayNotes.forEach(note => {
+                    const noteItem = notesList.createDiv('day-note-item');
+                    noteItem.setText(note.basename);
+                    
+                    // 添加点击事件
+                    noteItem.addEventListener('click', async (e) => {
+                        e.stopPropagation();
+                        await this.openInAppropriateLeaf(note);
+                    });
+                    
+                    // 添加预览功能
+                    noteItem.addEventListener('mouseenter', async () => {
+                        try {
+                            this.previewContainer.empty();
+                            const content = await this.app.vault.read(note);
+                            await MarkdownRenderer.render(
+                                this.app,
+                                content,
+                                this.previewContainer,
+                                note.path,
+                                this
+                            );
+                        } catch (error) {
+                            console.error('预览加载失败:', error);
+                        }
+                    });
+                });
+            }
+        }
+    }
+
+    // 添加获取指定月份笔记的方法
+    private getNotesByDate(year: number, month: number): Record<string, TFile[]> {
+        const notesByDate: Record<string, TFile[]> = {};
+        const files = this.app.vault.getMarkdownFiles();
+        
+        files.forEach(file => {
+            const fileDate = new Date(file.stat.mtime);
+            if (fileDate.getFullYear() === year && fileDate.getMonth() === month) {
+                const dateStr = fileDate.toISOString().split('T')[0];
+                if (!notesByDate[dateStr]) {
+                    notesByDate[dateStr] = [];
+                }
+                notesByDate[dateStr].push(file);
+            }
+        });
+        
+        return notesByDate;
+    }
+
+    // 添加格式化月份标题的方法
+    private formatMonthTitle(date: Date): string {
+        return `${date.getFullYear()}年${date.getMonth() + 1}月`;
     }
 
 }
