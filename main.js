@@ -137,6 +137,15 @@ var CardView = class extends import_obsidian.ItemView {
     if (mainLayoutElement) {
       mainLayoutElement.insertBefore(this.calendarContainer, mainLayoutElement.firstChild);
     }
+    const cardContainer = containerEl.querySelector(".card-container");
+    cardContainer.addEventListener("click", (e) => {
+      if (e.target === cardContainer) {
+        const cards = cardContainer.querySelectorAll(".note-card");
+        cards.forEach((card) => {
+          card.classList.remove("selected");
+        });
+      }
+    });
   }
   /**
    * 加载所有标签并创建标签过滤器
@@ -414,7 +423,7 @@ var CardView = class extends import_obsidian.ItemView {
     };
     this.previewResizer.addEventListener("mousedown", startResize);
   }
-  // 添加内容区域宽度调整方法
+  // 添加内��区域宽度调整方法
   adjustContentWidth() {
     const mainLayout = this.containerEl.querySelector(".main-layout");
     const previewWidth = this.previewContainer.offsetWidth;

@@ -214,6 +214,7 @@
     padding: 1rem
     transition: all 0.2s ease
     justify-content: center
+    
 
     // 卡片布局优化   
     .note-card 
@@ -224,11 +225,20 @@
       border-radius: 8px
       border: 1px solid var(--background-modifier-border)
       cursor: pointer
-      transition: all 0.2s ease
+      transition: all 0.3s ease-in-out
+      opacity: 1
+      transform: scale(1)
       overflow: hidden
+      
+      // 删除时的动画
+      &.removing
+        opacity: 0
+        transform: scale(0.8)
+      
       &:hover 
         transform: translateY(-2px)
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1)
+      
       &.selected 
         border: 2px solid var(--interactive-accent)
         box-shadow: 0 0 8px rgba(var(--interactive-accent-rgb), 0.3)

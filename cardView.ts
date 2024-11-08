@@ -163,6 +163,20 @@ export class CardView extends ItemView {
         if (mainLayoutElement) {
             mainLayoutElement.insertBefore(this.calendarContainer, mainLayoutElement.firstChild);
         }
+
+        // 在卡片容器的事件处理中添加
+        const cardContainer = containerEl.querySelector('.card-container');
+        if (cardContainer) {
+            cardContainer.addEventListener('click', (e) => {
+                // 如果点击的是容器本身(而不是卡片)
+                if(e.target === cardContainer) {
+                    // 移除所有卡片的selected类
+                    const cards = cardContainer.querySelectorAll('.note-card');
+                cards.forEach(card => {
+                    card.classList.remove('selected');
+                });
+            }
+        });
     }
 
     /**
@@ -172,7 +186,7 @@ export class CardView extends ItemView {
         const tags = this.getAllTags();
         
         // 添加 "All" 标签
-        const allTagBtn = this.tagContainer.createEl('button', { 
+        const allTagBtn = this.tagContainer.createEl('button', {
             text: 'All',
             cls: 'tag-btn active'  // 默认选中
         });
@@ -197,7 +211,7 @@ export class CardView extends ItemView {
 
     /**
      * 获取所有笔记中的标签
-     * @returns 去重后的标签数组
+     * @returns 去重后的标签组
      */
     private getAllTags(): string[] {
         const tags = new Set<string>();
@@ -299,7 +313,7 @@ export class CardView extends ItemView {
             console.log('点击了文件夹',e);
             e.stopPropagation();
             e.preventDefault();
-            console.log('点击了文件夹',e);
+            console.log('点了文件夹',e);
             console.log(`当前分屏页的数量: ${this.app.workspace.getLeavesOfType('file-explorer').length}`);
             console.log(`workspace:`,this.app.workspace);
            
@@ -535,7 +549,7 @@ export class CardView extends ItemView {
         this.previewResizer.addEventListener('mousedown', startResize);
     }
 
-    // 添加内容区域宽度调整方法
+    // 添加内区域宽度调整方法
     private adjustContentWidth() {
         const mainLayout = this.containerEl.querySelector('.main-layout');
         const previewWidth = this.previewContainer.offsetWidth;
@@ -882,16 +896,35 @@ export class CardView extends ItemView {
                         ).show();
 
                         if (confirm) {
-                            for (const file of files) {
-                                await this.app.vault.trash(file, true);
+                            try {
+                                // 先删除所有文件
+                                for (const file of files) {
+                                    await this.app.vault.trash(file, true);
+                                }
+
+                                // 文件删除成功后，处理UI动画
+                                files.forEach(file => {
+                                    const card = this.container.querySelector(`[data-path="${file.path}"]`);
+                                    if (card instanceof HTMLElement) {
+                                        card.addClass('removing');
+                                        // 等待动画完成后移除DOM元素
+                                        setTimeout(() => {
+                                            card.remove();
+                                            this.selectedNotes.delete(file.path);
+                                        }, 300);
+                                    }
+                                });
+                                // 显示删除成功提示
+                                console.error(`已删除 ${files.length} 个文件`);
+                            } catch (error) {
+                                console.error('删除文件失败:', error);
                             }
-                            this.refreshView();
                         }
                     });
             });
         }
 
-        menu.showAtMouseEvent(event);
+        menu.showAtMouseEvent(event);//显示右键菜单
     }
 
     // 修改调整卡片大小的方法
@@ -1305,7 +1338,7 @@ export class CardView extends ItemView {
         });
     }
 
-    // 添加删除空白笔记的方法
+    // 添加删除白笔记的方法
     private async deleteEmptyNotes() {
         const selectedFiles = this.getSelectedFiles();
         if (selectedFiles.length === 0) {
