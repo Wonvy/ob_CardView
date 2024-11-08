@@ -919,7 +919,7 @@ var CardView = class extends import_obsidian.ItemView {
   setupSearch() {
     const debounce = (fn, delay) => {
       let timeoutId;
-      return function(...args) {
+      return (...args) => {
         clearTimeout(timeoutId);
         timeoutId = setTimeout(() => fn.apply(this, args), delay);
       };

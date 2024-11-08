@@ -1236,7 +1236,7 @@ export class CardView extends ItemView {
         // 使用防抖来处理快速输入
         const debounce = (fn: Function, delay: number) => {
             let timeoutId: NodeJS.Timeout;
-            return function (...args: any[]) {
+            return  (...args: any[]) => {
                 clearTimeout(timeoutId);
                 timeoutId = setTimeout(() => fn.apply(this, args), delay);
             };
