@@ -10,7 +10,7 @@ interface CardViewPluginSettings {
 
 const DEFAULT_SETTINGS: CardViewPluginSettings = {
     defaultView: 'card',
-    cardWidth: 281,
+    cardWidth: 280,
     minCardWidth: 280,
     maxCardWidth: 600
 }

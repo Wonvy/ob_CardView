@@ -4,8 +4,8 @@
     "description": "在 Obsidian 中以卡片方式查看笔记，支持标签过滤和多种视图模式。",
     "main": "main.js",
     "scripts": {
-        "dev": "node esbuild.config.mjs",
-        "build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production",
+        "dev": "concurrently \"node esbuild.config.mjs\" \"npm run sass\" \"node deploy.js\"",
+        "build": "tsc -noEmit -skipLibCheck && node esbuild.config.mjs production && npm run sass:build",
         "version": "node version-bump.mjs && git add manifest.json versions.json",
         "deploy": "npm run build && node deploy.js",
         "sass": "sass styles.sass:styles.css --watch",
@@ -22,6 +22,8 @@
         "@typescript-eslint/eslint-plugin": "^5.2.0",
         "@typescript-eslint/parser": "^5.2.0",
         "builtin-modules": "^3.2.0",
+        "chokidar": "^3.6.0",
+        "concurrently": "^8.2.2",
         "esbuild-plugin-sass": "^1.0.1",
         "tslib": "2.3.1"
     },
