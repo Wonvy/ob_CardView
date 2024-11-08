@@ -246,6 +246,8 @@ var CardView = class extends import_obsidian.ItemView {
       e.stopPropagation();
       e.preventDefault();
       console.log("\u70B9\u51FB\u4E86\u6587\u4EF6\u5939", e);
+      console.log(`\u5F53\u524D\u5206\u5C4F\u9875\u7684\u6570\u91CF: ${this.app.workspace.getLeavesOfType("file-explorer").length}`);
+      console.log(`workspace:`, this.app.workspace);
       const fileExplorer = this.app.workspace.getLeavesOfType("file-explorer")[0];
       if (fileExplorer) {
         console.log("fileExplorer", fileExplorer);
@@ -276,7 +278,8 @@ var CardView = class extends import_obsidian.ItemView {
     try {
       const content = await this.app.vault.read(file);
       const noteContent = cardContent.createDiv("note-content");
-      await import_obsidian.MarkdownRenderer.renderMarkdown(
+      await import_obsidian.MarkdownRenderer.render(
+        this.app,
         content,
         noteContent,
         file.path,
@@ -289,7 +292,8 @@ var CardView = class extends import_obsidian.ItemView {
         noteContent.style.opacity = "1";
         try {
           this.previewContainer.empty();
-          await import_obsidian.MarkdownRenderer.renderMarkdown(
+          await import_obsidian.MarkdownRenderer.render(
+            this.app,
             content,
             this.previewContainer,
             file.path,

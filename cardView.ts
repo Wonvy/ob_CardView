@@ -297,6 +297,11 @@ export class CardView extends ItemView {
             e.stopPropagation();
             e.preventDefault();
             console.log('点击了文件夹',e);
+            console.log(`当前分屏页的数量: ${this.app.workspace.getLeavesOfType('file-explorer').length}`);
+            console.log(`workspace:`,this.app.workspace);
+           
+
+
             
             // 打开文件夹
             const fileExplorer = this.app.workspace.getLeavesOfType('file-explorer')[0];
@@ -304,6 +309,7 @@ export class CardView extends ItemView {
                 console.log('fileExplorer',fileExplorer);
                 // 激活文件浏览器视图
                 this.app.workspace.revealLeaf(fileExplorer);
+
                 
                 // 获取文件浏览器视图实例
                 const fileExplorerView = fileExplorer.view as any;
@@ -346,14 +352,14 @@ export class CardView extends ItemView {
             
             // 创建笔记内容容器
             const noteContent = cardContent.createDiv('note-content');
-            
-            // 渲染 Markdown 内容
-            await MarkdownRenderer.renderMarkdown(
+            // 修改渲染选项以支持图片
+            await MarkdownRenderer.render(
+                this.app,
                 content,
                 noteContent,
                 file.path,
-                this 
-            );
+                this
+            )
 
             // 鼠标悬停事件
             card.addEventListener('mouseenter', async () => {
@@ -365,7 +371,8 @@ export class CardView extends ItemView {
                 // 在预览栏中显示完整内容
                 try {
                     this.previewContainer.empty();
-                    await MarkdownRenderer.renderMarkdown(
+                    await MarkdownRenderer.render(
+                        this.app,
                         content,
                         this.previewContainer,
                         file.path,
@@ -594,7 +601,7 @@ export class CardView extends ItemView {
             new Date(b).getTime() - new Date(a).getTime()
         );
 
-        // 创建时间轴
+        // 创建间轴
         for (const date of sortedDates) {
             const dateGroup = timelineContainer.createDiv('timeline-date-group');
             
