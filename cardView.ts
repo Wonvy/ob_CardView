@@ -16,14 +16,14 @@ export const VIEW_TYPE_CARD = 'card-view';
 export class CardView extends ItemView {
     private plugin: CardViewPlugin;
     private currentView: 'card' | 'list' | 'timeline';
-    private container: HTMLElement;
-    private tagContainer: HTMLElement;
-    private contentContainer: HTMLElement;
-    private previewContainer: HTMLElement;
-    private previewResizer: HTMLElement;
+    private container: HTMLElement = createDiv();  
+    private tagContainer: HTMLElement = createDiv();  
+    private contentContainer: HTMLElement = createDiv();  
+    private previewContainer: HTMLElement = createDiv();  
+    private previewResizer: HTMLElement = createDiv();  
     private isPreviewCollapsed: boolean = false;
     private currentFolder: string | null = null;
-    private searchInput: HTMLInputElement;
+    private searchInput: HTMLInputElement = createEl('input');  
     private currentSearchTerm: string = '';
     private selectedTags: Set<string> = new Set();
     private selectedNotes: Set<string> = new Set();
@@ -32,7 +32,7 @@ export class CardView extends ItemView {
     private cardSize: number = 280;  // 默认卡片宽度
     private readonly MIN_CARD_SIZE = 280;  // 最小卡片宽度
     private readonly MAX_CARD_SIZE = 600;  // 最大卡片宽度
-    private calendarContainer: HTMLElement;
+    private calendarContainer: HTMLElement = createDiv();
     private isCalendarVisible: boolean = false;
     private currentDate: Date = new Date();
     private currentFilter: { type: 'date' | 'none', value?: string } = { type: 'none' };
@@ -226,7 +226,7 @@ export class CardView extends ItemView {
             
             // 创建图
             const iconSpan = btn.createSpan({ cls: 'view-switch-icon' });
-            iconSpan.innerHTML = iconHtml[view.icon];
+            iconSpan.innerHTML = iconHtml[view.icon as keyof typeof iconHtml];  // 明确类型
             
             // 添加文字
             btn.createSpan({ text: view.text, cls: 'view-switch-text' });
@@ -522,7 +522,7 @@ export class CardView extends ItemView {
         const previewWidth = this.previewContainer.offsetWidth;
         const contentSection = this.containerEl.querySelector('.content-section');
         
-        if (mainLayout && contentSection) {
+        if (mainLayout instanceof HTMLElement && contentSection instanceof HTMLElement) {
             const totalWidth = mainLayout.offsetWidth;
             const newContentWidth = totalWidth - previewWidth - 4; // 4px 是分隔线宽度
             contentSection.style.width = `${newContentWidth}px`;
@@ -703,7 +703,7 @@ export class CardView extends ItemView {
                 const fileDate = new Date(file.stat.mtime);
                 const fileDateStr = fileDate.toISOString().split('T')[0];
                 
-                if (this.currentFilter.value.length === 7) {
+               if (this.currentFilter.value?.length === 7) {
                     // 按月份过滤
                     matchesDate = fileDateStr.startsWith(this.currentFilter.value);
                 } else {
@@ -717,7 +717,7 @@ export class CardView extends ItemView {
 
         // 创建卡片并高亮搜索词
         const cards = await Promise.all(
-            filteredFiles.map(file => this.createNoteCard(file, this.currentSearchTerm))
+            filteredFiles.map(file => this.createNoteCard(file))  
         );
 
         cards.forEach(card => {
@@ -1243,7 +1243,7 @@ class FileSelectionModal extends Modal {
 // 添加确认对话框
 class ConfirmModal extends Modal {
     private result: boolean = false;
-    private resolvePromise: (value: boolean) => void;
+    private resolvePromise: (value: boolean) => void = () => {};  // 添加默认值
     private title: string;
     private message: string;
 

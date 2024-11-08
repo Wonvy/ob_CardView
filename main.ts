@@ -1,4 +1,4 @@
-import { App, Plugin, PluginSettingTab, Setting, TFile, TFolder,WorkspaceLeaf } from 'obsidian';
+import { App, PluginManifest,Plugin, PluginSettingTab, Setting, TFile, TFolder,WorkspaceLeaf } from 'obsidian';
 import { CardView, VIEW_TYPE_CARD } from './cardView';
 
 interface CardViewPluginSettings {
@@ -32,7 +32,7 @@ class CardViewSettingTab extends PluginSettingTab {
             .setDesc('选择默认的视图模式')
             .addDropdown(dropdown => {
                 dropdown
-                    .addOption('card', '卡片 视图')
+                    .addOption('card', '卡片视图')
                     .addOption('list', '列表视图')
                     .addOption('timeline', '时间轴视图')
                     .setValue(this.plugin.settings.defaultView);
@@ -93,6 +93,11 @@ class CardViewSettingTab extends PluginSettingTab {
 export default class CardViewPlugin extends Plugin {
     settings: CardViewPluginSettings;
 
+    constructor(app: App, manifest: PluginManifest) { // 添加 manifest 参数
+        super(app, manifest); // 传递 manifest
+        this.settings = DEFAULT_SETTINGS; // 初始化 settings
+    }
+    
     async onload() {
         await this.loadSettings();
 
