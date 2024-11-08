@@ -396,6 +396,7 @@ export class CardView extends ItemView {
             openButton.addEventListener('click', async (e) => {
                 e.stopPropagation();
                 await this.openInAppropriateLeaf(file);
+                card.addClass('selected'); // 给该卡片添加selected类
             });
 
             // 单击选择

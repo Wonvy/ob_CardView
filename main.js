@@ -312,6 +312,7 @@ var CardView = class extends import_obsidian.ItemView {
       openButton.addEventListener("click", async (e) => {
         e.stopPropagation();
         await this.openInAppropriateLeaf(file);
+        card.addClass("selected");
       });
       card.addEventListener("click", (e) => {
         this.handleCardSelection(file.path, e);
