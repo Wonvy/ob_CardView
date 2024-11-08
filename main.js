@@ -132,6 +132,13 @@ var CardView = class extends import_obsidian.ItemView {
       }
     }, { passive: false });
     await this.loadNotes();
+    this.calendarContainer = createDiv();
+    this.calendarContainer.addClass("calendar-container");
+    this.calendarContainer.style.display = "none";
+    const mainLayoutElement = containerEl.querySelector(".main-layout");
+    if (mainLayoutElement) {
+      mainLayoutElement.insertBefore(this.calendarContainer, mainLayoutElement.firstChild);
+    }
   }
   /**
    * 加载所有标签并创建标签过滤器
@@ -678,6 +685,7 @@ var CardView = class extends import_obsidian.ItemView {
   }
   // 切换日历的显示状态
   toggleCalendar() {
+    console.log("\u5207\u6362\u65E5\u5386\u663E\u793A\u72B6\u6001, \u5F53\u524D\u72B6\u6001:", this.isCalendarVisible);
     this.isCalendarVisible = !this.isCalendarVisible;
     if (this.isCalendarVisible) {
       this.showCalendar();
@@ -685,6 +693,10 @@ var CardView = class extends import_obsidian.ItemView {
     } else {
       this.hideCalendar();
       this.clearDateFilter();
+    }
+    const calendarBtn = this.containerEl.querySelector(".calendar-toggle-button");
+    if (calendarBtn) {
+      calendarBtn.toggleClass("active", this.isCalendarVisible);
     }
   }
   // 添加按月份过滤的方法
@@ -699,29 +711,40 @@ var CardView = class extends import_obsidian.ItemView {
   }
   // 显示日历
   showCalendar() {
-    var _a;
+    console.log("\u5F00\u59CB\u663E\u793A\u65E5\u5386");
     if (!this.calendarContainer) {
-      const contentSection = this.containerEl.querySelector(".content-section");
-      if (!contentSection) return;
-      this.calendarContainer = createDiv("calendar-container");
-      (_a = contentSection.parentElement) == null ? void 0 : _a.insertBefore(this.calendarContainer, contentSection);
+      console.log("\u521B\u5EFA\u65E5\u5386\u5BB9\u5668");
+      const mainLayout2 = this.containerEl.querySelector(".main-layout");
+      if (!mainLayout2) {
+        console.error("\u672A\u627E\u5230 main-layout \u5143\u7D20");
+        return;
+      }
+      this.calendarContainer = createDiv();
+      this.calendarContainer.addClass("calendar-container");
+      mainLayout2.insertBefore(this.calendarContainer, mainLayout2.firstChild);
+      console.log("\u65E5\u5386\u5BB9\u5668\u5DF2\u521B\u5EFA:", this.calendarContainer);
     }
     this.calendarContainer.empty();
-    this.renderCalendar();
     this.calendarContainer.style.display = "block";
+    this.renderCalendar();
     const mainLayout = this.containerEl.querySelector(".main-layout");
     if (mainLayout) {
       mainLayout.addClass("with-calendar");
+      console.log("\u5DF2\u6DFB\u52A0 with-calendar \u7C7B\u5230 main-layout");
     }
+    this.calendarContainer.style.opacity = "1";
+    this.calendarContainer.style.visibility = "visible";
   }
   // 隐藏日历 
   hideCalendar() {
+    console.log("\u9690\u85CF\u65E5\u5386");
     if (this.calendarContainer) {
       this.calendarContainer.style.display = "none";
       this.calendarContainer.empty();
       const mainLayout = this.containerEl.querySelector(".main-layout");
       if (mainLayout) {
         mainLayout.removeClass("with-calendar");
+        console.log("\u5DF2\u79FB\u9664 with-calendar \u7C7B");
       }
     }
   }
@@ -1013,7 +1036,7 @@ var CardViewSettingTab = class extends import_obsidian2.PluginSettingTab {
         this.plugin.updateAllCardViews();
       }
     }));
-    new import_obsidian2.Setting(containerEl).setName("\u6700\u5C0F\u5BBD\u5EA6").setDesc("\u8BBE\u7F6E\u5361\u7247\u7684\u6700\u5C0F\u5BBD\u5EA6\uFF08\u50CF\u7D20\uFF09").addText((text) => text.setPlaceholder("280").setValue(this.plugin.settings.minCardWidth.toString()).onChange(async (value) => {
+    new import_obsidian2.Setting(containerEl).setName("\u6700\u5C0F \u5BBD\u5EA6").setDesc("\u8BBE\u7F6E\u5361\u7247\u7684\u6700\u5C0F\u5BBD\u5EA6\uFF08\u50CF\u7D20\uFF09").addText((text) => text.setPlaceholder("280").setValue(this.plugin.settings.minCardWidth.toString()).onChange(async (value) => {
       const width = Number(value);
       if (!isNaN(width) && width >= 200) {
         this.plugin.settings.minCardWidth = width;

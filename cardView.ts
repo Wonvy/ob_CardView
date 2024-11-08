@@ -149,6 +149,17 @@ export class CardView extends ItemView {
         }, { passive: false });
 
         await this.loadNotes();
+
+        // 初始化日历容器
+        this.calendarContainer = createDiv();
+        this.calendarContainer.addClass('calendar-container');
+        this.calendarContainer.style.display = 'none';
+        
+        // 将日历容器添加到主布局中
+        const mainLayoutElement = containerEl.querySelector('.main-layout');  // 修改变量名
+        if (mainLayoutElement) {
+            mainLayoutElement.insertBefore(this.calendarContainer, mainLayoutElement.firstChild);
+        }
     }
 
     /**
@@ -882,7 +893,10 @@ export class CardView extends ItemView {
 
     // 切换日历的显示状态
     private toggleCalendar() {
+        console.log('切换日历显示状态, 当前状态:', this.isCalendarVisible);
+        
         this.isCalendarVisible = !this.isCalendarVisible;
+        
         if (this.isCalendarVisible) {
             this.showCalendar();
             // 显示当前月份的所有笔记
@@ -891,6 +905,12 @@ export class CardView extends ItemView {
             this.hideCalendar();
             // 清除日期过滤
             this.clearDateFilter();
+        }
+        
+        // 更新按钮状态
+        const calendarBtn = this.containerEl.querySelector('.calendar-toggle-button');
+        if (calendarBtn) {
+            calendarBtn.toggleClass('active', this.isCalendarVisible);
         }
     }
 
@@ -907,36 +927,60 @@ export class CardView extends ItemView {
 
     // 显示日历
     private showCalendar() {
+        // 添加调试日志
+        console.log('开始显示日历');
+        
+        // 确保 calendarContainer 存在
         if (!this.calendarContainer) {
-            // 修改：将日历容器添加到 content-section 之前
-            const contentSection = this.containerEl.querySelector('.content-section');
-            if (!contentSection) return;
+            console.log('创建日历容器');
+            const mainLayout = this.containerEl.querySelector('.main-layout');
+            if (!mainLayout) {
+                console.error('未找到 main-layout 元素');
+                return;
+            }
             
-            // 在 content-section 之前插入日历容器
-            this.calendarContainer = createDiv('calendar-container');
-            contentSection.parentElement?.insertBefore(this.calendarContainer, contentSection);
+            // 创建日历容器
+            this.calendarContainer = createDiv();
+            this.calendarContainer.addClass('calendar-container');
+            
+            // 将日历容器插入到 main-layout 的开头
+            mainLayout.insertBefore(this.calendarContainer, mainLayout.firstChild);
+            
+            console.log('日历容器已创建:', this.calendarContainer);
         }
+        
+        // 清空并显示日历容器
         this.calendarContainer.empty();
-        this.renderCalendar();
         this.calendarContainer.style.display = 'block';
         
-        // 修改：将 with-calendar 类添加到 main-layout
+        // 添加日历内容
+        this.renderCalendar();
+        
+        // 添加 with-calendar 类到 main-layout
         const mainLayout = this.containerEl.querySelector('.main-layout');
         if (mainLayout) {
             mainLayout.addClass('with-calendar');
+            console.log('已添加 with-calendar 类到 main-layout');
         }
+        
+        // 确保日历容器可见
+        this.calendarContainer.style.opacity = '1';
+        this.calendarContainer.style.visibility = 'visible';
     }
 
     // 隐藏日历 
     private hideCalendar() {
+        console.log('隐藏日历');
+        
         if (this.calendarContainer) {
             this.calendarContainer.style.display = 'none';
             this.calendarContainer.empty();
             
-            // 修改：从 main-layout 移除 with-calendar 类
+            // 移除 with-calendar 类
             const mainLayout = this.containerEl.querySelector('.main-layout');
             if (mainLayout) {
                 mainLayout.removeClass('with-calendar');
+                console.log('已移除 with-calendar 类');
             }
         }
     }

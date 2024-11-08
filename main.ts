@@ -61,7 +61,7 @@ class CardViewSettingTab extends PluginSettingTab {
                 }));
 
         new Setting(containerEl)
-            .setName('最小宽度')
+            .setName('最小 宽度')
             .setDesc('设置卡片的最小宽度（像素）')
             .addText(text => text
                 .setPlaceholder('280')
@@ -168,4 +168,4 @@ export default class CardViewPlugin extends Plugin {
         this.settings.cardWidth = width;
         await this.saveSettings();
     }
-} 
+}
