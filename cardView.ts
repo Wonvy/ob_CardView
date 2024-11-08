@@ -501,16 +501,15 @@ async onOpen() {
         this.container.setAttribute('data-view', view);
         this.container.empty();
         
-        // 获取 content-section 元素
         const contentSection = this.containerEl.querySelector('.content-section');
         if (contentSection) {
-            // 移除所有视图相关的类名
             contentSection.removeClass('view-card', 'view-list', 'view-timeline', 'view-month');
-            // 添加当前视图的类名
             contentSection.addClass(`view-${view}`);
         }
         
-        if (view === 'timeline') {
+        if (view === 'list') {
+            this.createListView();
+        } else if (view === 'timeline') {
             this.createTimelineView();
         } else if (view === 'month') {
             this.createMonthView();
@@ -933,7 +932,7 @@ async onOpen() {
                                         }, 300);
                                     }
                                 });
-                                // 显示删除成功提示
+                                // 显示���除成功提示
                                 console.error(`已删除 ${files.length} 个文件`);
                             } catch (error) {
                                 console.error('删除文件失败:', error);
@@ -1003,7 +1002,7 @@ async onOpen() {
             this.filterNotesByMonth(this.currentDate);
         } else {
             this.hideCalendar();
-            // 清除日期��滤
+            // 清除日期滤
             this.clearDateFilter();
         }
         
@@ -1619,6 +1618,98 @@ async onOpen() {
     private navigateYear(delta: number) {
         this.currentDate = new Date(this.currentDate.getFullYear() + delta, this.currentDate.getMonth());
         this.updateMonthView();
+    }
+
+    // 添加创建列表视图的方法
+    private async createListView() {
+        // 获取所有笔记并按文件夹分组
+        const files = this.app.vault.getMarkdownFiles();
+        const notesByFolder = new Map<string, TFile[]>();
+        
+        // 按文件夹分组并按修改时间排序
+        files.forEach(file => {
+            const folderPath = file.parent ? file.parent.path : '/';
+            if (!notesByFolder.has(folderPath)) {
+                notesByFolder.set(folderPath, []);
+            }
+            notesByFolder.get(folderPath)?.push(file);
+        });
+        
+        // 对每个文件夹中的笔记按修改时间排序
+        notesByFolder.forEach(notes => {
+            notes.sort((a, b) => b.stat.mtime - a.stat.mtime);
+        });
+
+        // 创建文件夹组
+        for (const [folderPath, notes] of notesByFolder) {
+            const folderGroup = this.container.createDiv('folder-group');
+            
+            // 创建文件夹标题
+            const folderTitle = folderGroup.createDiv('folder-title');
+            
+            // 添加文件夹图标
+            const folderIcon = folderTitle.createDiv('folder-icon');
+            folderIcon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>`;
+            
+            // 添加文件夹名称
+            const folderName = folderTitle.createDiv('folder-name');
+            folderName.setText(folderPath === '/' ? '根目录' : folderPath);
+            
+            // 添加笔记数量
+            const noteCount = folderTitle.createDiv('note-count');
+            noteCount.setText(`${notes.length} 个笔记`);
+            
+            // 创建笔记列表容器
+            const notesContainer = folderGroup.createDiv('notes-container');
+            
+            // 添加笔记项
+            for (const note of notes) {
+                const noteItem = notesContainer.createDiv('note-item');
+                noteItem.setAttribute('data-path', note.path);
+                
+                // 添加笔记标题
+                const noteTitle = noteItem.createDiv('note-title');
+                noteTitle.setText(note.basename);
+                
+                // 添加修改日期
+                const noteDate = noteItem.createDiv('note-date');
+                noteDate.setText(new Date(note.stat.mtime).toLocaleString());
+                
+                // 添加点击事件
+                noteItem.addEventListener('click', async (e) => {
+                    // 处理笔记选择
+                    this.handleCardSelection(note.path, e);
+                    
+                    // 双击打开笔记
+                    if (e.detail === 2) {
+                        await this.openInAppropriateLeaf(note);
+                    }
+                });
+                
+                // 添加右键菜单
+                noteItem.addEventListener('contextmenu', (e) => {
+                    e.preventDefault();
+                    this.showContextMenu(e, this.getSelectedFiles());
+                });
+                
+                // 添加预览功能
+                noteItem.addEventListener('mouseenter', async () => {
+                    try {
+                        this.previewContainer.empty();
+                        const content = await this.app.vault.read(note);
+                        await MarkdownRenderer.render(
+                            this.app,
+                            content,
+                            this.previewContainer,
+                            note.path,
+                            this
+                        );
+                    } catch (error) {
+                        console.error('预览加载失败:', error);
+                    }
+                });
+            }
+        }
     }
 
 }

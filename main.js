@@ -388,7 +388,9 @@ var CardView = class extends import_obsidian.ItemView {
       contentSection.removeClass("view-card", "view-list", "view-timeline", "view-month");
       contentSection.addClass(`view-${view}`);
     }
-    if (view === "timeline") {
+    if (view === "list") {
+      this.createListView();
+    } else if (view === "timeline") {
       this.createTimelineView();
     } else if (view === "month") {
       this.createMonthView();
@@ -1190,6 +1192,66 @@ ${emptyNotes.map((file) => file.basename).join("\n")}`
   navigateYear(delta) {
     this.currentDate = new Date(this.currentDate.getFullYear() + delta, this.currentDate.getMonth());
     this.updateMonthView();
+  }
+  // 添加创建列表视图的方法
+  async createListView() {
+    const files = this.app.vault.getMarkdownFiles();
+    const notesByFolder = /* @__PURE__ */ new Map();
+    files.forEach((file) => {
+      var _a;
+      const folderPath = file.parent ? file.parent.path : "/";
+      if (!notesByFolder.has(folderPath)) {
+        notesByFolder.set(folderPath, []);
+      }
+      (_a = notesByFolder.get(folderPath)) == null ? void 0 : _a.push(file);
+    });
+    notesByFolder.forEach((notes) => {
+      notes.sort((a, b) => b.stat.mtime - a.stat.mtime);
+    });
+    for (const [folderPath, notes] of notesByFolder) {
+      const folderGroup = this.container.createDiv("folder-group");
+      const folderTitle = folderGroup.createDiv("folder-title");
+      const folderIcon = folderTitle.createDiv("folder-icon");
+      folderIcon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>`;
+      const folderName = folderTitle.createDiv("folder-name");
+      folderName.setText(folderPath === "/" ? "\u6839\u76EE\u5F55" : folderPath);
+      const noteCount = folderTitle.createDiv("note-count");
+      noteCount.setText(`${notes.length} \u4E2A\u7B14\u8BB0`);
+      const notesContainer = folderGroup.createDiv("notes-container");
+      for (const note of notes) {
+        const noteItem = notesContainer.createDiv("note-item");
+        noteItem.setAttribute("data-path", note.path);
+        const noteTitle = noteItem.createDiv("note-title");
+        noteTitle.setText(note.basename);
+        const noteDate = noteItem.createDiv("note-date");
+        noteDate.setText(new Date(note.stat.mtime).toLocaleString());
+        noteItem.addEventListener("click", async (e) => {
+          this.handleCardSelection(note.path, e);
+          if (e.detail === 2) {
+            await this.openInAppropriateLeaf(note);
+          }
+        });
+        noteItem.addEventListener("contextmenu", (e) => {
+          e.preventDefault();
+          this.showContextMenu(e, this.getSelectedFiles());
+        });
+        noteItem.addEventListener("mouseenter", async () => {
+          try {
+            this.previewContainer.empty();
+            const content = await this.app.vault.read(note);
+            await import_obsidian.MarkdownRenderer.render(
+              this.app,
+              content,
+              this.previewContainer,
+              note.path,
+              this
+            );
+          } catch (error) {
+            console.error("\u9884\u89C8\u52A0\u8F7D\u5931\u8D25:", error);
+          }
+        });
+      }
+    }
   }
 };
 var ConfirmModal = class extends import_obsidian.Modal {
