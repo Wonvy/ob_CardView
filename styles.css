@@ -632,15 +632,28 @@
   line-height: 20px;
   display: inline-flex;
   align-items: center;
+  gap: 4px;
 }
 .tag-btn:hover {
   background-color: var(--background-modifier-hover);
   color: var(--text-normal);
 }
+.tag-btn:hover .tag-count {
+  color: var(--interactive-accent);
+}
 .tag-btn.active {
   background-color: var(--interactive-accent);
   color: var(--text-on-accent);
   border-color: var(--interactive-accent);
+}
+.tag-btn.active .tag-count {
+  color: var(--text-on-accent);
+}
+.tag-btn .tag-count {
+  color: var(--interactive-accent);
+  font-weight: 600;
+  font-size: 0.9em;
+  transition: color 0.2s ease;
 }
 
 /* 隐藏卡片内容中的标题 */

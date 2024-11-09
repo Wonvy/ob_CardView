@@ -190,26 +190,43 @@ async onOpen() {
         const tags = new Set<string>();
         this.app.vault.getMarkdownFiles().forEach(file => {
             const cache = this.app.metadataCache.getFileCache(file);
-            if (cache?.tags) {
-                cache.tags.forEach(tag => tags.add(tag.tag));
+            if (cache?.tags) { // 如果存在标签
+                cache.tags.forEach(tag => tags.add(tag.tag));// 添加标签
             }
         });
         return Array.from(tags);
     }
 
-
+    private getTagsWithCount(): Map<string, number> {
+        const tagCounts = new Map<string, number>();
+        
+        this.app.vault.getMarkdownFiles().forEach(file => {
+            const cache = this.app.metadataCache.getFileCache(file);
+            if (cache?.tags) {
+                cache.tags.forEach(tag => {
+                    const count = tagCounts.get(tag.tag) || 0;
+                    tagCounts.set(tag.tag, count + 1);
+                });
+            }
+        });
+        
+        return tagCounts;
+    }
 
     /**
      * 加载所有标签并创建标签过滤器
      */
     private async loadTags() {
-        const tags = await this.getAllTags();  // 确保使用 await
+        const tagCounts = this.getTagsWithCount();
+        this.tagContainer.empty();
 
         // 添加 "All" 标签
         const allTagBtn = this.tagContainer.createEl('button', {
-            text: 'All',
-            cls: 'tag-btn active'  // 默认选中
+            text: this.plugin.settings.showTagCount ? 
+                `All ${this.app.vault.getMarkdownFiles().length}` : 'All',
+            cls: 'tag-btn active'
         });
+        
         allTagBtn.addEventListener('click', () => {
             this.clearTagSelection();
             allTagBtn.addClass('active');
@@ -217,18 +234,32 @@ async onOpen() {
         });
 
         // 添加其他标签
-        tags.forEach(tag => {
-            const tagBtn = this.tagContainer.createEl('button', { 
-                text: tag,
-                cls: 'tag-btn'
+        Array.from(tagCounts.entries())
+            .sort(([a], [b]) => a.localeCompare(b))
+            .forEach(([tag, count]) => {
+                const tagBtn = this.tagContainer.createEl('button', { 
+                    cls: 'tag-btn'
+                });
+                
+                // 创建标签文本
+                const tagText = tagBtn.createSpan({
+                    text: tag
+                });
+                
+                // 如果需要显示数量,添加数量标签
+                if (this.plugin.settings.showTagCount) {
+                    tagBtn.createSpan({
+                        text: count.toString(),
+                        cls: 'tag-count'
+                    });
+                }
+                
+                tagBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    this.toggleTag(tag, tagBtn);
+                });
             });
-            tagBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                this.toggleTag(tag, tagBtn);
-            });
-        });
-    } // 确保方法结束
-
+    }
 
     /**
      * 创建视图切换按钮
@@ -384,7 +415,7 @@ async onOpen() {
             // 创建笔记内容容器
             const noteContent = cardContent.createDiv('note-content');
             
-            // 如果有搜索词，先处理内容中的搜索词高亮
+            // 如果有搜索词，先处内容中的搜索词高亮
             if (this.currentSearchTerm) {
                 // 将 Markdown 转换为 HTML
                 await MarkdownRenderer.render(
@@ -595,7 +626,7 @@ async onOpen() {
         if (fileExplorer) {
             const fileExplorerView = fileExplorer.view as any;
             
-            // 如果是根目录，直接展开根目录
+            // 如果是目录，直接展开根目录
             if (folder === '根目录') {
                 if (fileExplorerView.expandFolder) {
                     await fileExplorerView.expandFolder('/');
@@ -636,7 +667,7 @@ async onOpen() {
                 '# ' + fileName + '\n\n'
             );
             
-            // 在新标签页中打开笔 记
+            // 在新标签页中打开笔记
             const leaf = this.app.workspace.getLeaf('tab');
             await leaf.openFile(file);
             
@@ -1540,7 +1571,7 @@ async onOpen() {
             grid.createDiv('month-day empty');
         }
         
-        // 填充日期���子
+        // 填充日期子
         for (let day = 1; day <= lastDay.getDate(); day++) {
             const dateCell = grid.createDiv('month-day');
             const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
@@ -1777,6 +1808,10 @@ async onOpen() {
         });
     }
 
+    // 添加刷新标签的方法
+    public refreshTags() {
+        this.loadTags();
+    }
 }
 
 // 添加确认对话框

@@ -165,33 +165,53 @@ var CardView = class extends import_obsidian.ItemView {
     });
     return Array.from(tags);
   }
+  getTagsWithCount() {
+    const tagCounts = /* @__PURE__ */ new Map();
+    this.app.vault.getMarkdownFiles().forEach((file) => {
+      const cache = this.app.metadataCache.getFileCache(file);
+      if (cache == null ? void 0 : cache.tags) {
+        cache.tags.forEach((tag) => {
+          const count = tagCounts.get(tag.tag) || 0;
+          tagCounts.set(tag.tag, count + 1);
+        });
+      }
+    });
+    return tagCounts;
+  }
   /**
    * 加载所有标签并创建标签过滤器
    */
   async loadTags() {
-    const tags = await this.getAllTags();
+    const tagCounts = this.getTagsWithCount();
+    this.tagContainer.empty();
     const allTagBtn = this.tagContainer.createEl("button", {
-      text: "All",
+      text: this.plugin.settings.showTagCount ? `All ${this.app.vault.getMarkdownFiles().length}` : "All",
       cls: "tag-btn active"
-      // 默认选中
     });
     allTagBtn.addEventListener("click", () => {
       this.clearTagSelection();
       allTagBtn.addClass("active");
       this.refreshView();
     });
-    tags.forEach((tag) => {
+    Array.from(tagCounts.entries()).sort(([a], [b]) => a.localeCompare(b)).forEach(([tag, count]) => {
       const tagBtn = this.tagContainer.createEl("button", {
-        text: tag,
         cls: "tag-btn"
       });
+      const tagText = tagBtn.createSpan({
+        text: tag
+      });
+      if (this.plugin.settings.showTagCount) {
+        tagBtn.createSpan({
+          text: count.toString(),
+          cls: "tag-count"
+        });
+      }
       tagBtn.addEventListener("click", (e) => {
         e.stopPropagation();
         this.toggleTag(tag, tagBtn);
       });
     });
   }
-  // 确保方法结束
   /**
    * 创建视图切换按钮
    * @param container - 按钮容器元素
@@ -1301,6 +1321,10 @@ ${emptyNotes.map((file) => file.basename).join("\n")}`
       }
     });
   }
+  // 添加刷新标签的方法
+  refreshTags() {
+    this.loadTags();
+  }
 };
 var ConfirmModal = class extends import_obsidian.Modal {
   constructor(app, title, message) {
@@ -1454,7 +1478,8 @@ var DEFAULT_SETTINGS = {
   defaultView: "card",
   cardWidth: 280,
   minCardWidth: 280,
-  maxCardWidth: 600
+  maxCardWidth: 600,
+  showTagCount: false
 };
 var CardViewSettingTab = class extends import_obsidian2.PluginSettingTab {
   constructor(app, plugin) {
@@ -1494,6 +1519,11 @@ var CardViewSettingTab = class extends import_obsidian2.PluginSettingTab {
         this.plugin.settings.maxCardWidth = width;
         await this.plugin.saveSettings();
       }
+    }));
+    new import_obsidian2.Setting(containerEl).setName("\u663E\u793A\u6807\u7B7E\u5F15\u7528\u6570\u91CF").setDesc("\u5728\u6807\u7B7E\u540E\u663E\u793A\u4F7F\u7528\u8BE5\u6807\u7B7E\u7684\u7B14\u8BB0\u6570\u91CF").addToggle((toggle) => toggle.setValue(this.plugin.settings.showTagCount).onChange(async (value) => {
+      this.plugin.settings.showTagCount = value;
+      await this.plugin.saveSettings();
+      this.plugin.refreshAllTags();
     }));
   }
 };
@@ -1553,6 +1583,14 @@ var CardViewPlugin = class extends import_obsidian2.Plugin {
   async saveCardWidth(width) {
     this.settings.cardWidth = width;
     await this.saveSettings();
+  }
+  refreshAllTags() {
+    this.app.workspace.getLeavesOfType(VIEW_TYPE_CARD).forEach((leaf) => {
+      const view = leaf.view;
+      if (view) {
+        view.refreshTags();
+      }
+    });
   }
 };
 //# sourceMappingURL=main.js.map

@@ -6,13 +6,15 @@ interface CardViewPluginSettings {
     cardWidth: number;
     minCardWidth: number;
     maxCardWidth: number;
+    showTagCount: boolean;
 }
 
 const DEFAULT_SETTINGS: CardViewPluginSettings = {
     defaultView: 'card',
     cardWidth: 280,
     minCardWidth: 280,
-    maxCardWidth: 600
+    maxCardWidth: 600,
+    showTagCount: false
 }
 
 class CardViewSettingTab extends PluginSettingTab {
@@ -86,6 +88,17 @@ class CardViewSettingTab extends PluginSettingTab {
                         this.plugin.settings.maxCardWidth = width;
                         await this.plugin.saveSettings();
                     }
+                }));
+
+        new Setting(containerEl)
+            .setName('显示标签引用数量')
+            .setDesc('在标签后显示使用该标签的笔记数量')
+            .addToggle(toggle => toggle
+                .setValue(this.plugin.settings.showTagCount)
+                .onChange(async (value) => {
+                    this.plugin.settings.showTagCount = value;
+                    await this.plugin.saveSettings();
+                    this.plugin.refreshAllTags();
                 }));
     }
 }
@@ -167,5 +180,14 @@ export default class CardViewPlugin extends Plugin {
     async saveCardWidth(width: number) {
         this.settings.cardWidth = width;
         await this.saveSettings();
+    }
+
+    refreshAllTags() {
+        this.app.workspace.getLeavesOfType(VIEW_TYPE_CARD).forEach(leaf => {
+            const view = leaf.view as CardView;
+            if (view) {
+                view.refreshTags();
+            }
+        });
     }
 }

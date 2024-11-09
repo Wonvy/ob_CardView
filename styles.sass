@@ -644,9 +644,9 @@
 
 // 元素-标签按钮
 .tag-btn 
-  background-color: transparent  // 默认透明背景   
+  background-color: transparent
   color: var(--text-muted)
-  border: 1px solid var(--background-modifier-border)  // 添加边框   
+  border: 1px solid var(--background-modifier-border)
   border-radius: 4px
   padding: 2px 8px
   font-size: 0.85em
@@ -655,14 +655,28 @@
   height: 24px
   line-height: 20px
   display: inline-flex
-  align-items: center  
+  align-items: center
+  gap: 4px
+  
   &:hover 
     background-color: var(--background-modifier-hover)
-    color: var(--text-normal)  
+    color: var(--text-normal)
+    .tag-count
+      color: var(--interactive-accent)
+  
   &.active 
     background-color: var(--interactive-accent)
     color: var(--text-on-accent)
-    border-color: var(--interactive-accent)  
+    border-color: var(--interactive-accent)
+    .tag-count
+      color: var(--text-on-accent)
+  
+  // 标签数量样式
+  .tag-count
+    color: var(--interactive-accent)
+    font-weight: 600
+    font-size: 0.9em
+    transition: color 0.2s ease
 
 
 /* 隐藏卡片内容中的标题 */
