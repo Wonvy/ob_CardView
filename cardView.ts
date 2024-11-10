@@ -349,36 +349,21 @@ async onOpen() {
         
         // 添加点击事件
         folderPath.addEventListener('click', async (e) => {
-            console.log('点击了文件夹',e);
             e.stopPropagation();
             e.preventDefault();
-            console.log('点了文件夹',e);
-            console.log(`当前分屏页的数量: ${this.app.workspace.getLeavesOfType('file-explorer').length}`);
-            console.log(`workspace:`,this.app.workspace);
-           
 
-
-            
-            // 打开文件夹
             const fileExplorer = this.app.workspace.getLeavesOfType('file-explorer')[0];
-            if (fileExplorer) {
-                console.log('fileExplorer',fileExplorer);
-                // 激活文件浏览器视图
-                this.app.workspace.revealLeaf(fileExplorer);
 
+            if (fileExplorer) {
+                // 获取 Obsidian 的文件对象
+                const targetFile = this.app.vault.getAbstractFileByPath("时间笔记/2024-06-06_0619 简报 页面撑高距离不够.md");
                 
-                // 获取文件浏览器视图实例
-                const fileExplorerView = fileExplorer.view as any;
-                if (fileExplorerView.expandFolder) {
-                    await this.revealFolderInExplorer(folder);
-                    // 聚焦到文件浏览器
-                    fileExplorer.setEphemeralState({ focus: true });
-                    
-                    // 添加视觉反馈
-                    folderPath.addClass('folder-clicked');
-                    setTimeout(() => {
-                        folderPath.removeClass('folder-clicked');
-                    }, 200);
+                if (targetFile) {
+                    // 激活文件浏览器视图
+                    this.app.workspace.revealLeaf(fileExplorer);
+                    console.log(fileExplorer.view);
+                    (fileExplorer.view as any).revealInFileExplorer(targetFile);
+    
                 }
             }
         });
@@ -408,6 +393,7 @@ async onOpen() {
             title.setText(displayTitle);
         }
 
+        
         try {
             // 读取笔记内容
             const content = await this.app.vault.read(file);
@@ -670,7 +656,7 @@ async onOpen() {
             // 在新标签页中打开笔记
             const leaf = this.app.workspace.getLeaf('tab');
             await leaf.openFile(file);
-            
+
             // 刷新卡片视图
             this.loadNotes();
         } catch (error) {
@@ -1090,7 +1076,7 @@ async onOpen() {
         const mainLayout = this.containerEl.querySelector('.main-layout');
         if (mainLayout) {
             mainLayout.addClass('with-calendar');
-            console.log('已添加 with-calendar 类到 main-layout');
+            console.log('已添加 with-calendar 类 main-layout');
         }
         
         // 确保日历容器可见
@@ -1237,7 +1223,7 @@ async onOpen() {
         // 设置新的过滤条件
         this.currentFilter = { type: 'date', value: dateStr };
         
-        // 高亮选中的日期
+        // 高亮中的日期
         const selectedDay = this.calendarContainer.querySelector(`.calendar-day[data-date="${dateStr}"]`);
         if (selectedDay) {
             selectedDay.addClass('selected');
@@ -1274,14 +1260,31 @@ async onOpen() {
             return root !== currentRoot;
         });
         
-        if (otherLeaf) {
-            // 如果找到其他分屏的叶子，在那里打开文件
-            await otherLeaf.openFile(file);
-            this.app.workspace.setActiveLeaf(otherLeaf);
-        } else {
-            // 如果没有找到其他分屏的叶子，在当前分屏创建新标签页
-            const leaf = this.app.workspace.getLeaf('tab');
-            await leaf.openFile(file);
+        try {
+            let targetLeaf;
+            if (otherLeaf) {
+                // 如果找到其他分屏的叶子，在那里打开文件
+                await otherLeaf.openFile(file);
+                targetLeaf = otherLeaf;
+            } else {
+                // 如果没有找到其他分屏的叶子，在当前分屏创建新标签页
+                targetLeaf = this.app.workspace.getLeaf('tab');
+                await targetLeaf.openFile(file);
+            }
+            
+            // 设置活动叶子
+            this.app.workspace.setActiveLeaf(targetLeaf);
+            
+            // 获取文件浏览器视图
+            const fileExplorer = this.app.workspace.getLeavesOfType('file-explorer')[0];
+            if (fileExplorer && fileExplorer.view) {
+                // 使用 fileManager 来定位文件
+                await (fileExplorer.view as any).revealInFolder(file);
+            }
+            
+        } catch (error) {
+            console.error('打开文件失败:', error);
+            new Notice('打开文件失败');
         }
     }
 
@@ -1654,9 +1657,9 @@ async onOpen() {
     // 修改 createListView 方法
     private async createListView() {
         // 获取所有笔记并按文件夹分组
-        const files = this.app.vault.getMarkdownFiles();
-        const notesByFolder = new Map<string, TFile[]>();
-        const folderStructure = new Map<string, Map<string, TFile[]>>();
+        const files = this.app.vault.getMarkdownFiles();//获取所有笔记
+        const notesByFolder = new Map<string, TFile[]>();//按文件夹分组
+        const folderStructure = new Map<string, Map<string, TFile[]>>();//文件夹结构
         
         // 构建文件夹结构和分组笔记
         files.forEach(file => {

@@ -276,24 +276,15 @@ var CardView = class extends import_obsidian.ItemView {
     folderPath.setAttribute("title", `\u6253\u5F00\u6587\u4EF6\u5939: ${folder}`);
     folderPath.addClass("clickable");
     folderPath.addEventListener("click", async (e) => {
-      console.log("\u70B9\u51FB\u4E86\u6587\u4EF6\u5939", e);
       e.stopPropagation();
       e.preventDefault();
-      console.log("\u70B9\u4E86\u6587\u4EF6\u5939", e);
-      console.log(`\u5F53\u524D\u5206\u5C4F\u9875\u7684\u6570\u91CF: ${this.app.workspace.getLeavesOfType("file-explorer").length}`);
-      console.log(`workspace:`, this.app.workspace);
       const fileExplorer = this.app.workspace.getLeavesOfType("file-explorer")[0];
       if (fileExplorer) {
-        console.log("fileExplorer", fileExplorer);
-        this.app.workspace.revealLeaf(fileExplorer);
-        const fileExplorerView = fileExplorer.view;
-        if (fileExplorerView.expandFolder) {
-          await this.revealFolderInExplorer(folder);
-          fileExplorer.setEphemeralState({ focus: true });
-          folderPath.addClass("folder-clicked");
-          setTimeout(() => {
-            folderPath.removeClass("folder-clicked");
-          }, 200);
+        const targetFile = this.app.vault.getAbstractFileByPath("\u65F6\u95F4\u7B14\u8BB0/2024-06-06_0619 \u7B80\u62A5 \u9875\u9762\u6491\u9AD8\u8DDD\u79BB\u4E0D\u591F.md");
+        if (targetFile) {
+          this.app.workspace.revealLeaf(fileExplorer);
+          console.log(fileExplorer.view);
+          fileExplorer.view.revealInFileExplorer(targetFile);
         }
       }
     });
@@ -821,7 +812,7 @@ var CardView = class extends import_obsidian.ItemView {
     const mainLayout = this.containerEl.querySelector(".main-layout");
     if (mainLayout) {
       mainLayout.addClass("with-calendar");
-      console.log("\u5DF2\u6DFB\u52A0 with-calendar \u7C7B\u5230 main-layout");
+      console.log("\u5DF2\u6DFB\u52A0 with-calendar \u7C7B main-layout");
     }
     this.calendarContainer.style.opacity = "1";
     this.calendarContainer.style.visibility = "visible";
@@ -943,12 +934,23 @@ var CardView = class extends import_obsidian.ItemView {
       const root = leaf.getRoot();
       return root !== currentRoot;
     });
-    if (otherLeaf) {
-      await otherLeaf.openFile(file);
-      this.app.workspace.setActiveLeaf(otherLeaf);
-    } else {
-      const leaf = this.app.workspace.getLeaf("tab");
-      await leaf.openFile(file);
+    try {
+      let targetLeaf;
+      if (otherLeaf) {
+        await otherLeaf.openFile(file);
+        targetLeaf = otherLeaf;
+      } else {
+        targetLeaf = this.app.workspace.getLeaf("tab");
+        await targetLeaf.openFile(file);
+      }
+      this.app.workspace.setActiveLeaf(targetLeaf);
+      const fileExplorer = this.app.workspace.getLeavesOfType("file-explorer")[0];
+      if (fileExplorer && fileExplorer.view) {
+        await fileExplorer.view.revealInFolder(file);
+      }
+    } catch (error) {
+      console.error("\u6253\u5F00\u6587\u4EF6\u5931\u8D25:", error);
+      new import_obsidian.Notice("\u6253\u5F00\u6587\u4EF6\u5931\u8D25");
     }
   }
   // 在类的开头添加一个高亮文本的辅助方法
