@@ -28,6 +28,7 @@ export class CardView extends ItemView {
     private lastSelectedNote: string | null = null;
     private recentFolders: string[] = [];
     private cardSize: number = 280;  // 默认卡片宽度
+    private cardHeight: number = 280; // 默认卡片高度
     private calendarContainer: HTMLElement = createDiv();
     private isCalendarVisible: boolean = false;
     private currentDate: Date = new Date();
@@ -123,9 +124,25 @@ async onOpen() {
         const contentArea = contentSection.createDiv('card-view-content');
         this.container = contentArea.createDiv('card-container');
         
-        // 使用保存的宽度初始化卡片容器
+        // 使用保存的宽度和高度初始化卡片容器
         this.cardSize = this.plugin.settings.cardWidth;
+        // 删除读取高度的代码，因为cardHeight属性不存在
         this.container.style.gridTemplateColumns = `repeat(auto-fill, ${this.cardSize}px)`;
+        
+        // 添加滚轮事件监听
+        this.container.addEventListener('wheel', (e: WheelEvent) => {
+            if (e.ctrlKey || e.shiftKey) {
+                e.preventDefault();
+                
+                if (e.ctrlKey) {
+                    // Ctrl + 滚轮调整宽度
+                    this.adjustCardSize(e.deltaY);
+                } else if (e.shiftKey) {
+                    // Shift + 滚轮调整高度
+                    this.adjustCardHeight(e.deltaY);
+                }
+            }
+        });
 
         // 创建预览区域
         const previewWrapper = mainLayout.createDiv('preview-wrapper');
@@ -328,6 +345,10 @@ async onOpen() {
         const card = document.createElement('div');
         card.addClass('note-card');
         card.setAttribute('data-path', file.path);
+        
+        // 设置卡片宽度和高度
+        card.style.width = `${this.cardSize}px`;
+        card.style.height = `${this.cardHeight}px`;
         
         // 创建卡片头部
         const header = card.createDiv('note-card-header');
@@ -532,7 +553,7 @@ async onOpen() {
 
         // 添加卡片悬停事件
         card.addEventListener('mouseenter', async () => {
-            openButton.style.opacity = '1';  // ��示打开按钮
+            openButton.style.opacity = '1';  // 示打开按钮
             // ... 其他悬停事码 ...
         });
 
@@ -1002,6 +1023,22 @@ async onOpen() {
         }
     }
 
+    // 添加调整卡片高度的方法
+    private adjustCardHeight(delta: number) {
+        const adjustment = delta > 0 ? -10 : 10;
+        const newHeight = Math.max(
+            this.plugin.settings.minCardHeight ?? 0,
+            Math.min(this.plugin.settings.maxCardHeight ?? Infinity, this.cardHeight + adjustment)
+        );
+
+        if (newHeight !== this.cardHeight) {
+            this.cardHeight = newHeight;
+            this.updateCardHeight(newHeight);
+            // 使用新添加的方法保存高度
+            this.plugin.saveCardHeight(newHeight);
+        }
+    }
+
     // 添加更新卡片大小的方法
     public updateCardSize(width: number) {
         this.cardSize = width;
@@ -1013,6 +1050,17 @@ async onOpen() {
         });
         // 更新容器的网格列宽度
         this.container.style.gridTemplateColumns = `repeat(auto-fill, ${width}px)`;
+    }
+
+    // 添加更新卡片高度的方法
+    private updateCardHeight(height: number) {
+        this.cardHeight = height;
+        // 更新所有卡片的高度
+        this.container.querySelectorAll('.note-card').forEach((card: Element) => {
+            if (card instanceof HTMLElement) {
+                card.style.height = `${height}px`;
+            }
+        });
     }
 
     // 创建日历钮
@@ -1054,7 +1102,7 @@ async onOpen() {
         }
     }
 
-    // 添加按月份过滤的方法
+    // 添加按月份过滤的法
     private filterNotesByMonth(date: Date) {
         const year = date.getFullYear();
         const month = date.getMonth();
@@ -1392,7 +1440,7 @@ async onOpen() {
         batchRenameItem.setText('批量重命名');
         batchRenameItem.addEventListener('click', () => {
             menu.style.display = 'none';  // 点击后隐藏菜单
-            console.log('批量重命名功能待实现');
+            console.log('批量重命名功能���实现');
         });
 
         // 使用点击事替代鼠标悬停事件
@@ -1798,7 +1846,7 @@ async onOpen() {
             await this.openInAppropriateLeaf(note);
         });
 
-        // 右键菜单
+        // 右��菜单
         noteItem.addEventListener('contextmenu', (e) => {
             e.preventDefault();
             this.showContextMenu(e, this.getSelectedFiles());

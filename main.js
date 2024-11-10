@@ -54,6 +54,8 @@ var CardView = class extends import_obsidian.ItemView {
     this.recentFolders = [];
     this.cardSize = 280;
     // 默认卡片宽度
+    this.cardHeight = 280;
+    // 默认卡片高度
     this.calendarContainer = createDiv();
     this.isCalendarVisible = false;
     this.currentDate = /* @__PURE__ */ new Date();
@@ -114,6 +116,16 @@ var CardView = class extends import_obsidian.ItemView {
     this.container = contentArea.createDiv("card-container");
     this.cardSize = this.plugin.settings.cardWidth;
     this.container.style.gridTemplateColumns = `repeat(auto-fill, ${this.cardSize}px)`;
+    this.container.addEventListener("wheel", (e) => {
+      if (e.ctrlKey || e.shiftKey) {
+        e.preventDefault();
+        if (e.ctrlKey) {
+          this.adjustCardSize(e.deltaY);
+        } else if (e.shiftKey) {
+          this.adjustCardHeight(e.deltaY);
+        }
+      }
+    });
     const previewWrapper = mainLayout.createDiv("preview-wrapper");
     const previewControls = previewWrapper.createDiv("preview-controls");
     const toggleButton = previewControls.createEl("button", {
@@ -261,6 +273,8 @@ var CardView = class extends import_obsidian.ItemView {
     const card = document.createElement("div");
     card.addClass("note-card");
     card.setAttribute("data-path", file.path);
+    card.style.width = `${this.cardSize}px`;
+    card.style.height = `${this.cardHeight}px`;
     const header = card.createDiv("note-card-header");
     const lastModified = header.createDiv("note-date");
     lastModified.setText(new Date(file.stat.mtime).toLocaleDateString());
@@ -753,6 +767,20 @@ var CardView = class extends import_obsidian.ItemView {
       this.plugin.saveCardWidth(newSize);
     }
   }
+  // 添加调整卡片高度的方法
+  adjustCardHeight(delta) {
+    var _a, _b;
+    const adjustment = delta > 0 ? -10 : 10;
+    const newHeight = Math.max(
+      (_a = this.plugin.settings.minCardHeight) != null ? _a : 0,
+      Math.min((_b = this.plugin.settings.maxCardHeight) != null ? _b : Infinity, this.cardHeight + adjustment)
+    );
+    if (newHeight !== this.cardHeight) {
+      this.cardHeight = newHeight;
+      this.updateCardHeight(newHeight);
+      this.plugin.saveCardHeight(newHeight);
+    }
+  }
   // 添加更新卡片大小的方法
   updateCardSize(width) {
     this.cardSize = width;
@@ -762,6 +790,15 @@ var CardView = class extends import_obsidian.ItemView {
       }
     });
     this.container.style.gridTemplateColumns = `repeat(auto-fill, ${width}px)`;
+  }
+  // 添加更新卡片高度的方法
+  updateCardHeight(height) {
+    this.cardHeight = height;
+    this.container.querySelectorAll(".note-card").forEach((card) => {
+      if (card instanceof HTMLElement) {
+        card.style.height = `${height}px`;
+      }
+    });
   }
   // 创建日历钮
   createCalendarButton(leftTools) {
@@ -793,7 +830,7 @@ var CardView = class extends import_obsidian.ItemView {
       calendarBtn.toggleClass("active", this.isCalendarVisible);
     }
   }
-  // 添加按月份过滤的方法
+  // 添加按月份过滤的法
   filterNotesByMonth(date) {
     const year = date.getFullYear();
     const month = date.getMonth();
@@ -1031,7 +1068,7 @@ var CardView = class extends import_obsidian.ItemView {
     batchRenameItem.setText("\u6279\u91CF\u91CD\u547D\u540D");
     batchRenameItem.addEventListener("click", () => {
       menu.style.display = "none";
-      console.log("\u6279\u91CF\u91CD\u547D\u540D\u529F\u80FD\u5F85\u5B9E\u73B0");
+      console.log("\u6279\u91CF\u91CD\u547D\u540D\u529F\u80FD\uFFFD\uFFFD\uFFFD\u5B9E\u73B0");
     });
     let isMenuVisible = false;
     commandBtn.addEventListener("click", (e) => {
@@ -1495,7 +1532,10 @@ var DEFAULT_SETTINGS = {
   cardWidth: 280,
   minCardWidth: 280,
   maxCardWidth: 600,
-  showTagCount: false
+  showTagCount: false,
+  cardHeight: 280,
+  minCardHeight: 200,
+  maxCardHeight: 800
 };
 var CardViewSettingTab = class extends import_obsidian2.PluginSettingTab {
   constructor(app, plugin) {
@@ -1506,9 +1546,9 @@ var CardViewSettingTab = class extends import_obsidian2.PluginSettingTab {
     const { containerEl } = this;
     containerEl.empty();
     new import_obsidian2.Setting(containerEl).setName("\u9ED8\u8BA4\u89C6\u56FE").setDesc("\u9009\u62E9\u9ED8\u8BA4\u7684\u89C6\u56FE1\u6A21\u5F0F").addDropdown((dropdown) => {
-      dropdown.addOption("card", "\u5361\u7247\u89C6\u56FE").addOption("list", "\u5217\u8868\u89C6\u56FE").addOption("timeline", "\u65F6\u95F4\u8F74\u89C6\u56FE").setValue(this.plugin.settings.defaultView);
+      dropdown.addOption("card", "\u5361\u7247\u89C6\u56FE").addOption("list", "\u5217\u8868\u89C6\u56FE").addOption("timeline", "\u65F6\u95F4\u8F74\u89C6\u56FE").addOption("month", "\u6708\u89C6\u56FE").setValue(this.plugin.settings.defaultView);
       dropdown.onChange(async (value) => {
-        if (value === "card" || value === "list" || value === "timeline") {
+        if (value === "card" || value === "list" || value === "timeline" || value === "month") {
           this.plugin.settings.defaultView = value;
           await this.plugin.saveSettings();
         }
@@ -1540,6 +1580,28 @@ var CardViewSettingTab = class extends import_obsidian2.PluginSettingTab {
       this.plugin.settings.showTagCount = value;
       await this.plugin.saveSettings();
       this.plugin.refreshAllTags();
+    }));
+    new import_obsidian2.Setting(containerEl).setName("\u5361\u7247\u9AD8\u5EA6").setDesc("\u8BBE\u7F6E\u5361\u7247\u7684\u9AD8\u5EA6\uFF08200-800\u50CF\u7D20\uFF09").addText((text) => text.setPlaceholder("280").setValue(this.plugin.settings.cardHeight.toString()).onChange(async (value) => {
+      const height = Number(value);
+      if (!isNaN(height) && height >= 200 && height <= 800) {
+        this.plugin.settings.cardHeight = height;
+        await this.plugin.saveSettings();
+        this.plugin.updateAllCardViews();
+      }
+    }));
+    new import_obsidian2.Setting(containerEl).setName("\u6700\u5C0F\u9AD8\u5EA6").setDesc("\u8BBE\u7F6E\u5361\u7247\u7684\u6700\u5C0F\u9AD8\u5EA6\uFF08\u50CF\u7D20\uFF09").addText((text) => text.setPlaceholder("200").setValue(this.plugin.settings.minCardHeight.toString()).onChange(async (value) => {
+      const height = Number(value);
+      if (!isNaN(height) && height >= 200) {
+        this.plugin.settings.minCardHeight = height;
+        await this.plugin.saveSettings();
+      }
+    }));
+    new import_obsidian2.Setting(containerEl).setName("\u6700\u5927\u9AD8\u5EA6").setDesc("\u8BBE\u7F6E\u5361\u7247\u7684\u6700\u5927\u9AD8\u5EA6\uFF08\u50CF\u7D20\uFF09").addText((text) => text.setPlaceholder("800").setValue(this.plugin.settings.maxCardHeight.toString()).onChange(async (value) => {
+      const height = Number(value);
+      if (!isNaN(height) && height <= 800) {
+        this.plugin.settings.maxCardHeight = height;
+        await this.plugin.saveSettings();
+      }
     }));
   }
 };
@@ -1607,6 +1669,10 @@ var CardViewPlugin = class extends import_obsidian2.Plugin {
         view.refreshTags();
       }
     });
+  }
+  async saveCardHeight(height) {
+    this.settings.cardHeight = height;
+    await this.saveSettings();
   }
 };
 //# sourceMappingURL=main.js.map

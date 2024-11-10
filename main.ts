@@ -2,11 +2,14 @@ import { App, PluginManifest,Plugin, PluginSettingTab, Setting, TFile, Workspace
 import { CardView, VIEW_TYPE_CARD } from './cardView';
 
 interface CardViewPluginSettings {
-    defaultView: 'card' | 'list' | 'timeline';
+    defaultView: 'card' | 'list' | 'timeline' | 'month';
     cardWidth: number;
     minCardWidth: number;
     maxCardWidth: number;
     showTagCount: boolean;
+    cardHeight: number;
+    minCardHeight: number;
+    maxCardHeight: number;
 }
 
 const DEFAULT_SETTINGS: CardViewPluginSettings = {
@@ -14,7 +17,10 @@ const DEFAULT_SETTINGS: CardViewPluginSettings = {
     cardWidth: 280,
     minCardWidth: 280,
     maxCardWidth: 600,
-    showTagCount: false
+    showTagCount: false,
+    cardHeight: 280,
+    minCardHeight: 200,
+    maxCardHeight: 800
 }
 
 class CardViewSettingTab extends PluginSettingTab {
@@ -37,10 +43,11 @@ class CardViewSettingTab extends PluginSettingTab {
                     .addOption('card', '卡片视图')
                     .addOption('list', '列表视图')
                     .addOption('timeline', '时间轴视图')
+                    .addOption('month', '月视图')
                     .setValue(this.plugin.settings.defaultView);
                 
                 dropdown.onChange(async (value) => {
-                    if (value === 'card' || value === 'list' || value === 'timeline') {
+                    if (value === 'card' || value === 'list' || value === 'timeline' || value === 'month') {
                         this.plugin.settings.defaultView = value;
                         await this.plugin.saveSettings();
                     }
@@ -99,6 +106,49 @@ class CardViewSettingTab extends PluginSettingTab {
                     this.plugin.settings.showTagCount = value;
                     await this.plugin.saveSettings();
                     this.plugin.refreshAllTags();
+                }));
+
+        new Setting(containerEl)
+            .setName('卡片高度')
+            .setDesc('设置卡片的高度（200-800像素）')
+            .addText(text => text
+                .setPlaceholder('280')
+                .setValue(this.plugin.settings.cardHeight.toString())
+                .onChange(async (value) => {
+                    const height = Number(value);
+                    if (!isNaN(height) && height >= 200 && height <= 800) {
+                        this.plugin.settings.cardHeight = height;
+                        await this.plugin.saveSettings();
+                        this.plugin.updateAllCardViews();
+                    }
+                }));
+
+        new Setting(containerEl)
+            .setName('最小高度')
+            .setDesc('设置卡片的最小高度（像素）')
+            .addText(text => text
+                .setPlaceholder('200')
+                .setValue(this.plugin.settings.minCardHeight.toString())
+                .onChange(async (value) => {
+                    const height = Number(value);
+                    if (!isNaN(height) && height >= 200) {
+                        this.plugin.settings.minCardHeight = height;
+                        await this.plugin.saveSettings();
+                    }
+                }));
+
+        new Setting(containerEl)
+            .setName('最大高度')
+            .setDesc('设置卡片的最大高度（像素）')
+            .addText(text => text
+                .setPlaceholder('800')
+                .setValue(this.plugin.settings.maxCardHeight.toString())
+                .onChange(async (value) => {
+                    const height = Number(value);
+                    if (!isNaN(height) && height <= 800) {
+                        this.plugin.settings.maxCardHeight = height;
+                        await this.plugin.saveSettings();
+                    }
                 }));
     }
 }
@@ -189,5 +239,10 @@ export default class CardViewPlugin extends Plugin {
                 view.refreshTags();
             }
         });
+    }
+
+    public async saveCardHeight(height: number) {
+        this.settings.cardHeight = height;
+        await this.saveSettings();
     }
 }
