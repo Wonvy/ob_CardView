@@ -200,7 +200,7 @@
 }
 
 .card-view-content {
-  height: 100%;
+  height: calc(100% - 120px);
   overflow-y: auto;
   padding: 1rem;
   position: relative;
