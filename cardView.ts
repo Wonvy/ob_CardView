@@ -643,8 +643,6 @@ async onOpen() {
             this.container.style.gridTemplateColumns = `repeat(${columns}, ${actualCardWidth}px)`;
         }
     }
-
-  
     // 创建新笔记
     private async createNewNote(date?: Date) {
         // 获取当前日期作为默认文件名
@@ -654,8 +652,16 @@ async onOpen() {
 
         // 检查文件名是否已存在
         while (this.app.vault.getAbstractFileByPath(`${fileName}.md`)) {
-            fileName = date ? `${baseFileName} ${counter}` : `未命名 ${counter}`;
-            counter++;
+            const file = this.app.vault.getAbstractFileByPath(`${fileName}.md`);
+            if (file instanceof TFile && file.stat.size === 0) {
+                // 如果笔记内容为空，则打开这个笔记
+                const leaf = this.app.workspace.getLeaf('tab');
+                await leaf.openFile(file);
+                return;
+            } else {
+                fileName = date ? `${baseFileName} ${counter}` : `未命名 ${counter}`;
+                counter++;
+            }
         }
 
         try {

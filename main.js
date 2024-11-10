@@ -495,8 +495,15 @@ var CardView = class extends import_obsidian.ItemView {
     let fileName = baseFileName;
     let counter = 1;
     while (this.app.vault.getAbstractFileByPath(`${fileName}.md`)) {
-      fileName = date ? `${baseFileName} ${counter}` : `\u672A\u547D\u540D ${counter}`;
-      counter++;
+      const file = this.app.vault.getAbstractFileByPath(`${fileName}.md`);
+      if (file instanceof import_obsidian.TFile && file.stat.size === 0) {
+        const leaf = this.app.workspace.getLeaf("tab");
+        await leaf.openFile(file);
+        return;
+      } else {
+        fileName = date ? `${baseFileName} ${counter}` : `\u672A\u547D\u540D ${counter}`;
+        counter++;
+      }
     }
     try {
       const file = await this.app.vault.create(
