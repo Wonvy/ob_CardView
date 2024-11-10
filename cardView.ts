@@ -351,20 +351,12 @@ async onOpen() {
         folderPath.addEventListener('click', async (e) => {
             e.stopPropagation();
             e.preventDefault();
-
+            
+            // 获取文件浏览器视图
             const fileExplorer = this.app.workspace.getLeavesOfType('file-explorer')[0];
-
-            if (fileExplorer) {
-                // 获取 Obsidian 的文件对象
-                const targetFile = this.app.vault.getAbstractFileByPath("时间笔记/2024-06-06_0619 简报 页面撑高距离不够.md");
-                
-                if (targetFile) {
-                    // 激活文件浏览器视图
-                    this.app.workspace.revealLeaf(fileExplorer);
-                    console.log(fileExplorer.view);
-                    (fileExplorer.view as any).revealInFileExplorer(targetFile);
-    
-                }
+            if (fileExplorer && fileExplorer.view) {
+                // 使用 revealInFolder 方法显示文件夹
+                await (fileExplorer.view as any).revealInFolder(file.parent);
             }
         });
 
@@ -606,40 +598,6 @@ async onOpen() {
     }
 
   
-    private async revealFolderInExplorer(folder: string) {
-        // 获取文件浏览器视图
-        const fileExplorer = this.app.workspace.getLeavesOfType('file-explorer')[0];
-        if (fileExplorer) {
-            const fileExplorerView = fileExplorer.view as any;
-            
-            // 如果是目录，直接展开根目录
-            if (folder === '根目录') {
-                if (fileExplorerView.expandFolder) {
-                    await fileExplorerView.expandFolder('/');
-                }
-                return;
-            }
-
-            // 展开并选中文件夹
-            if (fileExplorerView.expandFolder) {
-                // 展开父文件夹路
-                const folderParts = folder.split('/');
-                let currentPath = '';
-                
-                // 逐级展开文件夹
-                for (const part of folderParts) {
-                    currentPath += (currentPath ? '/' : '') + part;
-                    await fileExplorerView.expandFolder(currentPath);
-                }
-
-                // 选中目标文件夹
-                if (fileExplorerView.setSelection) {
-                    await fileExplorerView.setSelection(folder);
-                }
-            }
-        }
-    }
-
     // 创建新笔记
     private async createNewNote() {
         // 获取当前日期作为默认文件名
@@ -894,11 +852,11 @@ async onOpen() {
 
             menu.addItem((item) => {
                 item
-                    .setTitle(`在件管理器中显示`)
+                    .setTitle(`文件管理器中显示`)
                     .setIcon("folder")
-                    .onClick(() => {
-                        const file = files[0];  // 显示第一个选中文件的位置
-                        this.revealFolderInExplorer(file.parent?.path || '/');
+                    .onClick(async () => {
+                        const file = files[0];  //示第一个选中文件的位置
+                        await this.openInAppropriateLeaf(file,false);
                     });
             });
 
@@ -1173,7 +1131,7 @@ async onOpen() {
             dayEl.setText(day.toString());
             dayEl.setAttribute('data-date', dateStr);
             
-            // 如果是当前过滤的日期，添加选中样式
+            // 如果是当前过滤的日期添加选中样式
             if (this.currentFilter.type === 'date' && this.currentFilter.value === dateStr) {
                 dayEl.addClass('selected');
             }
@@ -1247,44 +1205,38 @@ async onOpen() {
 
 
     // 修改方法名以更好地反映其功能
-    private async openInAppropriateLeaf(file: TFile) {
-        // 获取所有可见的 markdown 类型的叶子
-        const leaves = this.app.workspace.getLeavesOfType('markdown');
-        
-        // 获取当前卡片视图所在的根分屏
-        const currentRoot = this.leaf.getRoot();
-        
-        // 找到不在当前根分屏下的叶子
-        const otherLeaf = leaves.find(leaf => {
-            const root = leaf.getRoot();
-            return root !== currentRoot;
-        });
-        
+    private async openInAppropriateLeaf(file: TFile, openFile: boolean = true) {
         try {
-            let targetLeaf;
-            if (otherLeaf) {
-                // 如果找到其他分屏的叶子，在那里打开文件
-                await otherLeaf.openFile(file);
-                targetLeaf = otherLeaf;
-            } else {
-                // 如果没有找到其他分屏的叶子，在当前分屏创建新标签页
-                targetLeaf = this.app.workspace.getLeaf('tab');
-                await targetLeaf.openFile(file);
+            if (openFile) {
+                // 只有在需要打开文件时才执行这些操作
+                const leaves = this.app.workspace.getLeavesOfType('markdown');
+                const currentRoot = this.leaf.getRoot();
+                const otherLeaf = leaves.find(leaf => {
+                    const root = leaf.getRoot();
+                    return root !== currentRoot;
+                });
+                
+                let targetLeaf;
+                if (otherLeaf) {
+                    await otherLeaf.openFile(file);
+                    targetLeaf = otherLeaf;
+                } else {
+                    targetLeaf = this.app.workspace.getLeaf('tab');
+                    await targetLeaf.openFile(file);
+                }
+                
+                this.app.workspace.setActiveLeaf(targetLeaf);
             }
             
-            // 设置活动叶子
-            this.app.workspace.setActiveLeaf(targetLeaf);
-            
-            // 获取文件浏览器视图
+            // 无论是否打开文件，都在文件管理器中定位文件
             const fileExplorer = this.app.workspace.getLeavesOfType('file-explorer')[0];
             if (fileExplorer && fileExplorer.view) {
-                // 使用 fileManager 来定位文件
                 await (fileExplorer.view as any).revealInFolder(file);
             }
             
         } catch (error) {
-            console.error('打开文件失败:', error);
-            new Notice('打开文件失败');
+            console.error('操作失败:', error);
+            new Notice('操作失败');
         }
     }
 
@@ -1658,7 +1610,7 @@ async onOpen() {
     private async createListView() {
         // 获取所有笔记并按文件夹分组
         const files = this.app.vault.getMarkdownFiles();//获取所有笔记
-        const notesByFolder = new Map<string, TFile[]>();//按文件夹分组
+        const notesByFolder = new Map<string, TFile[]>();//按件夹分组
         const folderStructure = new Map<string, Map<string, TFile[]>>();//文件夹结构
         
         // 构建文件夹结构和分组笔记
@@ -1674,7 +1626,7 @@ async onOpen() {
                 const rootFolder = pathParts[0];
                 const subFolder = pathParts.length > 2 ? pathParts[1] : '';
                 
-                // 初始化根文件夹结构
+                // 初始���根文件夹结构
                 if (!folderStructure.has(rootFolder)) {
                     folderStructure.set(rootFolder, new Map());
                 }

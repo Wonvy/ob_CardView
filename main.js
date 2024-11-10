@@ -279,13 +279,8 @@ var CardView = class extends import_obsidian.ItemView {
       e.stopPropagation();
       e.preventDefault();
       const fileExplorer = this.app.workspace.getLeavesOfType("file-explorer")[0];
-      if (fileExplorer) {
-        const targetFile = this.app.vault.getAbstractFileByPath("\u65F6\u95F4\u7B14\u8BB0/2024-06-06_0619 \u7B80\u62A5 \u9875\u9762\u6491\u9AD8\u8DDD\u79BB\u4E0D\u591F.md");
-        if (targetFile) {
-          this.app.workspace.revealLeaf(fileExplorer);
-          console.log(fileExplorer.view);
-          fileExplorer.view.revealInFileExplorer(targetFile);
-        }
+      if (fileExplorer && fileExplorer.view) {
+        await fileExplorer.view.revealInFolder(file.parent);
       }
     });
     const openButton = header.createDiv("note-open-button");
@@ -464,29 +459,6 @@ var CardView = class extends import_obsidian.ItemView {
       const gap = 16;
       const actualCardWidth = (availableWidth - (columns - 1) * gap) / columns;
       this.container.style.gridTemplateColumns = `repeat(${columns}, ${actualCardWidth}px)`;
-    }
-  }
-  async revealFolderInExplorer(folder) {
-    const fileExplorer = this.app.workspace.getLeavesOfType("file-explorer")[0];
-    if (fileExplorer) {
-      const fileExplorerView = fileExplorer.view;
-      if (folder === "\u6839\u76EE\u5F55") {
-        if (fileExplorerView.expandFolder) {
-          await fileExplorerView.expandFolder("/");
-        }
-        return;
-      }
-      if (fileExplorerView.expandFolder) {
-        const folderParts = folder.split("/");
-        let currentPath = "";
-        for (const part of folderParts) {
-          currentPath += (currentPath ? "/" : "") + part;
-          await fileExplorerView.expandFolder(currentPath);
-        }
-        if (fileExplorerView.setSelection) {
-          await fileExplorerView.setSelection(folder);
-        }
-      }
     }
   }
   // 创建新笔记
@@ -677,10 +649,9 @@ var CardView = class extends import_obsidian.ItemView {
         });
       });
       menu.addItem((item) => {
-        item.setTitle(`\u5728\u4EF6\u7BA1\u7406\u5668\u4E2D\u663E\u793A`).setIcon("folder").onClick(() => {
-          var _a;
+        item.setTitle(`\u6587\u4EF6\u7BA1\u7406\u5668\u4E2D\u663E\u793A`).setIcon("folder").onClick(async () => {
           const file = files[0];
-          this.revealFolderInExplorer(((_a = file.parent) == null ? void 0 : _a.path) || "/");
+          await this.openInAppropriateLeaf(file, false);
         });
       });
       menu.addItem((item) => {
@@ -927,30 +898,32 @@ var CardView = class extends import_obsidian.ItemView {
     this.refreshView();
   }
   // 修改方法名以更好地反映其功能
-  async openInAppropriateLeaf(file) {
-    const leaves = this.app.workspace.getLeavesOfType("markdown");
-    const currentRoot = this.leaf.getRoot();
-    const otherLeaf = leaves.find((leaf) => {
-      const root = leaf.getRoot();
-      return root !== currentRoot;
-    });
+  async openInAppropriateLeaf(file, openFile = true) {
     try {
-      let targetLeaf;
-      if (otherLeaf) {
-        await otherLeaf.openFile(file);
-        targetLeaf = otherLeaf;
-      } else {
-        targetLeaf = this.app.workspace.getLeaf("tab");
-        await targetLeaf.openFile(file);
+      if (openFile) {
+        const leaves = this.app.workspace.getLeavesOfType("markdown");
+        const currentRoot = this.leaf.getRoot();
+        const otherLeaf = leaves.find((leaf) => {
+          const root = leaf.getRoot();
+          return root !== currentRoot;
+        });
+        let targetLeaf;
+        if (otherLeaf) {
+          await otherLeaf.openFile(file);
+          targetLeaf = otherLeaf;
+        } else {
+          targetLeaf = this.app.workspace.getLeaf("tab");
+          await targetLeaf.openFile(file);
+        }
+        this.app.workspace.setActiveLeaf(targetLeaf);
       }
-      this.app.workspace.setActiveLeaf(targetLeaf);
       const fileExplorer = this.app.workspace.getLeavesOfType("file-explorer")[0];
       if (fileExplorer && fileExplorer.view) {
         await fileExplorer.view.revealInFolder(file);
       }
     } catch (error) {
-      console.error("\u6253\u5F00\u6587\u4EF6\u5931\u8D25:", error);
-      new import_obsidian.Notice("\u6253\u5F00\u6587\u4EF6\u5931\u8D25");
+      console.error("\u64CD\u4F5C\u5931\u8D25:", error);
+      new import_obsidian.Notice("\u64CD\u4F5C\u5931\u8D25");
     }
   }
   // 在类的开头添加一个高亮文本的辅助方法
