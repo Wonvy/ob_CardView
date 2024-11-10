@@ -490,13 +490,18 @@ var CardView = class extends import_obsidian.ItemView {
     }
   }
   // 创建新笔记
-  async createNewNote() {
-    const date = /* @__PURE__ */ new Date();
-    const fileName = ` ${date.toLocaleString().replace(/[/:]/g, "-")}\u672A\u547D\u540D\u7B14\u8BB0`;
+  async createNewNote(date) {
+    const baseFileName = date ? date.toLocaleDateString() : "\u672A\u547D\u540D";
+    let fileName = baseFileName;
+    let counter = 1;
+    while (this.app.vault.getAbstractFileByPath(`${fileName}.md`)) {
+      fileName = date ? `${baseFileName} ${counter}` : `\u672A\u547D\u540D ${counter}`;
+      counter++;
+    }
     try {
       const file = await this.app.vault.create(
         `${fileName}.md`,
-        "# " + fileName + "\n\n"
+        ""
       );
       const leaf = this.app.workspace.getLeaf("tab");
       await leaf.openFile(file);
@@ -659,7 +664,7 @@ var CardView = class extends import_obsidian.ItemView {
         });
       });
       menu.addItem((item) => {
-        item.setTitle(`\u6587\u4EF6\u7BA1\u7406\u5668\u4E2D\u663E\u793A`).setIcon("folder").onClick(async () => {
+        item.setTitle(`\u6587\u4EF6\u5217\u8868\u4E2D\u663E\u793A`).setIcon("folder").onClick(async () => {
           const file = files[0];
           await this.openInAppropriateLeaf(file, false);
         });

@@ -646,16 +646,23 @@ async onOpen() {
 
   
     // 创建新笔记
-    private async createNewNote() {
+    private async createNewNote(date?: Date) {
         // 获取当前日期作为默认文件名
-        const date = new Date();
-        const fileName = ` ${date.toLocaleString().replace(/[/:]/g, '-')}未命名笔记`;
-        
+        const baseFileName = date ? date.toLocaleDateString() : '未命名';
+        let fileName = baseFileName;
+        let counter = 1;
+
+        // 检查文件名是否已存在
+        while (this.app.vault.getAbstractFileByPath(`${fileName}.md`)) {
+            fileName = date ? `${baseFileName} ${counter}` : `未命名 ${counter}`;
+            counter++;
+        }
+
         try {
             // 创建新笔记
             const file = await this.app.vault.create(
                 `${fileName}.md`,
-                '# ' + fileName + '\n\n'
+                ''
             );
             
             // 在新标签页中打开笔记
@@ -876,7 +883,7 @@ async onOpen() {
 
             menu.addItem((item) => {
                 item
-                    .setTitle(`文件管理器中显示`)
+                    .setTitle(`文件列表中显示`)
                     .setIcon("folder")
                     .onClick(async () => {
                         const file = files[0];  //示第一个选中文件的位置
