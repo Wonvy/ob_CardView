@@ -271,17 +271,35 @@ var CardView = class extends import_obsidian.ItemView {
     const lastModified = header.createDiv("note-date");
     lastModified.setText(new Date(file.stat.mtime).toLocaleDateString());
     const folderPath = header.createDiv("note-folder");
-    const folder = file.parent ? file.parent.path === "/" ? "\u6839\u76EE\u5F55" : file.parent.path : "\u6839\u76EE\u5F55";
-    folderPath.setText(folder);
-    folderPath.setAttribute("title", `\u6253\u5F00\u6587\u4EF6\u5939: ${folder}`);
-    folderPath.addClass("clickable");
-    folderPath.addEventListener("click", async (e) => {
-      e.stopPropagation();
-      e.preventDefault();
-      const fileExplorer = this.app.workspace.getLeavesOfType("file-explorer")[0];
-      if (fileExplorer && fileExplorer.view) {
-        await fileExplorer.view.revealInFolder(file.parent);
+    const folder = file.parent ? file.parent.path : "\u6839\u76EE\u5F55";
+    const pathParts = folder === "\u6839\u76EE\u5F55" ? ["\u6839\u76EE\u5F55"] : folder.split("/");
+    pathParts.forEach((part, index) => {
+      if (index > 0) {
+        folderPath.createSpan({ text: " / ", cls: "folder-separator" });
       }
+      const folderPart = folderPath.createSpan({
+        text: part,
+        cls: "folder-part clickable"
+      });
+      const currentPath = folder === "\u6839\u76EE\u5F55" ? "" : pathParts.slice(0, index + 1).join("/");
+      const underline = folderPart.createSpan({ cls: "folder-underline" });
+      folderPart.addEventListener("mouseenter", () => {
+        underline.addClass("active");
+      });
+      folderPart.addEventListener("mouseleave", () => {
+        underline.removeClass("active");
+      });
+      folderPart.addEventListener("click", async (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        const fileExplorer = this.app.workspace.getLeavesOfType("file-explorer")[0];
+        if (fileExplorer && fileExplorer.view) {
+          const targetFolder = currentPath ? this.app.vault.getAbstractFileByPath(currentPath) : this.app.vault.getRoot();
+          if (targetFolder && (targetFolder instanceof import_obsidian.TFolder || !currentPath)) {
+            await fileExplorer.view.revealInFolder(targetFolder);
+          }
+        }
+      });
     });
     const openButton = header.createDiv("note-open-button");
     openButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>`;
@@ -934,7 +952,7 @@ var CardView = class extends import_obsidian.ItemView {
       new import_obsidian.Notice("\u64CD\u4F5C\u5931\u8D25");
     }
   }
-  // 在类的开头添加一个高亮文本的辅助方法
+  // 在类的开头添加一��高亮文本的辅助方法
   highlightText(text, searchTerm) {
     if (!searchTerm || searchTerm.trim() === "") {
       return text;
@@ -1199,33 +1217,21 @@ ${emptyNotes.map((file) => file.basename).join("\n")}`
   // 修改 createListView 方法
   async createListView() {
     const files = this.app.vault.getMarkdownFiles();
-    const notesByFolder = /* @__PURE__ */ new Map();
     const folderStructure = /* @__PURE__ */ new Map();
     files.forEach((file) => {
-      var _a, _b, _c, _d, _e, _f, _g, _h, _i, _j;
+      var _a;
       const pathParts = file.path.split("/");
-      if (pathParts[0] === "" || !pathParts[0]) {
-        if (!folderStructure.has("\u672A\u5206\u7C7B")) {
-          folderStructure.set("\u672A\u5206\u7C7B", /* @__PURE__ */ new Map([["", []]]));
+      const rootFolder = pathParts.length > 1 ? pathParts[0] : "\u6839\u76EE\u5F55";
+      const subFolder = pathParts.length > 2 ? pathParts[1] : "";
+      if (!folderStructure.has(rootFolder)) {
+        folderStructure.set(rootFolder, /* @__PURE__ */ new Map());
+      }
+      const subFolders = folderStructure.get(rootFolder);
+      if (subFolders) {
+        if (!subFolders.has(subFolder)) {
+          subFolders.set(subFolder, []);
         }
-        (_b = (_a = folderStructure.get("\u672A\u5206\u7C7B")) == null ? void 0 : _a.get("")) == null ? void 0 : _b.push(file);
-      } else {
-        const rootFolder = pathParts[0];
-        const subFolder = pathParts.length > 2 ? pathParts[1] : "";
-        if (!folderStructure.has(rootFolder)) {
-          folderStructure.set(rootFolder, /* @__PURE__ */ new Map());
-        }
-        if (subFolder) {
-          if (!((_c = folderStructure.get(rootFolder)) == null ? void 0 : _c.has(subFolder))) {
-            (_d = folderStructure.get(rootFolder)) == null ? void 0 : _d.set(subFolder, []);
-          }
-          (_f = (_e = folderStructure.get(rootFolder)) == null ? void 0 : _e.get(subFolder)) == null ? void 0 : _f.push(file);
-        } else {
-          if (!((_g = folderStructure.get(rootFolder)) == null ? void 0 : _g.has(""))) {
-            (_h = folderStructure.get(rootFolder)) == null ? void 0 : _h.set("", []);
-          }
-          (_j = (_i = folderStructure.get(rootFolder)) == null ? void 0 : _i.get("")) == null ? void 0 : _j.push(file);
-        }
+        (_a = subFolders.get(subFolder)) == null ? void 0 : _a.push(file);
       }
     });
     for (const [rootFolder, subFolders] of folderStructure) {

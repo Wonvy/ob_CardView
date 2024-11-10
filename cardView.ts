@@ -342,22 +342,54 @@ async onOpen() {
 
         // 修改文件夹路径的创建和样式
         const folderPath = header.createDiv('note-folder');
-        const folder = file.parent ? (file.parent.path === '/' ? '根目录' : file.parent.path) : '根目录';
-        folderPath.setText(folder);
-        folderPath.setAttribute('title', `打开文件夹: ${folder}`);
-        folderPath.addClass('clickable');
-        
-        // 添加点击事件
-        folderPath.addEventListener('click', async (e) => {
-            e.stopPropagation();
-            e.preventDefault();
-            
-            // 获取文件浏览器视图
-            const fileExplorer = this.app.workspace.getLeavesOfType('file-explorer')[0];
-            if (fileExplorer && fileExplorer.view) {
-                // 使用 revealInFolder 方法显示文件夹
-                await (fileExplorer.view as any).revealInFolder(file.parent);
+        const folder = file.parent ? file.parent.path : '根目录';
+
+        // 拆分文件夹路径并处理根目录的特殊情况
+        const pathParts = folder === '根目录' ? ['根目录'] : folder.split('/');
+
+        pathParts.forEach((part, index) => {
+            if (index > 0) {
+                // 只有在非根目录且不是第一个部分时添加分隔符
+                folderPath.createSpan({ text: ' / ', cls: 'folder-separator' });
             }
+            
+            // 创建可点击的文件夹部分
+            const folderPart = folderPath.createSpan({
+                text: part,
+                cls: 'folder-part clickable'
+            });
+            
+            // 获取到这一层的完整路径（对根目录做特殊处理）
+            const currentPath = folder === '根目录' ? '' : pathParts.slice(0, index + 1).join('/');
+            
+            // 添加下划线
+            const underline = folderPart.createSpan({ cls: 'folder-underline' });
+            
+            // 添加悬停效果
+            folderPart.addEventListener('mouseenter', () => {
+                underline.addClass('active');
+            });
+            
+            folderPart.addEventListener('mouseleave', () => {
+                underline.removeClass('active');
+            });
+            
+            // 添加点击事件
+            folderPart.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                
+                // 获取文件浏览器视图
+                const fileExplorer = this.app.workspace.getLeavesOfType('file-explorer')[0];
+                if (fileExplorer && fileExplorer.view) {
+                    // 获取对应层级的文件夹
+                    const targetFolder = currentPath ? this.app.vault.getAbstractFileByPath(currentPath) : this.app.vault.getRoot();
+                    if (targetFolder && (targetFolder instanceof TFolder || !currentPath)) {
+                        // 在文件浏览器中定位到该文件夹
+                        await (fileExplorer.view as any).revealInFolder(targetFolder);
+                    }
+                }
+            });
         });
 
         // 添加打开按钮
@@ -482,7 +514,7 @@ async onOpen() {
                 e.preventDefault();
                 e.stopPropagation();
                 
-                // 如果卡片未被选中，先选中它
+                // 如果卡片未被选中，先选它
                 if (!card.hasClass('selected')) {
                     // 如果没有按住 Ctrl，清除其他选择
                     if (!e.ctrlKey) {
@@ -1253,7 +1285,7 @@ async onOpen() {
         }
     }
 
-    // 在类的开头添加一个高亮文本的辅助方法
+    // 在类的开头添加一��高亮文本的辅助方法
     private highlightText(text: string, searchTerm: string): string {
         if (!searchTerm || searchTerm.trim() === '') {
             return text; // 如果搜索词为空，直接返回原文本
@@ -1621,41 +1653,27 @@ async onOpen() {
 
     // 修改 createListView 方法
     private async createListView() {
-        // 获取所有笔记并按文件夹分组
-        const files = this.app.vault.getMarkdownFiles();//获取所有笔记
-        const notesByFolder = new Map<string, TFile[]>();//按件夹分组
-        const folderStructure = new Map<string, Map<string, TFile[]>>();//文件夹结构
+        const files = this.app.vault.getMarkdownFiles();
+        const folderStructure = new Map<string, Map<string, TFile[]>>();
         
         // 构建文件夹结构和分组笔记
         files.forEach(file => {
             const pathParts = file.path.split('/');
-            if (pathParts[0] === '' || !pathParts[0]) {
-                // 根目录下的笔记放入"未分类"
-                if (!folderStructure.has('未分类')) {
-                    folderStructure.set('未分类', new Map([['', []]]));
+            const rootFolder = pathParts.length > 1 ? pathParts[0] : '根目录';
+            const subFolder = pathParts.length > 2 ? pathParts[1] : '';
+            
+            // 初始化根文件夹结构
+            if (!folderStructure.has(rootFolder)) {
+                folderStructure.set(rootFolder, new Map());
+            }
+            
+            // 将笔记添加到对应的文件夹中
+            const subFolders = folderStructure.get(rootFolder);
+            if (subFolders) {
+                if (!subFolders.has(subFolder)) {
+                    subFolders.set(subFolder, []);
                 }
-                folderStructure.get('未分类')?.get('')?.push(file);
-            } else {
-                const rootFolder = pathParts[0];
-                const subFolder = pathParts.length > 2 ? pathParts[1] : '';
-                
-                // 初始根文件夹结构
-                if (!folderStructure.has(rootFolder)) {
-                    folderStructure.set(rootFolder, new Map());
-                }
-                
-                // 将笔记添加到对应的文件夹中
-                if (subFolder) {
-                    if (!folderStructure.get(rootFolder)?.has(subFolder)) {
-                        folderStructure.get(rootFolder)?.set(subFolder, []);
-                    }
-                    folderStructure.get(rootFolder)?.get(subFolder)?.push(file);
-                } else {
-                    if (!folderStructure.get(rootFolder)?.has('')) {
-                        folderStructure.get(rootFolder)?.set('', []);
-                    }
-                    folderStructure.get(rootFolder)?.get('')?.push(file);
-                }
+                subFolders.get(subFolder)?.push(file);
             }
         });
         
