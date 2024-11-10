@@ -471,7 +471,7 @@
   position: relative;
   display: flex;
   height: 100%;
-  transition: width 0.2s ease;
+  transition: all 0.2s ease;
   width: 300px;
 }
 .preview-wrapper.collapsed {
@@ -486,6 +486,9 @@
   left: 0;
   opacity: 1;
   pointer-events: auto;
+}
+.preview-wrapper.collapsed .preview-controls .preview-toggle svg {
+  transform: rotate(0deg);
 }
 .preview-wrapper .preview-controls {
   position: absolute;
@@ -508,6 +511,7 @@
 }
 .preview-wrapper .preview-controls .preview-toggle svg {
   transition: transform 0.2s ease;
+  transform: rotate(180deg);
 }
 .preview-wrapper .preview-resizer {
   width: 4px;

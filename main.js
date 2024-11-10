@@ -433,6 +433,9 @@ var CardView = class extends import_obsidian.ItemView {
     if (this.isPreviewCollapsed) {
       this.previewContainer.addClass("collapsed");
       previewWrapper == null ? void 0 : previewWrapper.addClass("collapsed");
+      if (previewWrapper instanceof HTMLElement) {
+        previewWrapper.style.width = "0px";
+      }
       const contentSection = this.containerEl.querySelector(".content-section");
       if (contentSection instanceof HTMLElement) {
         contentSection.style.width = "100%";
@@ -440,11 +443,16 @@ var CardView = class extends import_obsidian.ItemView {
     } else {
       this.previewContainer.removeClass("collapsed");
       previewWrapper == null ? void 0 : previewWrapper.removeClass("collapsed");
+      const width = "300px";
+      if (previewWrapper instanceof HTMLElement) {
+        previewWrapper.style.width = width;
+      }
+      this.previewContainer.style.width = width;
       this.adjustContentWidth();
     }
     const toggleButton = this.containerEl.querySelector(".preview-toggle svg");
-    if (toggleButton instanceof HTMLElement) {
-      toggleButton.style.transform = this.isPreviewCollapsed ? "rotate(0deg)" : "rotate(180deg)";
+    if (toggleButton instanceof SVGElement) {
+      toggleButton.style.transform = this.isPreviewCollapsed ? "" : "rotate(180deg)";
     }
   }
   // 修改预览栏大小调整方法

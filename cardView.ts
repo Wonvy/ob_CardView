@@ -532,7 +532,7 @@ async onOpen() {
 
         // 添加卡片悬停事件
         card.addEventListener('mouseenter', async () => {
-            openButton.style.opacity = '1';  // 显示打开按钮
+            openButton.style.opacity = '1';  // ��示打开按钮
             // ... 其他悬停事码 ...
         });
 
@@ -579,6 +579,9 @@ async onOpen() {
         if (this.isPreviewCollapsed) {
             this.previewContainer.addClass('collapsed');
             previewWrapper?.addClass('collapsed');
+            if (previewWrapper instanceof HTMLElement) {
+                previewWrapper.style.width = '0px';  // 直接设置宽度为0
+            }
             // 调整内容区域宽度
             const contentSection = this.containerEl.querySelector('.content-section');
             if (contentSection instanceof HTMLElement) {
@@ -587,14 +590,20 @@ async onOpen() {
         } else {
             this.previewContainer.removeClass('collapsed');
             previewWrapper?.removeClass('collapsed');
-            // 恢复预览栏宽度并调整内容区域
+            // 恢复预览栏宽度
+            const width = '300px';  // 默认宽度
+            if (previewWrapper instanceof HTMLElement) {
+                previewWrapper.style.width = width;
+            }
+            this.previewContainer.style.width = width;
+            // 调整内容区域
             this.adjustContentWidth();
         }
 
         // 更新折叠按钮图标方向
         const toggleButton = this.containerEl.querySelector('.preview-toggle svg');
-        if (toggleButton instanceof HTMLElement) {
-            toggleButton.style.transform = this.isPreviewCollapsed ? 'rotate(0deg)' : 'rotate(180deg)';
+        if (toggleButton instanceof SVGElement) {  // 修改类型检查
+            toggleButton.style.transform = this.isPreviewCollapsed ? '' : 'rotate(180deg)';
         }
     }
 

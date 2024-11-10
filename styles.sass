@@ -486,7 +486,7 @@
   position: relative
   display: flex
   height: 100%
-  transition: width 0.2s ease
+  transition: all 0.2s ease
   width: 300px
   
   &.collapsed
@@ -501,6 +501,9 @@
       left: 0  // 折叠时调整按钮位置
       opacity: 1
       pointer-events: auto
+      
+      .preview-toggle svg
+        transform: rotate(0deg)  // 折叠时箭头朝右
   
   .preview-controls 
     position: absolute
@@ -523,6 +526,7 @@
       
       svg
         transition: transform 0.2s ease
+        transform: rotate(180deg)  // 默认箭头朝左
   
   .preview-resizer 
     width: 4px
