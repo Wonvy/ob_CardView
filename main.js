@@ -137,6 +137,7 @@ var CardView = class extends import_obsidian.ItemView {
     this.previewResizer = previewWrapper.createDiv("preview-resizer");
     this.previewContainer = previewWrapper.createDiv("preview-container");
     this.setupResizer();
+    this.setupScrollSync();
     await this.loadNotes();
     this.calendarContainer = createDiv();
     this.calendarContainer.addClass("calendar-container");
@@ -1068,7 +1069,7 @@ var CardView = class extends import_obsidian.ItemView {
     batchRenameItem.setText("\u6279\u91CF\u91CD\u547D\u540D");
     batchRenameItem.addEventListener("click", () => {
       menu.style.display = "none";
-      console.log("\u6279\u91CF\u91CD\u547D\u540D\u529F\u80FD\uFFFD\uFFFD\uFFFD\u5B9E\u73B0");
+      console.log("\u6279\u91CF\u91CD\u547D\u540D\u529F\u80FD\u5B9E\u73B0");
     });
     let isMenuVisible = false;
     commandBtn.addEventListener("click", (e) => {
@@ -1370,6 +1371,27 @@ ${emptyNotes.map((file) => file.basename).join("\n")}`
   // 添加刷新标签的方法
   refreshTags() {
     this.loadTags();
+  }
+  // 在 CardView 类中添加新的方法来处理滚动同步
+  setupScrollSync() {
+    const cardContainer = this.container;
+    const previewContainer = this.previewContainer;
+    cardContainer.addEventListener("wheel", (e) => {
+      if (e.ctrlKey || e.shiftKey) {
+        return;
+      }
+      cardContainer.style.cursor = "ns-resize";
+      setTimeout(() => {
+        cardContainer.style.cursor = "default";
+      }, 150);
+      previewContainer.scrollTop += e.deltaY;
+    });
+    previewContainer.addEventListener("wheel", (e) => {
+      previewContainer.style.cursor = "ns-resize";
+      setTimeout(() => {
+        previewContainer.style.cursor = "default";
+      }, 150);
+    });
   }
 };
 var ConfirmModal = class extends import_obsidian.Modal {

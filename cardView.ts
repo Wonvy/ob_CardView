@@ -166,6 +166,9 @@ async onOpen() {
         // 设置预览栏调整功能
         this.setupResizer();
 
+        // 设置滚动同步
+        this.setupScrollSync();
+
         await this.loadNotes();
 
         // 初始化日历容器
@@ -1440,7 +1443,7 @@ async onOpen() {
         batchRenameItem.setText('批量重命名');
         batchRenameItem.addEventListener('click', () => {
             menu.style.display = 'none';  // 点击后隐藏菜单
-            console.log('批量重命名功能���实现');
+            console.log('批量重命名功能实现');
         });
 
         // 使用点击事替代鼠标悬停事件
@@ -1846,7 +1849,7 @@ async onOpen() {
             await this.openInAppropriateLeaf(note);
         });
 
-        // 右��菜单
+        // 右菜单
         noteItem.addEventListener('contextmenu', (e) => {
             e.preventDefault();
             this.showContextMenu(e, this.getSelectedFiles());
@@ -1873,6 +1876,43 @@ async onOpen() {
     // 添加刷新标签的方法
     public refreshTags() {
         this.loadTags();
+    }
+
+    // 在 CardView 类中添加新的方法来处理滚动同步
+    private setupScrollSync() {
+        // 获取卡片容器和预览容器
+        const cardContainer = this.container;
+        const previewContainer = this.previewContainer;
+
+        // 为卡片容器添加滚动事件监听
+        cardContainer.addEventListener('wheel', (e: WheelEvent) => {
+            // 如果按住了 Ctrl 或 Shift 键，不处理滚动同步（因为这是用来调整卡片大小的）
+            if (e.ctrlKey || e.shiftKey) {
+                return;
+            }
+
+            // 添加滚动时的鼠标样式
+            cardContainer.style.cursor = 'ns-resize';
+
+            // 设置定时器来恢复鼠标样式
+            setTimeout(() => {
+                cardContainer.style.cursor = 'default';
+            }, 150);
+
+            // 同步预览容器的滚动位置
+            previewContainer.scrollTop += e.deltaY;
+        });
+
+        // 为预览容器添加滚动事件监听
+        previewContainer.addEventListener('wheel', (e: WheelEvent) => {
+            // 添加滚动时的鼠标样式
+            previewContainer.style.cursor = 'ns-resize';
+
+            // 设置定时器来恢复鼠标样式
+            setTimeout(() => {
+                previewContainer.style.cursor = 'default';
+            }, 150);
+        });
     }
 }
 

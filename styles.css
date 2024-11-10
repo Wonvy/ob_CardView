@@ -476,14 +476,12 @@
 }
 .preview-wrapper.collapsed {
   width: 0;
-  margin-right: 24px;
 }
 .preview-wrapper.collapsed .preview-resizer {
   opacity: 0;
   pointer-events: none;
 }
 .preview-wrapper.collapsed .preview-controls {
-  left: 0;
   opacity: 1;
   pointer-events: auto;
 }
@@ -492,7 +490,7 @@
 }
 .preview-wrapper .preview-controls {
   position: absolute;
-  left: -24px;
+  left: -26px;
   top: 50%;
   transform: translateY(-50%);
   z-index: 11;
@@ -500,8 +498,12 @@
 }
 .preview-wrapper .preview-controls .preview-toggle {
   background: var(--background-secondary);
+  border-radius: 5px 0 0 5px;
   border: 1px solid var(--background-modifier-border);
-  border-radius: 4px;
+  border-right: none;
+  width: 30px;
+  height: 30px;
+  box-sizing: border-box;
   padding: 4px;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -552,7 +554,6 @@
 .content-section {
   flex: 1;
   min-width: 0;
-  padding: 16px;
   transition: margin-left 0.2s ease;
 }
 
