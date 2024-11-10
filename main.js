@@ -1191,7 +1191,7 @@ ${emptyNotes.map((file) => file.basename).join("\n")}`
         await this.app.vault.trash(file, true);
       }
       this.refreshView();
-      new import_obsidian.Notice(`\u5DF2\u5220\u9664 ${emptyNotes.length} \u4E2A\u7A7A\u767D\u7B14\u8BB0`);
+      new import_obsidian.Notice(`\uFFFD\uFFFD\uFFFD\u5220\u9664 ${emptyNotes.length} \u4E2A\u7A7A\u767D\u7B14\u8BB0`);
     }
   }
   // 创建月视图
@@ -1598,71 +1598,87 @@ ${content}` : content;
       }, 5e3);
     }
   }
-  // 添加拖拽功能方法
+  // 修改 setupDraggable 方法
   setupDraggable(element) {
     let isDragging = false;
     let startX;
     let startY;
-    let elementX;
-    let elementY;
+    let initialLeft;
+    let initialTop;
     const dragStart = (e) => {
       const target = e.target;
-      if (target.closest(".quick-note-input") || target.closest(".quick-note-btn") || target.closest(".control-button") || target.closest(".quick-note-send") || target.closest(".minimize-icon") || target.closest(".tag-input") || target.closest(".quick-note-title")) {
+      if (!element.hasClass("minimized") && (target.closest(".quick-note-input") || target.closest(".quick-note-btn") || target.closest(".control-button") || target.closest(".quick-note-send") || target.closest(".minimize-icon") || target.closest(".tag-input") || target.closest(".quick-note-title"))) {
         return;
       }
       isDragging = true;
       const rect = element.getBoundingClientRect();
-      elementX = rect.left + rect.width / 2;
-      elementY = rect.top;
-      startX = e.clientX - elementX;
-      startY = e.clientY - elementY;
+      const computedStyle = window.getComputedStyle(element);
+      initialLeft = rect.left;
+      initialTop = rect.top;
+      startX = e.clientX - rect.left;
+      startY = e.clientY - rect.top;
       element.style.transition = "none";
       element.style.cursor = "grabbing";
-      element.style.left = elementX + "px";
-      element.style.top = elementY + "px";
-      element.style.transform = "none";
+      element.addClass("dragging");
     };
     const dragEnd = () => {
       if (!isDragging) return;
       isDragging = false;
       element.style.transition = "all 0.2s ease";
-      element.style.cursor = "grab";
+      element.style.cursor = element.hasClass("minimized") ? "grab" : "default";
+      element.removeClass("dragging");
     };
     const drag = (e) => {
       if (!isDragging) return;
       e.preventDefault();
       const newX = e.clientX - startX;
       const newY = e.clientY - startY;
-      const maxX = window.innerWidth - element.offsetWidth / 2;
-      const minX = element.offsetWidth / 2;
+      const maxX = window.innerWidth - element.offsetWidth;
       const maxY = window.innerHeight - element.offsetHeight;
-      elementX = Math.max(minX, Math.min(newX, maxX));
-      elementY = Math.max(0, Math.min(newY, maxY));
-      element.style.left = elementX + "px";
-      element.style.top = elementY + "px";
+      const boundedX = Math.max(0, Math.min(newX, maxX));
+      const boundedY = Math.max(0, Math.min(newY, maxY));
+      if (element.hasClass("minimized")) {
+        element.style.left = `${boundedX}px`;
+        element.style.top = `${boundedY}px`;
+        element.style.transform = "none";
+      } else {
+        element.style.left = `${boundedX}px`;
+        element.style.top = `${boundedY}px`;
+        element.style.transform = "none";
+      }
     };
     element.addEventListener("mousedown", dragStart);
     document.addEventListener("mousemove", drag);
     document.addEventListener("mouseup", dragEnd);
     window.addEventListener("resize", () => {
-      if (!isDragging) {
-        element.style.removeProperty("left");
-        element.style.removeProperty("top");
+      if (!isDragging && !element.hasClass("minimized")) {
+        element.style.left = "50%";
+        element.style.top = "20px";
         element.style.transform = "translateX(-50%)";
       }
     });
   }
-  // 添加最小化切换方法
+  // 修改 toggleMinimize 方法
   toggleMinimize(element) {
     const isMinimized = element.hasClass("minimized");
+    const rect = element.getBoundingClientRect();
     if (isMinimized) {
       element.removeClass("minimized");
       element.style.removeProperty("height");
       element.style.width = "800px";
+      element.style.left = "50%";
+      element.style.top = "20px";
+      element.style.transform = "translateX(-50%)";
     } else {
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top;
       element.addClass("minimized");
       element.style.width = "40px";
       element.style.height = "40px";
+      const newLeft = centerX - 20;
+      element.style.left = `${newLeft}px`;
+      element.style.top = `${centerY}px`;
+      element.style.transform = "none";
     }
   }
   // 添加保存和加载最近标签的方法

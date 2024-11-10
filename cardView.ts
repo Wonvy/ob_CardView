@@ -862,7 +862,7 @@ export class CardView extends ItemView {
     private async createTimelineView() {
         const timelineContainer = this.container.createDiv('timeline-container');
         
-        // 获所有笔记并按日期分组
+        // 获所有笔记并��日期分组
         const files = this.app.vault.getMarkdownFiles();
         const notesByDate = new Map<string, TFile[]>();
         
@@ -1626,7 +1626,7 @@ export class CardView extends ItemView {
             }
             // 刷新视图
             this.refreshView();
-            new Notice(`已删除 ${emptyNotes.length} 个空白笔记`);
+            new Notice(`���删除 ${emptyNotes.length} 个空白笔记`);
         }
     }
 
@@ -2209,47 +2209,47 @@ export class CardView extends ItemView {
         }
     }
 
-    // 添加拖拽功能方法
+    // 修改 setupDraggable 方法
     private setupDraggable(element: HTMLElement) {
         let isDragging = false;
         let startX: number;
         let startY: number;
-        let elementX: number;
-        let elementY: number;
-        
-        // 移除初始化位置的代码，因为我们使用了 CSS 居中
-        
+        let initialLeft: number;
+        let initialTop: number;
+
         const dragStart = (e: MouseEvent) => {
-            // 如果点击的是输入框、按钮或最小化图标，不启动拖拽
+            // 检查是否应该允许拖拽
             const target = e.target as HTMLElement;
-            if (target.closest('.quick-note-input') || 
+            if (!element.hasClass('minimized') && (
+                target.closest('.quick-note-input') || 
                 target.closest('.quick-note-btn') || 
                 target.closest('.control-button') ||
                 target.closest('.quick-note-send') ||
                 target.closest('.minimize-icon') ||
                 target.closest('.tag-input') ||
-                target.closest('.quick-note-title')) {
+                target.closest('.quick-note-title')
+            )) {
                 return;
             }
 
             isDragging = true;
             
-            // 获取当前位置，考虑 transform 的偏移
+            // 获取元素当前位置
             const rect = element.getBoundingClientRect();
-            elementX = rect.left + rect.width / 2;  // 考虑元素中心点
-            elementY = rect.top;
+            const computedStyle = window.getComputedStyle(element);
             
-            startX = e.clientX - elementX;
-            startY = e.clientY - elementY;
+            // 获取实际的 left 和 top 值
+            initialLeft = rect.left;
+            initialTop = rect.top;
+            
+            // 记录鼠标点击位置相对元素左上角的偏移
+            startX = e.clientX - rect.left;
+            startY = e.clientY - rect.top;
             
             // 添加拖动时的样式
             element.style.transition = 'none';
             element.style.cursor = 'grabbing';
-            
-            // 切换到绝对定位
-            element.style.left = elementX + 'px';
-            element.style.top = elementY + 'px';
-            element.style.transform = 'none';  // 移除 transform
+            element.addClass('dragging');
         };
 
         const dragEnd = () => {
@@ -2257,7 +2257,8 @@ export class CardView extends ItemView {
             
             isDragging = false;
             element.style.transition = 'all 0.2s ease';
-            element.style.cursor = 'grab';
+            element.style.cursor = element.hasClass('minimized') ? 'grab' : 'default';
+            element.removeClass('dragging');
         };
 
         const drag = (e: MouseEvent) => {
@@ -2270,16 +2271,23 @@ export class CardView extends ItemView {
             const newY = e.clientY - startY;
 
             // 限制拖动范围
-            const maxX = window.innerWidth - element.offsetWidth / 2;  // 考虑元素宽度的一半
-            const minX = element.offsetWidth / 2;  // 考虑元素宽度的一半
+            const maxX = window.innerWidth - element.offsetWidth;
             const maxY = window.innerHeight - element.offsetHeight;
             
-            elementX = Math.max(minX, Math.min(newX, maxX));
-            elementY = Math.max(0, Math.min(newY, maxY));
+            const boundedX = Math.max(0, Math.min(newX, maxX));
+            const boundedY = Math.max(0, Math.min(newY, maxY));
 
-            // 更新位置
-            element.style.left = elementX + 'px';
-            element.style.top = elementY + 'px';
+            // 根据最小化状态设置位置
+            if (element.hasClass('minimized')) {
+                element.style.left = `${boundedX}px`;
+                element.style.top = `${boundedY}px`;
+                element.style.transform = 'none';
+            } else {
+                // 正常状态下允许水平和垂直移动
+                element.style.left = `${boundedX}px`;
+                element.style.top = `${boundedY}px`;
+                element.style.transform = 'none';
+            }
         };
 
         // 添加事件监听
@@ -2289,30 +2297,44 @@ export class CardView extends ItemView {
 
         // 监听窗口大小变化
         window.addEventListener('resize', () => {
-            if (!isDragging) {
-                // 如果不在拖拽中，恢复居中
-                element.style.removeProperty('left');
-                element.style.removeProperty('top');
+            if (!isDragging && !element.hasClass('minimized')) {
+                // 如果不在拖拽中且不是最小化状态，恢复初始位置
+                element.style.left = '50%';
+                element.style.top = '20px';
                 element.style.transform = 'translateX(-50%)';
             }
         });
     }
 
-    // 添加最小化切换方法
+    // 修改 toggleMinimize 方法
     private toggleMinimize(element: HTMLElement) {
         const isMinimized = element.hasClass('minimized');
+        const rect = element.getBoundingClientRect();
         
         if (isMinimized) {
             // 恢复正常状态
             element.removeClass('minimized');
-            // 不再设置固定高度，让内容自然展开
             element.style.removeProperty('height');
             element.style.width = '800px';
+            // 恢复居中定位
+            element.style.left = '50%';
+            element.style.top = '20px';
+            element.style.transform = 'translateX(-50%)';
         } else {
-            // 最小化
+            // 最小化状态
+            // 保存当前位置的中心点
+            const centerX = rect.left + rect.width / 2;
+            const centerY = rect.top;
+            
             element.addClass('minimized');
             element.style.width = '40px';
             element.style.height = '40px';
+            
+            // 计算新位置，保持原来的中心点位置
+            const newLeft = centerX - 20; // 20 是最小化宽度的一半
+            element.style.left = `${newLeft}px`;
+            element.style.top = `${centerY}px`;
+            element.style.transform = 'none';
         }
     }
 

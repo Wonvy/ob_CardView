@@ -1123,7 +1123,7 @@
   position: fixed;
   top: 20px;
   left: 50%;
-  transform: translateX(-50%);
+  transform: translate(-50%, 0);
   width: 800px;
   z-index: 1000;
   background: var(--background-primary);
@@ -1144,16 +1144,9 @@
   cursor: grabbing;
 }
 .quick-note-bar.dragging {
-  transition: none;
+  transition: none !important;
   opacity: 0.95;
-}
-.quick-note-bar.dragging::after {
-  content: "";
-  position: absolute;
-  inset: -2px;
-  border: 2px solid var(--interactive-accent);
-  border-radius: 14px;
-  opacity: 0.3;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
 }
 .quick-note-bar .quick-note-input-container {
   display: flex;
