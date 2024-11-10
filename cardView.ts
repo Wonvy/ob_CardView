@@ -1701,8 +1701,8 @@ async onOpen() {
             // 创建根文件夹的笔记选项
             const rootNotes = subFolders.get('') || [];
             if (rootNotes.length > 0) {
-                const rootTitle = sideNav.createDiv('folder-title root');
-                rootTitle.setText('当前目录');
+                const rootTitle = sideNav.createDiv('folder-title');
+                rootTitle.setText('...');//当前目录
                 rootTitle.addEventListener('click', () => {
                     this.showFolderContent(notesArea, rootNotes);
                     sideNav.querySelectorAll('.folder-title').forEach(el => el.removeClass('active'));

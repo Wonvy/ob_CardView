@@ -1245,8 +1245,8 @@ ${emptyNotes.map((file) => file.basename).join("\n")}`
       const sideNav = contentArea.createDiv("folder-sidebar");
       const rootNotes = subFolders.get("") || [];
       if (rootNotes.length > 0) {
-        const rootTitle = sideNav.createDiv("folder-title root");
-        rootTitle.setText("\u5F53\u524D\u76EE\u5F55");
+        const rootTitle = sideNav.createDiv("folder-title");
+        rootTitle.setText("...");
         rootTitle.addEventListener("click", () => {
           this.showFolderContent(notesArea, rootNotes);
           sideNav.querySelectorAll(".folder-title").forEach((el) => el.removeClass("active"));
