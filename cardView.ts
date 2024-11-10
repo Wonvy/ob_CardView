@@ -382,6 +382,7 @@ async onOpen() {
                 // 获取文件浏览器视图
                 const fileExplorer = this.app.workspace.getLeavesOfType('file-explorer')[0];
                 if (fileExplorer && fileExplorer.view) {
+                    this.app.workspace.revealLeaf(fileExplorer);
                     // 获取对应层级的文件夹
                     const targetFolder = currentPath ? this.app.vault.getAbstractFileByPath(currentPath) : this.app.vault.getRoot();
                     if (targetFolder && (targetFolder instanceof TFolder || !currentPath)) {
@@ -622,7 +623,7 @@ async onOpen() {
         this.previewResizer.addEventListener('mousedown', startResize);
     }
 
-    // 添加内区域宽度调整方法
+    // 调整内容宽度
     private adjustContentWidth() {
         const mainLayout = this.containerEl.querySelector('.main-layout');
         const previewWidth = this.previewContainer.offsetWidth;
@@ -791,7 +792,7 @@ async onOpen() {
         this.refreshView();
     }
 
-    // 添加清除标签选择法
+    // 清除标签选择
     private clearTagSelection() {
         this.selectedTags.clear();
         this.tagContainer.querySelectorAll('.tag-btn').forEach(btn => {
@@ -1213,7 +1214,7 @@ async onOpen() {
         this.refreshView();
     }
 
-    // 添加清除日期过滤的方法
+    // 清除日期过滤
     private clearDateFilter() {
         this.currentFilter = { type: 'none' };
         // 清除所有日期选中状态
@@ -1227,43 +1228,49 @@ async onOpen() {
     }
 
 
-    // 修改方法名以更好地反映其功能
+   // 打开文件
     private async openInAppropriateLeaf(file: TFile, openFile: boolean = true) {
-        try {
-            if (openFile) {
-                // 只有在需要打开文件时才执行这些操作
-                const leaves = this.app.workspace.getLeavesOfType('markdown');
-                const currentRoot = this.leaf.getRoot();
-                const otherLeaf = leaves.find(leaf => {
-                    const root = leaf.getRoot();
-                    return root !== currentRoot;
-                });
-                
-                let targetLeaf;
-                if (otherLeaf) {
-                    await otherLeaf.openFile(file);
-                    targetLeaf = otherLeaf;
-                } else {
-                    targetLeaf = this.app.workspace.getLeaf('tab');
-                    await targetLeaf.openFile(file);
+        const fileExplorer = this.app.workspace.getLeavesOfType('file-explorer')[0];
+        if (fileExplorer) {
+            this.app.workspace.revealLeaf(fileExplorer);  // 如果文件浏览器已经存在，直接激活它
+            try {
+                    if (openFile) {
+                        // 只有在需要打开文件时才执行这些操作
+                        const leaves = this.app.workspace.getLeavesOfType('markdown');
+                        const currentRoot = this.leaf.getRoot();
+                        const otherLeaf = leaves.find(leaf => {
+                            const root = leaf.getRoot();
+                            return root !== currentRoot;
+                        });
+                        
+                        let targetLeaf;
+                        if (otherLeaf) {
+                            await otherLeaf.openFile(file);
+                            targetLeaf = otherLeaf;
+                        } else {
+                            targetLeaf = this.app.workspace.getLeaf('tab');
+                            await targetLeaf.openFile(file);
+                        }
+                        
+                        this.app.workspace.setActiveLeaf(targetLeaf);
+                    }
+                    
+                    // 无论是否打开文件，都在文件管理器中定位文件
+                    const fileExplorer = this.app.workspace.getLeavesOfType('file-explorer')[0];
+                    if (fileExplorer && fileExplorer.view) {
+                        await (fileExplorer.view as any).revealInFolder(file);
+                    }
+                    
+                } catch (error) {
+                    console.error('操作失败:', error);
+                    new Notice('操作失败');
                 }
-                
-                this.app.workspace.setActiveLeaf(targetLeaf);
-            }
-            
-            // 无论是否打开文件，都在文件管理器中定位文件
-            const fileExplorer = this.app.workspace.getLeavesOfType('file-explorer')[0];
-            if (fileExplorer && fileExplorer.view) {
-                await (fileExplorer.view as any).revealInFolder(file);
-            }
-            
-        } catch (error) {
-            console.error('操作失败:', error);
-            new Notice('操作失败');
+
         }
+  
     }
 
-    // 在类的开头添加一高亮文本的辅助方法
+    // 高亮文本
     private highlightText(text: string, searchTerm: string): string {
         if (!searchTerm || searchTerm.trim() === '') {
             return text; // 如果搜索词为空，直接返回原文本
@@ -1277,7 +1284,7 @@ async onOpen() {
         return text.replace(regex, '<span class="search-highlight">$1</span>');
     }
 
-    // 添加内容搜索方法
+    // 文件内容搜索
     private async fileContentContainsSearch(file: TFile): Promise<boolean> {
         if (!this.currentSearchTerm || this.currentSearchTerm.trim() === '') {
             return true;
@@ -1314,7 +1321,7 @@ async onOpen() {
         }, 200));
     }
 
-    // 修改创建命令按钮的方法
+    // 创建命令按钮
     private createCommandButton(toolbar: HTMLElement) {
         const commandContainer = toolbar.createDiv('command-container');
         
@@ -1365,7 +1372,7 @@ async onOpen() {
         });
     }
 
-    // 添加删除白笔记的方法
+    // 删除空白笔记
     private async deleteEmptyNotes() {
         const selectedFiles = this.getSelectedFiles();
         if (selectedFiles.length === 0) {
@@ -1407,7 +1414,7 @@ async onOpen() {
         }
     }
 
-    // 修改 createMonthView 方法中的年份显示部分
+    // 创建月视图
     private createMonthView() {
         if (!this.container.querySelector('.month-view')) {
             const monthContainer = this.container.createDiv('month-view');
@@ -1477,13 +1484,13 @@ async onOpen() {
         this.updateMonthView();
     }
 
-    // 修改月份选择方法
+    // 选择月份
     private selectMonth(month: number) {
         this.currentDate = new Date(this.currentDate.getFullYear(), month);
         this.updateMonthView();
     }
 
-    // 修改更新月视图的方法
+    // 更新月视图
     private updateMonthView() {
         const monthView = this.container.querySelector('.month-view');
         if (!monthView) return;
@@ -1508,7 +1515,7 @@ async onOpen() {
         }
     }
 
-    // 修改月份导航方法
+   // 月份导航
     private navigateMonth(delta: number) {
         const newDate = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth() + delta);
         
@@ -1524,13 +1531,13 @@ async onOpen() {
         this.updateMonthView();
     }
 
-    // 添加跳转到今天的方法
+    // 跳转到今天
     private goToToday() {
         this.currentDate = new Date();
         this.updateMonthView();
     }
 
-    // 修改 renderMonthGrid 方法中的日期格子创建部分
+    // 渲染月视图网格
     private renderMonthGrid(grid: HTMLElement) {
         const year = this.currentDate.getFullYear();
         const month = this.currentDate.getMonth();
@@ -1599,7 +1606,7 @@ async onOpen() {
         }
     }
 
-    // 添加获取指定月份笔记的方法
+   // 获取指定月份笔记
     private getNotesByDate(year: number, month: number): Record<string, TFile[]> {
         const notesByDate: Record<string, TFile[]> = {};
         const files = this.app.vault.getMarkdownFiles();
@@ -1618,18 +1625,18 @@ async onOpen() {
         return notesByDate;
     }
 
-    // 添加格式化月份标题的方法
+    // 格式化月份标题
     private formatMonthTitle(date: Date): string {
         return `${date.getFullYear()}年${date.getMonth() + 1}月`;
     }
 
-    // 添加年份导航方法
+    // 年份导航
     private navigateYear(delta: number) {
         this.currentDate = new Date(this.currentDate.getFullYear() + delta, this.currentDate.getMonth());
         this.updateMonthView();
     }
 
-    // 修改 createListView 方法
+    // 创建列表视图
     private async createListView() {
         const files = this.app.vault.getMarkdownFiles();
         const folderStructure = new Map<string, Map<string, TFile[]>>();
@@ -1709,6 +1716,7 @@ async onOpen() {
         }
     }
 
+    // 显示文件夹内容
     private showFolderContent(container: HTMLElement, notes: TFile[]) {
         container.empty();
         
@@ -1798,6 +1806,7 @@ class ConfirmModal extends Modal {
         });
     }
 
+    // 打开模态框
     onOpen() {
         const { contentEl } = this;
         contentEl.createEl('h3', { text: this.title });
@@ -1818,6 +1827,7 @@ class ConfirmModal extends Modal {
         });
     }
 
+    // 关闭模态框
     onClose() {
         const { contentEl } = this;
         contentEl.empty();
@@ -1844,6 +1854,7 @@ class EnhancedFileSelectionModal extends Modal {
         this.onFoldersUpdate = onFoldersUpdate;
     }
 
+    // 打开模态框
     async onOpen() {
         const { contentEl } = this;
         contentEl.empty();
@@ -1890,6 +1901,7 @@ class EnhancedFileSelectionModal extends Modal {
         cancelButton.addEventListener('click', () => this.close());
     }
 
+    // 获取文件夹层次结构
     private getFoldersWithHierarchy(): FolderItem[] {
         const folders: FolderItem[] = [];
         const seen = new Set<string>();
@@ -1919,6 +1931,8 @@ class EnhancedFileSelectionModal extends Modal {
 
         return folders.sort((a, b) => a.path.localeCompare(b.path));
     }
+
+    // 创建文件夹树
     private createFolderTree(container: HTMLElement, folders: FolderItem[]) {
         folders.forEach(folder => {
             const item = container.createDiv({
@@ -1942,6 +1956,7 @@ class EnhancedFileSelectionModal extends Modal {
         });
     }
 
+    // 选择文件夹
     private selectFolder(element: HTMLElement, path: string) {
         // 移除其他选中状态
         this.contentEl.querySelectorAll('.folder-item').forEach(item => {
@@ -1953,6 +1968,7 @@ class EnhancedFileSelectionModal extends Modal {
         this.selectedFolder = path;
     }
 
+    // 移动文件
     private async moveFiles(targetFolder: string) {
         const confirmModal = new ConfirmModal(
             this.app,

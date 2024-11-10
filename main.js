@@ -294,6 +294,7 @@ var CardView = class extends import_obsidian.ItemView {
         e.preventDefault();
         const fileExplorer = this.app.workspace.getLeavesOfType("file-explorer")[0];
         if (fileExplorer && fileExplorer.view) {
+          this.app.workspace.revealLeaf(fileExplorer);
           const targetFolder = currentPath ? this.app.vault.getAbstractFileByPath(currentPath) : this.app.vault.getRoot();
           if (targetFolder && (targetFolder instanceof import_obsidian.TFolder || !currentPath)) {
             await fileExplorer.view.revealInFolder(targetFolder);
@@ -472,7 +473,7 @@ var CardView = class extends import_obsidian.ItemView {
     };
     this.previewResizer.addEventListener("mousedown", startResize);
   }
-  // 添加内区域宽度调整方法
+  // 调整内容宽度
   adjustContentWidth() {
     const mainLayout = this.containerEl.querySelector(".main-layout");
     const previewWidth = this.previewContainer.offsetWidth;
@@ -593,7 +594,7 @@ var CardView = class extends import_obsidian.ItemView {
     }
     this.refreshView();
   }
-  // 添加清除标签选择法
+  // 清除标签选择
   clearTagSelection() {
     this.selectedTags.clear();
     this.tagContainer.querySelectorAll(".tag-btn").forEach((btn) => {
@@ -896,7 +897,7 @@ var CardView = class extends import_obsidian.ItemView {
     }
     this.refreshView();
   }
-  // 添加清除日期过滤的方法
+  // 清除日期过滤
   clearDateFilter() {
     this.currentFilter = { type: "none" };
     if (this.calendarContainer) {
@@ -906,36 +907,40 @@ var CardView = class extends import_obsidian.ItemView {
     }
     this.refreshView();
   }
-  // 修改方法名以更好地反映其功能
+  // 打开文件
   async openInAppropriateLeaf(file, openFile = true) {
-    try {
-      if (openFile) {
-        const leaves = this.app.workspace.getLeavesOfType("markdown");
-        const currentRoot = this.leaf.getRoot();
-        const otherLeaf = leaves.find((leaf) => {
-          const root = leaf.getRoot();
-          return root !== currentRoot;
-        });
-        let targetLeaf;
-        if (otherLeaf) {
-          await otherLeaf.openFile(file);
-          targetLeaf = otherLeaf;
-        } else {
-          targetLeaf = this.app.workspace.getLeaf("tab");
-          await targetLeaf.openFile(file);
+    const fileExplorer = this.app.workspace.getLeavesOfType("file-explorer")[0];
+    if (fileExplorer) {
+      this.app.workspace.revealLeaf(fileExplorer);
+      try {
+        if (openFile) {
+          const leaves = this.app.workspace.getLeavesOfType("markdown");
+          const currentRoot = this.leaf.getRoot();
+          const otherLeaf = leaves.find((leaf) => {
+            const root = leaf.getRoot();
+            return root !== currentRoot;
+          });
+          let targetLeaf;
+          if (otherLeaf) {
+            await otherLeaf.openFile(file);
+            targetLeaf = otherLeaf;
+          } else {
+            targetLeaf = this.app.workspace.getLeaf("tab");
+            await targetLeaf.openFile(file);
+          }
+          this.app.workspace.setActiveLeaf(targetLeaf);
         }
-        this.app.workspace.setActiveLeaf(targetLeaf);
+        const fileExplorer2 = this.app.workspace.getLeavesOfType("file-explorer")[0];
+        if (fileExplorer2 && fileExplorer2.view) {
+          await fileExplorer2.view.revealInFolder(file);
+        }
+      } catch (error) {
+        console.error("\u64CD\u4F5C\u5931\u8D25:", error);
+        new import_obsidian.Notice("\u64CD\u4F5C\u5931\u8D25");
       }
-      const fileExplorer = this.app.workspace.getLeavesOfType("file-explorer")[0];
-      if (fileExplorer && fileExplorer.view) {
-        await fileExplorer.view.revealInFolder(file);
-      }
-    } catch (error) {
-      console.error("\u64CD\u4F5C\u5931\u8D25:", error);
-      new import_obsidian.Notice("\u64CD\u4F5C\u5931\u8D25");
     }
   }
-  // 在类的开头添加一高亮文本的辅助方法
+  // 高亮文本
   highlightText(text, searchTerm) {
     if (!searchTerm || searchTerm.trim() === "") {
       return text;
@@ -944,7 +949,7 @@ var CardView = class extends import_obsidian.ItemView {
     const regex = new RegExp(`(${escapedSearchTerm})`, "gi");
     return text.replace(regex, '<span class="search-highlight">$1</span>');
   }
-  // 添加内容搜索方法
+  // 文件内容搜索
   async fileContentContainsSearch(file) {
     if (!this.currentSearchTerm || this.currentSearchTerm.trim() === "") {
       return true;
@@ -973,7 +978,7 @@ var CardView = class extends import_obsidian.ItemView {
       this.refreshView();
     }, 200));
   }
-  // 修改创建命令按钮的方法
+  // 创建命令按钮
   createCommandButton(toolbar) {
     const commandContainer = toolbar.createDiv("command-container");
     const commandBtn = commandContainer.createEl("button", {
@@ -1010,7 +1015,7 @@ var CardView = class extends import_obsidian.ItemView {
       }
     });
   }
-  // 添加删除白笔记的方法
+  // 删除空白笔记
   async deleteEmptyNotes() {
     const selectedFiles = this.getSelectedFiles();
     if (selectedFiles.length === 0) {
@@ -1042,7 +1047,7 @@ ${emptyNotes.map((file) => file.basename).join("\n")}`
       new import_obsidian.Notice(`\u5DF2\u5220\u9664 ${emptyNotes.length} \u4E2A\u7A7A\u767D\u7B14\u8BB0`);
     }
   }
-  // 修改 createMonthView 方法中的年份显示部分
+  // 创建月视图
   createMonthView() {
     if (!this.container.querySelector(".month-view")) {
       const monthContainer = this.container.createDiv("month-view");
@@ -1084,12 +1089,12 @@ ${emptyNotes.map((file) => file.basename).join("\n")}`
     }
     this.updateMonthView();
   }
-  // 修改月份选择方法
+  // 选择月份
   selectMonth(month) {
     this.currentDate = new Date(this.currentDate.getFullYear(), month);
     this.updateMonthView();
   }
-  // 修改更新月视图的方法
+  // 更新月视图
   updateMonthView() {
     const monthView = this.container.querySelector(".month-view");
     if (!monthView) return;
@@ -1107,7 +1112,7 @@ ${emptyNotes.map((file) => file.basename).join("\n")}`
       this.renderMonthGrid(grid);
     }
   }
-  // 修改月份导航方法
+  // 月份导航
   navigateMonth(delta) {
     const newDate = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth() + delta);
     if (newDate.getFullYear() !== this.currentDate.getFullYear()) {
@@ -1119,12 +1124,12 @@ ${emptyNotes.map((file) => file.basename).join("\n")}`
     this.currentDate = newDate;
     this.updateMonthView();
   }
-  // 添加跳转到今天的方法
+  // 跳转到今天
   goToToday() {
     this.currentDate = /* @__PURE__ */ new Date();
     this.updateMonthView();
   }
-  // 修改 renderMonthGrid 方法中的日期格子创建部分
+  // 渲染月视图网格
   renderMonthGrid(grid) {
     const year = this.currentDate.getFullYear();
     const month = this.currentDate.getMonth();
@@ -1172,7 +1177,7 @@ ${emptyNotes.map((file) => file.basename).join("\n")}`
       }
     }
   }
-  // 添加获取指定月份笔记的方法
+  // 获取指定月份笔记
   getNotesByDate(year, month) {
     const notesByDate = {};
     const files = this.app.vault.getMarkdownFiles();
@@ -1188,16 +1193,16 @@ ${emptyNotes.map((file) => file.basename).join("\n")}`
     });
     return notesByDate;
   }
-  // 添加格式化月份标题的方法
+  // 格式化月份标题
   formatMonthTitle(date) {
     return `${date.getFullYear()}\u5E74${date.getMonth() + 1}\u6708`;
   }
-  // 添加年份导航方法
+  // 年份导航
   navigateYear(delta) {
     this.currentDate = new Date(this.currentDate.getFullYear() + delta, this.currentDate.getMonth());
     this.updateMonthView();
   }
-  // 修改 createListView 方法
+  // 创建列表视图
   async createListView() {
     const files = this.app.vault.getMarkdownFiles();
     const folderStructure = /* @__PURE__ */ new Map();
@@ -1251,6 +1256,7 @@ ${emptyNotes.map((file) => file.basename).join("\n")}`
       this.showFolderContent(notesArea, rootNotes);
     }
   }
+  // 显示文件夹内容
   showFolderContent(container, notes) {
     container.empty();
     notes.sort((a, b) => b.stat.mtime - a.stat.mtime);
@@ -1313,6 +1319,7 @@ var ConfirmModal = class extends import_obsidian.Modal {
       this.open();
     });
   }
+  // 打开模态框
   onOpen() {
     const { contentEl } = this;
     contentEl.createEl("h3", { text: this.title });
@@ -1329,6 +1336,7 @@ var ConfirmModal = class extends import_obsidian.Modal {
       this.close();
     });
   }
+  // 关闭模态框
   onClose() {
     const { contentEl } = this;
     contentEl.empty();
@@ -1343,6 +1351,7 @@ var EnhancedFileSelectionModal = class extends import_obsidian.Modal {
     this.recentFolders = recentFolders;
     this.onFoldersUpdate = onFoldersUpdate;
   }
+  // 打开模态框
   async onOpen() {
     const { contentEl } = this;
     contentEl.empty();
@@ -1377,6 +1386,7 @@ var EnhancedFileSelectionModal = class extends import_obsidian.Modal {
     });
     cancelButton.addEventListener("click", () => this.close());
   }
+  // 获取文件夹层次结构
   getFoldersWithHierarchy() {
     const folders = [];
     const seen = /* @__PURE__ */ new Set();
@@ -1403,6 +1413,7 @@ var EnhancedFileSelectionModal = class extends import_obsidian.Modal {
     });
     return folders.sort((a, b) => a.path.localeCompare(b.path));
   }
+  // 创建文件夹树
   createFolderTree(container, folders) {
     folders.forEach((folder) => {
       const item = container.createDiv({
@@ -1420,6 +1431,7 @@ var EnhancedFileSelectionModal = class extends import_obsidian.Modal {
       item.addEventListener("click", () => this.selectFolder(item, folder.path));
     });
   }
+  // 选择文件夹
   selectFolder(element, path) {
     this.contentEl.querySelectorAll(".folder-item").forEach((item) => {
       item.removeClass("selected");
@@ -1427,6 +1439,7 @@ var EnhancedFileSelectionModal = class extends import_obsidian.Modal {
     element.addClass("selected");
     this.selectedFolder = path;
   }
+  // 移动文件
   async moveFiles(targetFolder) {
     const confirmModal = new ConfirmModal(
       this.app,
