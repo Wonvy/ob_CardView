@@ -531,28 +531,31 @@
   margin-left: 0;
 }
 
-.timeline-container {
-  padding: 2rem 2rem 2rem 180px;
+.view-timeline .card-container {
+  display: flex;
+}
+.view-timeline .card-container .timeline-container {
+  padding: 0rem 0rem 0rem 150px;
   position: relative;
 }
-.timeline-container::before {
+.view-timeline .card-container .timeline-container::before {
   content: "";
   position: absolute;
-  left: 160px;
+  left: 127px;
   top: 0;
   bottom: 0;
   width: 2px;
   background-color: var(--background-modifier-border);
 }
-.timeline-container .timeline-date-group {
+.view-timeline .card-container .timeline-container .timeline-date-group {
   position: relative;
   margin-bottom: 2rem;
 }
-.timeline-container .timeline-date-group .timeline-date-node {
+.view-timeline .card-container .timeline-container .timeline-date-group .timeline-date-node {
   display: flex;
   position: absolute;
-  left: -147px;
-  width: 140px;
+  left: -118px;
+  width: 100px;
   text-align: right;
   display: flex;
   align-items: center;
@@ -560,7 +563,7 @@
   gap: 1rem;
   flex-direction: row-reverse;
 }
-.timeline-container .timeline-date-group .timeline-date-node .timeline-node-circle {
+.view-timeline .card-container .timeline-container .timeline-date-group .timeline-date-node .timeline-node-circle {
   width: 12px;
   height: 12px;
   border: 2px solid var(--interactive-accent);
@@ -568,38 +571,21 @@
   background-color: var(--background-primary);
   margin-right: -6px;
 }
-.timeline-container .timeline-date-group .timeline-date-node .timeline-date-label {
+.view-timeline .card-container .timeline-container .timeline-date-group .timeline-date-node .timeline-date-label {
   font-weight: bold;
   color: var(--text-muted);
 }
-.timeline-container .timeline-date-group .timeline-notes-list {
-  margin-left: 160px;
+.view-timeline .card-container .timeline-container .timeline-date-group .timeline-notes-list {
+  margin-left: 20px;
   margin-top: 2rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 1rem;
 }
-.timeline-container .timeline-date-group .timeline-notes-list .timeline-note-item {
-  position: relative;
-  margin-bottom: 1rem;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-}
-.timeline-container .timeline-date-group .timeline-notes-list .timeline-note-marker {
-  position: absolute;
-  left: -40px;
-  width: 10px;
-  height: 2px;
-  background-color: var(--background-modifier-border);
-}
-.timeline-container .timeline-date-group .timeline-notes-list .timeline-note-content {
-  background-color: var(--background-secondary);
-  border-radius: 4px;
-  padding: 0.5rem 1rem;
-  flex: 1;
-  transition: all 0.2s ease;
-}
-.timeline-container .timeline-date-group .timeline-notes-list:hover .timeline-note-content {
-  transform: translateX(4px);
-  background-color: var(--background-modifier-hover);
+.view-timeline .card-container .timeline-container .timeline-date-group .timeline-notes-list .timeline-note-item,
+.view-timeline .card-container .timeline-container .timeline-date-group .timeline-notes-list .timeline-note-marker,
+.view-timeline .card-container .timeline-container .timeline-date-group .timeline-notes-list .timeline-note-content {
+  display: none;
 }
 
 .note-tag {
@@ -722,9 +708,6 @@
   justify-content: space-between;
   align-items: center;
   padding: 16px 24px;
-  background: var(--background-secondary);
-  border-bottom: 1px solid var(--background-modifier-border);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 .month-view .month-header .year-group {
   display: flex;
@@ -813,8 +796,6 @@
 .month-view .month-weekdays {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  border-bottom: 1px solid var(--background-modifier-border);
-  margin-bottom: 1px;
 }
 .month-view .month-weekdays .weekday {
   padding: 8px;
@@ -835,13 +816,9 @@
 .month-view .month-grid .month-day {
   background-color: var(--background-primary);
   padding: 8px;
-  max-height: 150px;
   overflow: auto;
   display: flex;
   flex-direction: column;
-}
-.month-view .month-grid .month-day.empty {
-  background-color: var(--background-primary-alt);
 }
 .month-view .month-grid .month-day.today {
   background-color: var(--background-modifier-hover);

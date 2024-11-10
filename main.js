@@ -504,7 +504,7 @@ var CardView = class extends import_obsidian.ItemView {
       console.error("\u521B\u5EFA\u7B14\u8BB0\u5931\u8D25:", error);
     }
   }
-  // 创建时间轴视图
+  // 修改创建时间轴视图的方法
   async createTimelineView() {
     const timelineContainer = this.container.createDiv("timeline-container");
     const files = this.app.vault.getMarkdownFiles();
@@ -530,30 +530,13 @@ var CardView = class extends import_obsidian.ItemView {
       const notesList = dateGroup.createDiv("timeline-notes-list");
       const notes = notesByDate.get(date);
       if (notes) {
-        for (const file of notes) {
-          const noteItem = notesList.createDiv("timeline-note-item");
-          noteItem.createDiv("timeline-note-marker");
-          const noteContent = noteItem.createDiv("timeline-note-content");
-          noteContent.createDiv("timeline-note-title").setText(file.basename);
-          noteItem.addEventListener("click", async () => {
-            const leaf = this.app.workspace.getLeaf("tab");
-            await leaf.openFile(file);
-          });
-          noteItem.addEventListener("mouseenter", async () => {
-            try {
-              this.previewContainer.empty();
-              const content = await this.app.vault.read(file);
-              await import_obsidian.MarkdownRenderer.renderMarkdown(
-                content,
-                this.previewContainer,
-                file.path,
-                this
-              );
-            } catch (error) {
-              console.error("\u9884\u89C8\u52A0\u8F7D\u5931\u8D25:", error);
-            }
-          });
-        }
+        await Promise.all(notes.map(async (file) => {
+          const card = await this.createNoteCard(file);
+          if (card instanceof HTMLElement) {
+            card.style.width = "100%";
+            notesList.appendChild(card);
+          }
+        }));
       }
     }
   }
@@ -952,7 +935,7 @@ var CardView = class extends import_obsidian.ItemView {
       new import_obsidian.Notice("\u64CD\u4F5C\u5931\u8D25");
     }
   }
-  // 在类的开头添加一��高亮文本的辅助方法
+  // 在类的开头添加一高亮文本的辅助方法
   highlightText(text, searchTerm) {
     if (!searchTerm || searchTerm.trim() === "") {
       return text;

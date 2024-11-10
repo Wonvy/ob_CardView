@@ -668,7 +668,7 @@ async onOpen() {
         }
     }
 
-    // 创建时间轴视图
+    // 修改创建时间轴视图的方法
     private async createTimelineView() {
         const timelineContainer = this.container.createDiv('timeline-container');
         
@@ -692,7 +692,7 @@ async onOpen() {
             new Date(b).getTime() - new Date(a).getTime()
         );
 
-        // 创建间轴
+        // 创建时间轴
         for (const date of sortedDates) {
             const dateGroup = timelineContainer.createDiv('timeline-date-group');
             
@@ -701,42 +701,20 @@ async onOpen() {
             dateNode.createDiv('timeline-node-circle');
             dateNode.createDiv('timeline-date-label').setText(date);
 
-            // 创建笔记列表
+            // 创建笔记列表容器
             const notesList = dateGroup.createDiv('timeline-notes-list');
             const notes = notesByDate.get(date);
+            
+            // 为每个笔记创建卡片
             if (notes) {
-                for (const file of notes) {
-                    const noteItem = notesList.createDiv('timeline-note-item');
-                    
-                    // 创建标记
-                    noteItem.createDiv('timeline-note-marker');
-                    
-                    // 创建笔记内容
-                    const noteContent = noteItem.createDiv('timeline-note-content');
-                    noteContent.createDiv('timeline-note-title').setText(file.basename);
-                    
-                    // 添加点击事件
-                    noteItem.addEventListener('click', async () => {
-                        const leaf = this.app.workspace.getLeaf('tab');
-                        await leaf.openFile(file);
-                    });
-
-                    // 添加预览功能
-                    noteItem.addEventListener('mouseenter', async () => {
-                        try {
-                            this.previewContainer.empty();
-                            const content = await this.app.vault.read(file);
-                            await MarkdownRenderer.renderMarkdown(
-                                content,
-                                this.previewContainer,
-                                file.path,
-                                this
-                            );
-                        } catch (error) {
-                            console.error('预览加载失败:', error);
-                        }
-                    });
-                }
+                await Promise.all(notes.map(async (file) => {
+                    const card = await this.createNoteCard(file);
+                    if (card instanceof HTMLElement) {
+                        // 设置卡片宽度
+                        card.style.width = '100%';
+                        notesList.appendChild(card);
+                    }
+                }));
             }
         }
     }
@@ -1285,7 +1263,7 @@ async onOpen() {
         }
     }
 
-    // 在类的开头添加一��高亮文本的辅助方法
+    // 在类的开头添加一高亮文本的辅助方法
     private highlightText(text: string, searchTerm: string): string {
         if (!searchTerm || searchTerm.trim() === '') {
             return text; // 如果搜索词为空，直接返回原文本
@@ -1368,7 +1346,7 @@ async onOpen() {
             console.log('批量重命名功能待实现');
         });
 
-        // 使用点击事件替代鼠标悬停事件
+        // 使用点击事��替代鼠标悬停事件
         let isMenuVisible = false;
         
         // 点击按钮时切换菜单显示状态
