@@ -115,7 +115,6 @@ var CardView = class extends import_obsidian.ItemView {
     this.cardSize = this.plugin.settings.cardWidth;
     this.container.style.gridTemplateColumns = `repeat(auto-fill, ${this.cardSize}px)`;
     const previewWrapper = mainLayout.createDiv("preview-wrapper");
-    this.previewContainer = previewWrapper.createDiv("preview-container");
     const previewControls = previewWrapper.createDiv("preview-controls");
     const toggleButton = previewControls.createEl("button", {
       cls: "preview-toggle",
@@ -124,13 +123,8 @@ var CardView = class extends import_obsidian.ItemView {
     toggleButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-chevron-right"><polyline points="9 18 15 12 9 6"></polyline></svg>`;
     toggleButton.addEventListener("click", () => this.togglePreview());
     this.previewResizer = previewWrapper.createDiv("preview-resizer");
+    this.previewContainer = previewWrapper.createDiv("preview-container");
     this.setupResizer();
-    document.addEventListener("wheel", (e) => {
-      if (e.ctrlKey) {
-        e.preventDefault();
-        this.adjustCardSize(e.deltaY);
-      }
-    }, { passive: false });
     await this.loadNotes();
     this.calendarContainer = createDiv();
     this.calendarContainer.addClass("calendar-container");
@@ -435,10 +429,22 @@ var CardView = class extends import_obsidian.ItemView {
   // 切换预览栏的显示状态
   togglePreview() {
     this.isPreviewCollapsed = !this.isPreviewCollapsed;
+    const previewWrapper = this.containerEl.querySelector(".preview-wrapper");
     if (this.isPreviewCollapsed) {
       this.previewContainer.addClass("collapsed");
+      previewWrapper == null ? void 0 : previewWrapper.addClass("collapsed");
+      const contentSection = this.containerEl.querySelector(".content-section");
+      if (contentSection instanceof HTMLElement) {
+        contentSection.style.width = "100%";
+      }
     } else {
       this.previewContainer.removeClass("collapsed");
+      previewWrapper == null ? void 0 : previewWrapper.removeClass("collapsed");
+      this.adjustContentWidth();
+    }
+    const toggleButton = this.containerEl.querySelector(".preview-toggle svg");
+    if (toggleButton instanceof HTMLElement) {
+      toggleButton.style.transform = this.isPreviewCollapsed ? "rotate(0deg)" : "rotate(180deg)";
     }
   }
   // 修改预览栏大小调整方法
@@ -448,20 +454,27 @@ var CardView = class extends import_obsidian.ItemView {
     const startResize = (e) => {
       e.preventDefault();
       startX = e.pageX;
-      startWidth = parseInt(getComputedStyle(this.previewContainer).width, 10);
+      startWidth = this.previewContainer.offsetWidth;
       document.addEventListener("mousemove", resize);
       document.addEventListener("mouseup", stopResize);
       document.body.style.cursor = "col-resize";
       this.previewResizer.addClass("resizing");
     };
     const resize = (e) => {
+      if (!startWidth) return;
       const width = startWidth - (e.pageX - startX);
       if (width >= 50 && width <= 800) {
         this.previewContainer.style.width = `${width}px`;
+        const previewWrapper = this.containerEl.querySelector(".preview-wrapper");
+        if (previewWrapper instanceof HTMLElement) {
+          previewWrapper.style.width = `${width}px`;
+        }
         this.adjustContentWidth();
         if (this.isPreviewCollapsed) {
           this.isPreviewCollapsed = false;
           this.previewContainer.removeClass("collapsed");
+          const previewWrapper2 = this.containerEl.querySelector(".preview-wrapper");
+          previewWrapper2 == null ? void 0 : previewWrapper2.removeClass("collapsed");
         }
       }
     };
@@ -497,8 +510,7 @@ var CardView = class extends import_obsidian.ItemView {
     while (this.app.vault.getAbstractFileByPath(`${fileName}.md`)) {
       const file = this.app.vault.getAbstractFileByPath(`${fileName}.md`);
       if (file instanceof import_obsidian.TFile && file.stat.size === 0) {
-        const leaf = this.app.workspace.getLeaf("tab");
-        await leaf.openFile(file);
+        await this.openInAppropriateLeaf(file);
         return;
       } else {
         fileName = date ? `${baseFileName} ${counter}` : `\u672A\u547D\u540D ${counter}`;
@@ -510,8 +522,7 @@ var CardView = class extends import_obsidian.ItemView {
         `${fileName}.md`,
         ""
       );
-      const leaf = this.app.workspace.getLeaf("tab");
-      await leaf.openFile(file);
+      await this.openInAppropriateLeaf(file);
       this.loadNotes();
     } catch (error) {
       console.error("\u521B\u5EFA\u7B14\u8BB0\u5931\u8D25:", error);
@@ -744,7 +755,7 @@ var CardView = class extends import_obsidian.ItemView {
     });
     this.container.style.gridTemplateColumns = `repeat(auto-fill, ${width}px)`;
   }
-  // 创建日历按钮
+  // 创建日历钮
   createCalendarButton(leftTools) {
     const calendarBtn = leftTools.createEl("button", {
       cls: "calendar-toggle-button"
@@ -784,7 +795,7 @@ var CardView = class extends import_obsidian.ItemView {
     };
     this.refreshView();
   }
-  // 显示日历
+  // 显示历
   showCalendar() {
     console.log("\u5F00\u59CB\u663E\u793A\u65E5\u5386");
     if (!this.calendarContainer) {

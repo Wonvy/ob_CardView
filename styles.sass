@@ -484,33 +484,31 @@
 // 添加预览容器相关样式   
 .preview-wrapper 
   position: relative
-  right: 0
-  top: 0
-  height: 100%
   display: flex
-  z-index: 100  
-
-  // 预览容器   
-  .preview-container 
-    width: 300px
-    height: 100%
-    background-color: var(--background-primary)
-    border-left: 1px solid var(--background-modifier-border)
-    padding: 1rem
-    overflow-y: auto
-    transition: width 0.2s ease
-    resize: horizontal  // 添加水平调整大小功能   
-    max-width: 800px
-    &.collapsed 
-      width: 0
-      padding: 0
-      border-left: none  
-
+  height: 100%
+  transition: width 0.2s ease
+  width: 300px
+  
+  &.collapsed
+    width: 0
+    margin-right: 24px  // 为折叠按钮预留空间
+    
+    .preview-resizer
+      opacity: 0
+      pointer-events: none
+    
+    .preview-controls
+      left: 0  // 折叠时调整按钮位置
+      opacity: 1
+      pointer-events: auto
+  
   .preview-controls 
     position: absolute
     left: -24px
     top: 50%
-    transform: translateY(-50%) 
+    transform: translateY(-50%)
+    z-index: 11
+    transition: all 0.2s ease
 
     .preview-toggle 
       background: var(--background-secondary)
@@ -519,8 +517,41 @@
       padding: 4px
       cursor: pointer
       transition: all 0.2s ease
+      
       &:hover 
-        background: var(--background-modifier-hover)  
+        background: var(--background-modifier-hover)
+      
+      svg
+        transition: transform 0.2s ease
+  
+  .preview-resizer 
+    width: 4px
+    background-color: transparent
+    cursor: col-resize
+    position: relative
+    z-index: 10
+    transition: all 0.2s ease
+    
+    &:hover,
+    &.resizing 
+        background-color: var(--interactive-accent)
+  
+  .preview-container 
+    width: 100%
+    height: 100%
+    background-color: var(--background-primary)
+    border-left: 1px solid var(--background-modifier-border)
+    padding: 1rem
+    overflow-y: auto
+    transition: all 0.2s ease
+    
+    &.collapsed 
+        width: 0 !important
+        padding: 0
+        border-left: none
+        margin-left: 0
+        opacity: 0
+        visibility: hidden
 
 
 
@@ -1068,7 +1099,7 @@
                   white-space: nowrap
                   overflow: hidden
                   text-overflow: ellipsis
-                  flex: 1  // 占据剩余空间
+                  flex: 1  // 占余空间
                 
                 .note-date
                   font-size: 0.8em

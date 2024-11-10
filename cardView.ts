@@ -129,8 +129,7 @@ async onOpen() {
 
         // 创建预览区域
         const previewWrapper = mainLayout.createDiv('preview-wrapper');
-        this.previewContainer = previewWrapper.createDiv('preview-container');
-        
+
         // 添加预览控制按钮
         const previewControls = previewWrapper.createDiv('preview-controls');
         const toggleButton = previewControls.createEl('button', {
@@ -138,20 +137,17 @@ async onOpen() {
             attr: { 'aria-label': '折叠预览' }
         });
         toggleButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-chevron-right"><polyline points="9 18 15 12 9 6"></polyline></svg>`;
-        
+
         toggleButton.addEventListener('click', () => this.togglePreview());
 
-        // 添加调整大小的功能
+        // 添加调整宽度的分隔线
         this.previewResizer = previewWrapper.createDiv('preview-resizer');
-        this.setupResizer();
 
-        // 添加全局滚轮事件监听
-        document.addEventListener('wheel', (e: WheelEvent) => {
-            if (e.ctrlKey) {
-                e.preventDefault();
-                this.adjustCardSize(e.deltaY);
-            }
-        }, { passive: false });
+        // 创建预览容器
+        this.previewContainer = previewWrapper.createDiv('preview-container');
+
+        // 设置预览栏调整功能
+        this.setupResizer();
 
         await this.loadNotes();
 
@@ -288,7 +284,7 @@ async onOpen() {
             
             // 创建图
             const iconSpan = btn.createSpan({ cls: 'view-switch-icon' });
-            iconSpan.innerHTML = iconHtml[view.icon as keyof typeof iconHtml];  // 明确类型
+            iconSpan.innerHTML = iconHtml[view.icon as keyof typeof iconHtml];  // 确类型
             
             // 添加文字
             btn.createSpan({ text: view.text, cls: 'view-switch-text' });
@@ -537,7 +533,7 @@ async onOpen() {
         // 添加卡片悬停事件
         card.addEventListener('mouseenter', async () => {
             openButton.style.opacity = '1';  // 显示打开按钮
-            // ... 其他悬停事件码 ...
+            // ... 其他悬停事码 ...
         });
 
         card.addEventListener('mouseleave', () => {
@@ -578,10 +574,27 @@ async onOpen() {
     // 切换预览栏的显示状态
     private togglePreview() {
         this.isPreviewCollapsed = !this.isPreviewCollapsed;
+        const previewWrapper = this.containerEl.querySelector('.preview-wrapper');
+        
         if (this.isPreviewCollapsed) {
             this.previewContainer.addClass('collapsed');
+            previewWrapper?.addClass('collapsed');
+            // 调整内容区域宽度
+            const contentSection = this.containerEl.querySelector('.content-section');
+            if (contentSection instanceof HTMLElement) {
+                contentSection.style.width = '100%';
+            }
         } else {
             this.previewContainer.removeClass('collapsed');
+            previewWrapper?.removeClass('collapsed');
+            // 恢复预览栏宽度并调整内容区域
+            this.adjustContentWidth();
+        }
+
+        // 更新折叠按钮图标方向
+        const toggleButton = this.containerEl.querySelector('.preview-toggle svg');
+        if (toggleButton instanceof HTMLElement) {
+            toggleButton.style.transform = this.isPreviewCollapsed ? 'rotate(0deg)' : 'rotate(180deg)';
         }
     }
 
@@ -593,7 +606,7 @@ async onOpen() {
         const startResize = (e: MouseEvent) => {
             e.preventDefault();
             startX = e.pageX;
-            startWidth = parseInt(getComputedStyle(this.previewContainer).width, 10);
+            startWidth = this.previewContainer.offsetWidth;
             document.addEventListener('mousemove', resize);
             document.addEventListener('mouseup', stopResize);
             document.body.style.cursor = 'col-resize';
@@ -601,14 +614,22 @@ async onOpen() {
         };
 
         const resize = (e: MouseEvent) => {
+            if (!startWidth) return;
             const width = startWidth - (e.pageX - startX);
             if (width >= 50 && width <= 800) {
                 this.previewContainer.style.width = `${width}px`;
-                // 调整卡片容器的宽度
+                const previewWrapper = this.containerEl.querySelector('.preview-wrapper');
+                if (previewWrapper instanceof HTMLElement) {
+                    previewWrapper.style.width = `${width}px`;
+                }
                 this.adjustContentWidth();
+                
+                // 如果正在调整大小，确保预览栏是展开的
                 if (this.isPreviewCollapsed) {
                     this.isPreviewCollapsed = false;
                     this.previewContainer.removeClass('collapsed');
+                    const previewWrapper = this.containerEl.querySelector('.preview-wrapper');
+                    previewWrapper?.removeClass('collapsed');
                 }
             }
         };
@@ -655,8 +676,7 @@ async onOpen() {
             const file = this.app.vault.getAbstractFileByPath(`${fileName}.md`);
             if (file instanceof TFile && file.stat.size === 0) {
                 // 如果笔记内容为空，则打开这个笔记
-                const leaf = this.app.workspace.getLeaf('tab');
-                await leaf.openFile(file);
+                await this.openInAppropriateLeaf(file);
                 return;
             } else {
                 fileName = date ? `${baseFileName} ${counter}` : `未命名 ${counter}`;
@@ -672,8 +692,8 @@ async onOpen() {
             );
             
             // 在新标签页中打开笔记
-            const leaf = this.app.workspace.getLeaf('tab');
-            await leaf.openFile(file);
+            // const leaf = this.app.workspace.getLeaf('tab');
+            await this.openInAppropriateLeaf(file);
 
             // 刷新卡片视图
             this.loadNotes();
@@ -986,7 +1006,7 @@ async onOpen() {
         this.container.style.gridTemplateColumns = `repeat(auto-fill, ${width}px)`;
     }
 
-    // 创建日历按钮
+    // 创建日历钮
     private createCalendarButton(leftTools: HTMLElement) {
         const calendarBtn = leftTools.createEl('button', {
             cls: 'calendar-toggle-button',
@@ -1036,7 +1056,7 @@ async onOpen() {
         this.refreshView();
     }
 
-    // 显示日历
+    // 显示历
     private showCalendar() {
         // 添加调试日志
         console.log('开始显示日历');
@@ -1245,7 +1265,7 @@ async onOpen() {
     private async openInAppropriateLeaf(file: TFile, openFile: boolean = true) {
         const fileExplorer = this.app.workspace.getLeavesOfType('file-explorer')[0];
         if (fileExplorer) {
-            this.app.workspace.revealLeaf(fileExplorer);  // 如果文件浏览器已经存在，直接激活它
+            this.app.workspace.revealLeaf(fileExplorer);  // 如果文件浏览器已经存在，直接活它
             try {
                     if (openFile) {
                         // 只有在需要打开文件时才执行这些操作
@@ -1366,7 +1386,7 @@ async onOpen() {
             console.log('批量重命名功能待实现');
         });
 
-        // 使用点击事��替代鼠标悬停事件
+        // 使用点击事替代鼠标悬停事件
         let isMenuVisible = false;
         
         // 点击按钮时切换菜单显示状态
