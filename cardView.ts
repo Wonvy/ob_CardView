@@ -480,6 +480,20 @@ async onOpen() {
             // 右键菜单
             card.addEventListener('contextmenu', (e) => {
                 e.preventDefault();
+                e.stopPropagation();
+                
+                // 如果卡片未被选中，先选中它
+                if (!card.hasClass('selected')) {
+                    // 如果没有按住 Ctrl，清除其他选择
+                    if (!e.ctrlKey) {
+                        this.clearSelection();
+                    }
+                    this.selectedNotes.add(file.path);
+                    card.addClass('selected');
+                    this.lastSelectedNote = file.path;
+                }
+                
+                // 显示右键菜单
                 this.showContextMenu(e, this.getSelectedFiles());
             });
 
@@ -844,8 +858,7 @@ async onOpen() {
                     .setIcon("link")
                     .onClick(async () => {
                         for (const file of files) {
-                            const leaf = this.app.workspace.getLeaf('tab');
-                            await leaf.openFile(file);
+                            await this.openInAppropriateLeaf(file);
                         }
                     });
             });
@@ -1626,7 +1639,7 @@ async onOpen() {
                 const rootFolder = pathParts[0];
                 const subFolder = pathParts.length > 2 ? pathParts[1] : '';
                 
-                // 初始���根文件夹结构
+                // 初始根文件夹结构
                 if (!folderStructure.has(rootFolder)) {
                     folderStructure.set(rootFolder, new Map());
                 }

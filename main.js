@@ -368,6 +368,15 @@ var CardView = class extends import_obsidian.ItemView {
       });
       card.addEventListener("contextmenu", (e) => {
         e.preventDefault();
+        e.stopPropagation();
+        if (!card.hasClass("selected")) {
+          if (!e.ctrlKey) {
+            this.clearSelection();
+          }
+          this.selectedNotes.add(file.path);
+          card.addClass("selected");
+          this.lastSelectedNote = file.path;
+        }
         this.showContextMenu(e, this.getSelectedFiles());
       });
     } catch (error) {
@@ -643,8 +652,7 @@ var CardView = class extends import_obsidian.ItemView {
       menu.addItem((item) => {
         item.setTitle(`\u5728\u65B0\u6807\u7B7E\u9875\u6253\u5F00`).setIcon("link").onClick(async () => {
           for (const file of files) {
-            const leaf = this.app.workspace.getLeaf("tab");
-            await leaf.openFile(file);
+            await this.openInAppropriateLeaf(file);
           }
         });
       });
