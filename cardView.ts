@@ -67,7 +67,7 @@ export class CardView extends ItemView {
      * 视图打开时的初始化函数
      * 创建标签过滤器、视图切换按钮和容器
      */
-async onOpen() {
+    async onOpen() {
         const { containerEl } = this;
         containerEl.empty();
         containerEl.addClass('card-view-container');
@@ -94,7 +94,7 @@ async onOpen() {
         `;
         newNoteBtn.addEventListener('click', () => this.createNewNote());
 
-        // 添加日历按钮 - 在视图切换按钮之前添加
+        // 添加日历按钮
         this.createCalendarButton(leftTools);
 
         // 视图切换按钮组
@@ -104,7 +104,7 @@ async onOpen() {
         // 右侧搜索框
         const searchContainer = toolbar.createDiv('search-container');
         
-        // 添加命令按钮（在搜索框之前）
+        // 添加命令按钮
         this.createCommandButton(searchContainer);
         
         this.searchInput = searchContainer.createEl('input', {
@@ -112,7 +112,84 @@ async onOpen() {
             placeholder: '搜索笔记...',
             cls: 'search-input'
         });
-        
+
+        // 创建快速笔记栏（放在主布局容器的最前面）
+        const quickNoteBar = mainLayout.createDiv('quick-note-bar');
+
+        // 添加控制按钮
+        const controls = quickNoteBar.createDiv('quick-note-controls');
+
+        // 最小化按钮
+        const minimizeBtn = controls.createEl('button', {
+            cls: 'control-button minimize-btn',
+        });
+        minimizeBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line></svg>`;
+
+        // 最小化图标
+        const minimizeIcon = quickNoteBar.createDiv('minimize-icon');
+        minimizeIcon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>`;
+
+        // 添加拖拽功能
+        this.setupDraggable(quickNoteBar);
+
+        // 添加最小化功能
+        minimizeBtn.addEventListener('click', () => {
+            this.toggleMinimize(quickNoteBar);
+        });
+
+        minimizeIcon.addEventListener('click', () => {
+            this.toggleMinimize(quickNoteBar);
+        });
+
+        const inputContainer = quickNoteBar.createDiv('quick-note-input-container');
+
+        // 创建文本输入框
+        const noteInput = inputContainer.createEl('textarea', {
+            cls: 'quick-note-input',
+            attr: {
+                placeholder: '输入笔记内容，按 Enter 发送...'
+            }
+        });
+
+        // 创建工具栏
+        const quickNoteToolbar = inputContainer.createDiv('quick-note-toolbar');
+
+        // 添加代码按钮
+        const codeBtn = quickNoteToolbar.createEl('button', {
+            cls: 'quick-note-btn',
+            attr: { 'data-type': 'code' }
+        });
+        codeBtn.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+            代码
+        `;
+
+        // 添加图片按钮
+        const imageBtn = quickNoteToolbar.createEl('button', {
+            cls: 'quick-note-btn',
+            attr: { 'data-type': 'image' }
+        });
+        imageBtn.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+            图片
+        `;
+
+        // 添加灵感按钮
+        const ideaBtn = quickNoteToolbar.createEl('button', {
+            cls: 'quick-note-btn',
+            attr: { 'data-type': 'idea' }
+        });
+        ideaBtn.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+            灵感
+        `;
+
+        // 创建标签建议容器
+        const tagSuggestions = inputContainer.createDiv('tag-suggestions');
+
+        // 添加事件处理
+        this.setupQuickNoteEvents(noteInput, quickNoteToolbar, tagSuggestions);
+
         // 初始化搜索处理
         this.setupSearch();
 
@@ -147,7 +224,7 @@ async onOpen() {
         // 创建预览区域
         const previewWrapper = mainLayout.createDiv('preview-wrapper');
 
-        // 添加预览控制按钮
+        // 添加预控制按钮
         const previewControls = previewWrapper.createDiv('preview-controls');
         const toggleButton = previewControls.createEl('button', {
             cls: 'preview-toggle',
@@ -179,7 +256,7 @@ async onOpen() {
         // 将日历容器添加到主布局中
         const mainLayoutElement = containerEl.querySelector('.main-layout');  // 修改变量名
         if (mainLayoutElement) {
-            mainLayoutElement.insertBefore(this.calendarContainer, mainLayoutElement.firstChild);
+            mainLayout.insertBefore(this.calendarContainer, mainLayout.firstChild);
         }
 
         // 在卡片容器的事件处理中添加
@@ -196,6 +273,49 @@ async onOpen() {
                 } // 这里添加了缺失的闭合括号
             });
         }
+
+        // 在创建输入框后添加发送按钮
+        const sendButton = inputContainer.createEl('button', {
+            cls: 'quick-note-send',
+        });
+        sendButton.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+            <span>发送</span>
+        `;
+
+        // 添加发送按钮点击事件
+        sendButton.addEventListener('click', async () => {
+            const content = noteInput.value.trim();
+            if (content) {
+                // 获取激活的按钮类型
+                const activeTypes = Array.from(quickNoteToolbar.querySelectorAll('.quick-note-btn.active'))
+                    .map(btn => btn.getAttribute('data-type') || '');
+                
+                // 创建笔记
+                const file = await this.createQuickNote(content, activeTypes.filter(Boolean));
+                if (file) {
+                    // 清空输入框和重置按钮状态
+                    noteInput.value = '';
+                    quickNoteToolbar.querySelectorAll('.quick-note-btn').forEach(btn => {
+                        btn.removeClass('active');
+                    });
+                    
+                    // 重置输入框高度到初始状态
+                    noteInput.style.height = '24px';  // 设置为初高度
+                    noteInput.style.overflowY = 'hidden';  // 隐藏滚动条
+                    
+                    // 重置 quick-note-bar 高度
+                    const quickNoteBar = noteInput.closest('.quick-note-bar');
+                    if (quickNoteBar instanceof HTMLElement) {
+                        quickNoteBar.style.height = '36px';  // 设置为初始高度
+                    }
+                    
+                    // 刷新视图并高亮新笔记
+                    await this.refreshView();
+                    this.highlightNewNote(file.path);
+                }
+            }
+        });
     }
 
     /**
@@ -562,7 +682,7 @@ async onOpen() {
 
         card.addEventListener('mouseleave', () => {
             openButton.style.opacity = '0';  // 隐藏打开按钮
-            // ... 其他离开事件代码 ...
+            // ... 其他离事件代码 ...
         });
 
         return card;
@@ -739,7 +859,7 @@ async onOpen() {
     private async createTimelineView() {
         const timelineContainer = this.container.createDiv('timeline-container');
         
-        // 获取所有笔记并按日期分组
+        // 获���所有笔记并按日期分组
         const files = this.app.vault.getMarkdownFiles();
         const notesByDate = new Map<string, TFile[]>();
         
@@ -1137,7 +1257,7 @@ async onOpen() {
             // 将日历容器插入到 main-layout 的开头
             mainLayout.insertBefore(this.calendarContainer, mainLayout.firstChild);
             
-            console.log('日历容器已创建:', this.calendarContainer);
+            console.log('历容器已创建:', this.calendarContainer);
         }
         
         // 清空并显示日历容器
@@ -1187,7 +1307,7 @@ async onOpen() {
         const year = this.currentDate.getFullYear();
         const month = this.currentDate.getMonth();
         
-        // 创建日历头部
+        // 建日历头部
         const header = this.calendarContainer.createDiv('calendar-header');
         
         // 上个月按钮
@@ -1914,6 +2034,268 @@ async onOpen() {
             }, 150);
         });
     }
+
+    private setupQuickNoteEvents(
+        input: HTMLTextAreaElement,
+        toolbar: HTMLElement,
+        tagSuggestions: HTMLElement
+    ) {
+        // 存储最近使用的标签
+        let recentTags = new Set<string>();
+        
+        // 自动调整文本框高度的函数
+        const adjustTextareaHeight = () => {
+            input.style.height = 'auto';  // 重置高度
+            const scrollHeight = input.scrollHeight;
+            
+            if (scrollHeight > 800) {
+                input.style.height = '800px';  // 限制最大高度
+                input.style.overflowY = 'auto';  // 显示滚动条
+            } else {
+                input.style.height = scrollHeight + 'px';
+                input.style.overflowY = 'hidden';  // 隐藏滚动条
+            }
+        };
+
+        // 监听输入事件
+        input.addEventListener('input', () => {
+            adjustTextareaHeight();
+            
+            // 标签建议相关代码...
+            const text = input.value;
+            const lastWord = text.split(/\s/).pop();
+            
+            if (lastWord?.startsWith('#')) {
+                // ... 标签建议代码保持不变 ...
+            }
+        });
+
+        // 处理粘贴事件
+        input.addEventListener('paste', () => {
+            // 使用 setTimeout 确保在内容粘贴后更新高度
+            setTimeout(adjustTextareaHeight, 0);
+        });
+        
+        // 工具栏按钮点击事件
+        toolbar.querySelectorAll('.quick-note-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                btn.classList.toggle('active');
+            });
+        });
+        
+        // 处理笔记创建
+        input.addEventListener('keydown', async (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                const content = input.value.trim();
+                if (content) {
+                    const activeTypes = Array.from(toolbar.querySelectorAll('.quick-note-btn.active'))
+                        .map(btn => btn.getAttribute('data-type') || '');
+                    
+                    const file = await this.createQuickNote(content, activeTypes.filter(Boolean));
+                    if (file) {
+                        // 清空输入框和重置按钮状态
+                        input.value = '';
+                        toolbar.querySelectorAll('.quick-note-btn').forEach(btn => {
+                            btn.removeClass('active');
+                        });
+                        
+                        // 重置输入框高度到初始状态
+                        input.style.height = '24px';
+                        input.style.overflowY = 'hidden';
+                        
+                        // 重置 quick-note-bar 高度
+                        const quickNoteBar = input.closest('.quick-note-bar');
+                        if (quickNoteBar instanceof HTMLElement) {
+                            quickNoteBar.style.height = '36px';
+                        }
+                        
+                        // 刷新视图并高亮新笔记
+                        await this.refreshView();
+                        this.highlightNewNote(file.path);
+                    }
+                }
+            }
+        });
+
+        // 初始化高度
+        adjustTextareaHeight();
+
+        // 添加焦点事件处理
+        input.addEventListener('focus', () => {
+            this.containerEl.addClass('blur-background');
+        });
+
+        input.addEventListener('blur', () => {
+            // 使用 setTimeout 确保在处理完其他点击事件后再移除模糊
+            setTimeout(() => {
+                // 检查是否点击了工具栏按钮
+                const activeElement = document.activeElement;
+                const isToolbarButton = activeElement?.closest('.quick-note-toolbar');
+                if (!isToolbarButton) {
+                    this.containerEl.removeClass('blur-background');
+                }
+            }, 0);
+        });
+
+        // 为工具栏按钮添加焦点处理
+        toolbar.querySelectorAll('.quick-note-btn').forEach(btn => {
+            btn.addEventListener('focus', () => {
+                this.containerEl.addClass('blur-background');
+            });
+            
+            btn.addEventListener('blur', () => {
+                // 检查是否焦点还在输入框
+                if (document.activeElement !== input) {
+                    this.containerEl.removeClass('blur-background');
+                }
+            });
+        });
+    }
+
+    // 创建快速笔记
+    private async createQuickNote(content: string, types: string[]): Promise<TFile | null> {
+        try {
+            // 生成笔记标题（使用当前时间）
+            const now = new Date();
+            const title = now.toISOString().split('T')[0] + '-' + 
+                         now.toTimeString().split(' ')[0].replace(/:/g, '-');
+            
+            // 根据类型添加前缀
+            let prefix = '';
+            if (types.includes('code')) prefix += '```\n\n```\n';
+            if (types.includes('image')) prefix += '![]() \n';
+            if (types.includes('idea')) prefix += '> 💡 ';
+            
+            // 创建笔记文件
+            const file = await this.app.vault.create(
+                `${title}.md`,
+                prefix + content
+            );
+            
+            return file;
+        } catch (error) {
+            console.error('创建笔记失败:', error);
+            new Notice('创建笔记失败');
+            return null;
+        }
+    }
+
+    // 高亮新笔记
+    private highlightNewNote(path: string) {
+        const noteCard = this.container.querySelector(`[data-path="${path}"]`);
+        if (noteCard) {
+            noteCard.addClass('highlight');
+            // 5秒后移除高亮
+            setTimeout(() => {
+                noteCard.removeClass('highlight');
+            }, 5000);
+        }
+    }
+
+    // 添加拖拽功能方法
+    private setupDraggable(element: HTMLElement) {
+        let isDragging = false;
+        let startX: number;
+        let startY: number;
+        let elementX: number = 0;
+        let elementY: number = 0;
+        
+        // 初始化位置，将元素居中
+        const initialX = (window.innerWidth - element.offsetWidth) / 2;
+        elementX = initialX;
+        element.style.transform = `translate3d(${elementX}px, ${elementY}px, 0)`;
+        element.style.left = '0';  // 重置 left 属性
+
+        const dragStart = (e: MouseEvent) => {
+            // 如果点击的是输入框或按钮，不启动拖拽
+            const target = e.target as HTMLElement;
+            if (target.closest('.quick-note-input') || 
+                target.closest('.quick-note-btn') || 
+                target.closest('.control-button') ||
+                target.closest('.quick-note-send')) {
+                return;
+            }
+
+            isDragging = true;
+            
+            // 获取当前transform的值
+            const transform = window.getComputedStyle(element).transform;
+            const matrix = new DOMMatrix(transform);
+            elementX = matrix.m41;
+            elementY = matrix.m42;
+            
+            startX = e.clientX - elementX;
+            startY = e.clientY - elementY;
+            
+            // 添加拖动时的样式
+            element.style.transition = 'none';
+            element.style.cursor = 'grabbing';
+        };
+
+        const dragEnd = () => {
+            if (!isDragging) return;
+            
+            isDragging = false;
+            // 恢复过渡效果
+            element.style.transition = 'all 0.2s ease';
+            element.style.cursor = 'grab';
+        };
+
+        const drag = (e: MouseEvent) => {
+            if (!isDragging) return;
+            
+            e.preventDefault();
+            
+            // 计算新位置
+            elementX = e.clientX - startX;
+            elementY = e.clientY - startY;
+
+            // 限制拖动范围，防止拖出窗口
+            const maxX = window.innerWidth - element.offsetWidth;
+            const maxY = window.innerHeight - element.offsetHeight;
+            
+            elementX = Math.max(0, Math.min(elementX, maxX));
+            elementY = Math.max(0, Math.min(elementY, maxY));
+
+            // 使用 transform3d 启用硬件加速
+            element.style.transform = `translate3d(${elementX}px, ${elementY}px, 0)`;
+        };
+
+        // 添加事件监听
+        element.addEventListener('mousedown', dragStart, { passive: true });
+        document.addEventListener('mousemove', drag, { passive: false });
+        document.addEventListener('mouseup', dragEnd, { passive: true });
+
+        // 初始化鼠标样式
+        element.style.cursor = 'grab';
+
+        // 监听窗口大小变化，保持元素在可视区域内
+        window.addEventListener('resize', () => {
+            const maxX = window.innerWidth - element.offsetWidth;
+            const maxY = window.innerHeight - element.offsetHeight;
+            elementX = Math.max(0, Math.min(elementX, maxX));
+            elementY = Math.max(0, Math.min(elementY, maxY));
+            element.style.transform = `translate3d(${elementX}px, ${elementY}px, 0)`;
+        });
+    }
+
+    // 添加最小化切换方法
+    private toggleMinimize(element: HTMLElement) {
+        const isMinimized = element.hasClass('minimized');
+        
+        if (isMinimized) {
+            // 恢复正常状态
+            element.removeClass('minimized');
+            element.style.width = '800px';
+            element.style.height = 'auto';
+        } else {
+            // 最小化
+            element.addClass('minimized');
+            element.style.width = '80px';
+            element.style.height = '80px';
+        }
+    }
 }
 
 // 添加确认对话框
@@ -2088,7 +2470,7 @@ class EnhancedFileSelectionModal extends Modal {
 
     // 选择文件夹
     private selectFolder(element: HTMLElement, path: string) {
-        // 移除其他选中状态
+        // 移除其他中状态
         this.contentEl.querySelectorAll('.folder-item').forEach(item => {
             item.removeClass('selected');
         });

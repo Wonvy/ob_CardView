@@ -5,6 +5,16 @@
   height: 100%
   overflow: hidden
 
+  // 添加主容器的模糊效果
+  &.blur-background
+    .card-view-toolbar,
+    .tag-filter,
+    .card-view-content,
+    .preview-wrapper
+      filter: blur(2px)
+      transition: filter 0.3s ease
+      pointer-events: none  // 防止模糊元素响应点击
+
 
 // 工具栏样式   	
 .card-view-toolbar
@@ -705,7 +715,7 @@
   h6:first-child 
     display: none
 
-/* 统一卡片内所有文本样式 */
+/* 统一卡内所有文本样式 */
 .note-content
   h1
     color:#f00
@@ -734,7 +744,7 @@
     border-radius: 2px
     font-weight: bold
 
-// 修改卡片内容样式，确保高亮正常显示
+// 修改卡片内容样式，确保高亮常显示
 .note-card 
     .note-content 
         p, li, h1, h2, h3, h4, h5, h6 
@@ -1169,3 +1179,86 @@
 .folder-part:hover .folder-underline,
 .folder-underline.active
     transform: scaleX(1)
+
+
+// 快速创建笔记栏
+.quick-note-bar
+  position: fixed
+  top: 20px
+  left: 0
+  width: 800px
+  z-index: 1000
+  background: var(--background-secondary)
+  padding: 8px 16px
+  min-height: 36px
+  max-height: 800px
+  transition: all 0.2s ease
+  opacity: 0.95
+  border: 1px solid var(--background-modifier-border)
+  border-radius: 8px
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1)
+  will-change: transform
+  touch-action: none
+  -webkit-user-select: none
+  user-select: none
+  transform: translate3d(50%, 0, 0)
+
+  &:hover
+    opacity: 1
+
+  
+  // 最小化状态
+  &.minimized
+    width: 80px
+    height: 80px
+    padding: 8px
+    border-radius: 50%
+    background: var(--interactive-accent)
+    display: flex
+    align-items: center
+    justify-content: center
+    cursor: pointer
+    
+    .quick-note-input-container,
+    .quick-note-toolbar,
+    .tag-suggestions
+      display: none
+    
+    .minimize-icon
+      display: block
+      color: var(--text-on-accent)
+      
+  // 最小化图标
+  .minimize-icon
+    display: none
+    svg
+      width: 24px
+      height: 24px
+  
+  // 控制栏
+  .quick-note-controls
+    position: absolute
+    top: 8px
+    right: 8px
+    display: flex
+    gap: 8px
+    z-index: 2
+    
+    .control-button
+      background: transparent
+      border: none
+      padding: 4px
+      color: var(--text-muted)
+      cursor: pointer
+      border-radius: 4px
+      display: flex
+      align-items: center
+      justify-content: center
+      
+      &:hover
+        background: var(--background-modifier-hover)
+        color: var(--text-normal)
+      
+      svg
+        width: 16px
+        height: 16px

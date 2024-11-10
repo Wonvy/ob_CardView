@@ -109,6 +109,55 @@ var CardView = class extends import_obsidian.ItemView {
       placeholder: "\u641C\u7D22\u7B14\u8BB0...",
       cls: "search-input"
     });
+    const quickNoteBar = mainLayout.createDiv("quick-note-bar");
+    const controls = quickNoteBar.createDiv("quick-note-controls");
+    const minimizeBtn = controls.createEl("button", {
+      cls: "control-button minimize-btn"
+    });
+    minimizeBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line></svg>`;
+    const minimizeIcon = quickNoteBar.createDiv("minimize-icon");
+    minimizeIcon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>`;
+    this.setupDraggable(quickNoteBar);
+    minimizeBtn.addEventListener("click", () => {
+      this.toggleMinimize(quickNoteBar);
+    });
+    minimizeIcon.addEventListener("click", () => {
+      this.toggleMinimize(quickNoteBar);
+    });
+    const inputContainer = quickNoteBar.createDiv("quick-note-input-container");
+    const noteInput = inputContainer.createEl("textarea", {
+      cls: "quick-note-input",
+      attr: {
+        placeholder: "\u8F93\u5165\u7B14\u8BB0\u5185\u5BB9\uFF0C\u6309 Enter \u53D1\u9001..."
+      }
+    });
+    const quickNoteToolbar = inputContainer.createDiv("quick-note-toolbar");
+    const codeBtn = quickNoteToolbar.createEl("button", {
+      cls: "quick-note-btn",
+      attr: { "data-type": "code" }
+    });
+    codeBtn.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+            \u4EE3\u7801
+        `;
+    const imageBtn = quickNoteToolbar.createEl("button", {
+      cls: "quick-note-btn",
+      attr: { "data-type": "image" }
+    });
+    imageBtn.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+            \u56FE\u7247
+        `;
+    const ideaBtn = quickNoteToolbar.createEl("button", {
+      cls: "quick-note-btn",
+      attr: { "data-type": "idea" }
+    });
+    ideaBtn.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+            \u7075\u611F
+        `;
+    const tagSuggestions = inputContainer.createDiv("tag-suggestions");
+    this.setupQuickNoteEvents(noteInput, quickNoteToolbar, tagSuggestions);
     this.setupSearch();
     this.tagContainer = contentSection.createDiv("tag-filter");
     await this.loadTags();
@@ -144,7 +193,7 @@ var CardView = class extends import_obsidian.ItemView {
     this.calendarContainer.style.display = "none";
     const mainLayoutElement = containerEl.querySelector(".main-layout");
     if (mainLayoutElement) {
-      mainLayoutElement.insertBefore(this.calendarContainer, mainLayoutElement.firstChild);
+      mainLayout.insertBefore(this.calendarContainer, mainLayout.firstChild);
     }
     const cardContainer = containerEl.querySelector(".card-container");
     if (cardContainer) {
@@ -157,6 +206,34 @@ var CardView = class extends import_obsidian.ItemView {
         }
       });
     }
+    const sendButton = inputContainer.createEl("button", {
+      cls: "quick-note-send"
+    });
+    sendButton.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+            <span>\u53D1\u9001</span>
+        `;
+    sendButton.addEventListener("click", async () => {
+      const content = noteInput.value.trim();
+      if (content) {
+        const activeTypes = Array.from(quickNoteToolbar.querySelectorAll(".quick-note-btn.active")).map((btn) => btn.getAttribute("data-type") || "");
+        const file = await this.createQuickNote(content, activeTypes.filter(Boolean));
+        if (file) {
+          noteInput.value = "";
+          quickNoteToolbar.querySelectorAll(".quick-note-btn").forEach((btn) => {
+            btn.removeClass("active");
+          });
+          noteInput.style.height = "24px";
+          noteInput.style.overflowY = "hidden";
+          const quickNoteBar2 = noteInput.closest(".quick-note-bar");
+          if (quickNoteBar2 instanceof HTMLElement) {
+            quickNoteBar2.style.height = "36px";
+          }
+          await this.refreshView();
+          this.highlightNewNote(file.path);
+        }
+      }
+    });
   }
   /**
    * 获取所有笔记中的标签
@@ -854,7 +931,7 @@ var CardView = class extends import_obsidian.ItemView {
       this.calendarContainer = createDiv();
       this.calendarContainer.addClass("calendar-container");
       mainLayout2.insertBefore(this.calendarContainer, mainLayout2.firstChild);
-      console.log("\u65E5\u5386\u5BB9\u5668\u5DF2\u521B\u5EFA:", this.calendarContainer);
+      console.log("\u5386\u5BB9\u5668\u5DF2\u521B\u5EFA:", this.calendarContainer);
     }
     this.calendarContainer.empty();
     this.calendarContainer.style.display = "block";
@@ -1392,6 +1469,180 @@ ${emptyNotes.map((file) => file.basename).join("\n")}`
         previewContainer.style.cursor = "default";
       }, 150);
     });
+  }
+  setupQuickNoteEvents(input, toolbar, tagSuggestions) {
+    let recentTags = /* @__PURE__ */ new Set();
+    const adjustTextareaHeight = () => {
+      input.style.height = "auto";
+      const scrollHeight = input.scrollHeight;
+      if (scrollHeight > 800) {
+        input.style.height = "800px";
+        input.style.overflowY = "auto";
+      } else {
+        input.style.height = scrollHeight + "px";
+        input.style.overflowY = "hidden";
+      }
+    };
+    input.addEventListener("input", () => {
+      adjustTextareaHeight();
+      const text = input.value;
+      const lastWord = text.split(/\s/).pop();
+      if (lastWord == null ? void 0 : lastWord.startsWith("#")) {
+      }
+    });
+    input.addEventListener("paste", () => {
+      setTimeout(adjustTextareaHeight, 0);
+    });
+    toolbar.querySelectorAll(".quick-note-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        btn.classList.toggle("active");
+      });
+    });
+    input.addEventListener("keydown", async (e) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        const content = input.value.trim();
+        if (content) {
+          const activeTypes = Array.from(toolbar.querySelectorAll(".quick-note-btn.active")).map((btn) => btn.getAttribute("data-type") || "");
+          const file = await this.createQuickNote(content, activeTypes.filter(Boolean));
+          if (file) {
+            input.value = "";
+            toolbar.querySelectorAll(".quick-note-btn").forEach((btn) => {
+              btn.removeClass("active");
+            });
+            input.style.height = "24px";
+            input.style.overflowY = "hidden";
+            const quickNoteBar = input.closest(".quick-note-bar");
+            if (quickNoteBar instanceof HTMLElement) {
+              quickNoteBar.style.height = "36px";
+            }
+            await this.refreshView();
+            this.highlightNewNote(file.path);
+          }
+        }
+      }
+    });
+    adjustTextareaHeight();
+    input.addEventListener("focus", () => {
+      this.containerEl.addClass("blur-background");
+    });
+    input.addEventListener("blur", () => {
+      setTimeout(() => {
+        const activeElement = document.activeElement;
+        const isToolbarButton = activeElement == null ? void 0 : activeElement.closest(".quick-note-toolbar");
+        if (!isToolbarButton) {
+          this.containerEl.removeClass("blur-background");
+        }
+      }, 0);
+    });
+    toolbar.querySelectorAll(".quick-note-btn").forEach((btn) => {
+      btn.addEventListener("focus", () => {
+        this.containerEl.addClass("blur-background");
+      });
+      btn.addEventListener("blur", () => {
+        if (document.activeElement !== input) {
+          this.containerEl.removeClass("blur-background");
+        }
+      });
+    });
+  }
+  // 创建快速笔记
+  async createQuickNote(content, types) {
+    try {
+      const now = /* @__PURE__ */ new Date();
+      const title = now.toISOString().split("T")[0] + "-" + now.toTimeString().split(" ")[0].replace(/:/g, "-");
+      let prefix = "";
+      if (types.includes("code")) prefix += "```\n\n```\n";
+      if (types.includes("image")) prefix += "![]() \n";
+      if (types.includes("idea")) prefix += "> \u{1F4A1} ";
+      const file = await this.app.vault.create(
+        `${title}.md`,
+        prefix + content
+      );
+      return file;
+    } catch (error) {
+      console.error("\u521B\u5EFA\u7B14\u8BB0\u5931\u8D25:", error);
+      new import_obsidian.Notice("\u521B\u5EFA\u7B14\u8BB0\u5931\u8D25");
+      return null;
+    }
+  }
+  // 高亮新笔记
+  highlightNewNote(path) {
+    const noteCard = this.container.querySelector(`[data-path="${path}"]`);
+    if (noteCard) {
+      noteCard.addClass("highlight");
+      setTimeout(() => {
+        noteCard.removeClass("highlight");
+      }, 5e3);
+    }
+  }
+  // 添加拖拽功能方法
+  setupDraggable(element) {
+    let isDragging = false;
+    let startX;
+    let startY;
+    let elementX = 0;
+    let elementY = 0;
+    const initialX = (window.innerWidth - element.offsetWidth) / 2;
+    elementX = initialX;
+    element.style.transform = `translate3d(${elementX}px, ${elementY}px, 0)`;
+    element.style.left = "0";
+    const dragStart = (e) => {
+      const target = e.target;
+      if (target.closest(".quick-note-input") || target.closest(".quick-note-btn") || target.closest(".control-button") || target.closest(".quick-note-send")) {
+        return;
+      }
+      isDragging = true;
+      const transform = window.getComputedStyle(element).transform;
+      const matrix = new DOMMatrix(transform);
+      elementX = matrix.m41;
+      elementY = matrix.m42;
+      startX = e.clientX - elementX;
+      startY = e.clientY - elementY;
+      element.style.transition = "none";
+      element.style.cursor = "grabbing";
+    };
+    const dragEnd = () => {
+      if (!isDragging) return;
+      isDragging = false;
+      element.style.transition = "all 0.2s ease";
+      element.style.cursor = "grab";
+    };
+    const drag = (e) => {
+      if (!isDragging) return;
+      e.preventDefault();
+      elementX = e.clientX - startX;
+      elementY = e.clientY - startY;
+      const maxX = window.innerWidth - element.offsetWidth;
+      const maxY = window.innerHeight - element.offsetHeight;
+      elementX = Math.max(0, Math.min(elementX, maxX));
+      elementY = Math.max(0, Math.min(elementY, maxY));
+      element.style.transform = `translate3d(${elementX}px, ${elementY}px, 0)`;
+    };
+    element.addEventListener("mousedown", dragStart, { passive: true });
+    document.addEventListener("mousemove", drag, { passive: false });
+    document.addEventListener("mouseup", dragEnd, { passive: true });
+    element.style.cursor = "grab";
+    window.addEventListener("resize", () => {
+      const maxX = window.innerWidth - element.offsetWidth;
+      const maxY = window.innerHeight - element.offsetHeight;
+      elementX = Math.max(0, Math.min(elementX, maxX));
+      elementY = Math.max(0, Math.min(elementY, maxY));
+      element.style.transform = `translate3d(${elementX}px, ${elementY}px, 0)`;
+    });
+  }
+  // 添加最小化切换方法
+  toggleMinimize(element) {
+    const isMinimized = element.hasClass("minimized");
+    if (isMinimized) {
+      element.removeClass("minimized");
+      element.style.width = "800px";
+      element.style.height = "auto";
+    } else {
+      element.addClass("minimized");
+      element.style.width = "80px";
+      element.style.height = "80px";
+    }
   }
 };
 var ConfirmModal = class extends import_obsidian.Modal {
