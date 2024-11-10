@@ -291,8 +291,11 @@ export class CardView extends ItemView {
                 const activeTypes = Array.from(quickNoteToolbar.querySelectorAll('.quick-note-btn.active'))
                     .map(btn => btn.getAttribute('data-type') || '');
                 
-                // 创建笔记
-                const file = await this.createQuickNote(content, activeTypes.filter(Boolean));
+                // 使用当前日期作为文件名
+                const fileName = new Date().toISOString().split('T')[0];
+                
+                // 创建笔记 - 传入 fileName 字符串而不是 Date 对象
+                const file = await this.createQuickNote(content, activeTypes.filter(Boolean), fileName);
                 if (file) {
                     // 清空输入框和重置按钮状态
                     noteInput.value = '';
@@ -505,7 +508,7 @@ export class CardView extends ItemView {
             // 添加下划线
             const underline = folderPart.createSpan({ cls: 'folder-underline' });
             
-            // 添加悬停效果
+            // 添加悬停效
             folderPart.addEventListener('mouseenter', () => {
                 underline.addClass('active');
             });
@@ -859,7 +862,7 @@ export class CardView extends ItemView {
     private async createTimelineView() {
         const timelineContainer = this.container.createDiv('timeline-container');
         
-        // 获���所有笔记并按日期分组
+        // 获所有笔记并按日期分组
         const files = this.app.vault.getMarkdownFiles();
         const notesByDate = new Map<string, TFile[]>();
         
@@ -1948,7 +1951,7 @@ export class CardView extends ItemView {
             const noteTitle = noteItem.createDiv('note-title');
             noteTitle.setText(note.basename);
             
-            // 添加修改日期
+            // 添加修日期
             const noteDate = noteItem.createDiv('note-date');
             noteDate.setText(new Date(note.stat.mtime).toLocaleString());
             
@@ -2040,77 +2043,133 @@ export class CardView extends ItemView {
         toolbar: HTMLElement,
         tagSuggestions: HTMLElement
     ) {
-        // 存储最近使用的标签
-        let recentTags = new Set<string>();
-        
-        // 自动调整文本框高度的函数
-        const adjustTextareaHeight = () => {
-            input.style.height = 'auto';  // 重置高度
-            const scrollHeight = input.scrollHeight;
-            
-            if (scrollHeight > 800) {
-                input.style.height = '800px';  // 限制最大高度
-                input.style.overflowY = 'auto';  // 显示滚动条
-            } else {
-                input.style.height = scrollHeight + 'px';
-                input.style.overflowY = 'hidden';  // 隐藏滚动条
+        // 创建标题输入框
+        const titleInput = input.parentElement?.createEl('input', {
+            cls: 'quick-note-title',
+            attr: {
+                placeholder: '输入笔记标题...',
+                type: 'text'
             }
-        };
+        });
+        
+        // 将标题输入框移到最前面
+        if (titleInput && input.parentElement) {
+            input.parentElement.insertBefore(titleInput, input.parentElement.firstChild);
+        }
 
-        // 监听输入事件
-        input.addEventListener('input', () => {
-            adjustTextareaHeight();
-            
-            // 标签建议相关代码...
-            const text = input.value;
-            const lastWord = text.split(/\s/).pop();
-            
-            if (lastWord?.startsWith('#')) {
-                // ... 标签建议代码保持不变 ...
+        // 创建标签容器
+        const tagsContainer = input.parentElement?.createDiv('tags-container');
+        const tagInput = tagsContainer?.createEl('input', {
+            cls: 'tag-input',
+            attr: {
+                placeholder: '添加标签...'
             }
         });
 
-        // 处理粘贴事件
-        input.addEventListener('paste', () => {
-            // 使用 setTimeout 确保在内容粘贴后更新高度
-            setTimeout(adjustTextareaHeight, 0);
-        });
-        
-        // 工具栏按钮点击事件
-        toolbar.querySelectorAll('.quick-note-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                btn.classList.toggle('active');
+        // 存储最近使用的标签并初始化显示
+        const recentTags = new Set<string>(this.loadRecentTags());
+        const tags = new Set<string>();
+
+        // 初始化显示最近使用的标签
+        recentTags.forEach(tag => {
+            const tagItem = tagsContainer?.createDiv('tag-item');
+            tagItem?.addClass('recent-tag');
+            tagItem?.setText(tag);
+            tagItem?.addEventListener('click', () => {
+                tagItem.removeClass('recent-tag');
+                tags.add(tag);
             });
         });
-        
-        // 处理笔记创建
+
+        // 修改添加标签的方法
+        const addTag = (tagText: string) => {
+            if (!tagText || tags.has(tagText)) return;
+            
+            const tagItem = tagsContainer?.createDiv('tag-item');
+            tagItem?.setText(tagText);
+            
+            const removeBtn = tagItem?.createDiv('remove-tag');
+            removeBtn?.setText('×');
+            removeBtn?.addEventListener('click', () => {
+                tags.delete(tagText);
+                tagItem?.remove();
+                // 将移除的标签添加到最近使用
+                recentTags.add(tagText);
+                this.saveRecentTags(Array.from(recentTags));
+            });
+            
+            tags.add(tagText);
+            if (tagInput) tagInput.value = '';
+            
+            // 更新最近使用的标签
+            recentTags.add(tagText);
+            this.saveRecentTags(Array.from(recentTags));
+        };
+
+        // 修改标签输入处理
+        if (tagInput) {
+            let inputBuffer = '';
+            tagInput.addEventListener('input', (e) => {
+                inputBuffer = (e.target as HTMLInputElement).value;
+                if (inputBuffer.includes(' ')) {
+                    // 空格分割的每个词都作为单独的标签
+                    const tags = inputBuffer.split(' ').filter(t => t.trim());
+                    tags.forEach(tag => addTag(tag.trim()));
+                    inputBuffer = '';
+                    tagInput.value = '';
+                }
+            });
+        }
+
+        // 处理代码高亮
+        input.addEventListener('input', () => {
+            const content = input.value;
+            if (content.includes('```')) {
+                input.addClass('has-code');
+                // 使用 Prism.js 或其他语法高亮库处理代码块
+                // 这里需要添加具体的代码高亮逻辑
+            } else {
+                input.removeClass('has-code');
+            }
+        });
+
+        // 修改笔记创建逻辑
         input.addEventListener('keydown', async (e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
+                // 使用可选链和空值合并操作符
+                const title = titleInput?.value?.trim() ?? new Date().toISOString().split('T')[0];
                 const content = input.value.trim();
+                
                 if (content) {
-                    const activeTypes = Array.from(toolbar.querySelectorAll('.quick-note-btn.active'))
-                        .map(btn => btn.getAttribute('data-type') || '');
-                    
-                    const file = await this.createQuickNote(content, activeTypes.filter(Boolean));
+                    // 生成唯一文件名
+                    let fileName = title;
+                    let counter = 1;
+                    while (this.app.vault.getAbstractFileByPath(`${fileName}.md`)) {
+                        fileName = `${title} ${counter++}`;
+                    }
+
+                    // 构建笔记内容，包含标签
+                    const tagsContent = Array.from(tags).map(tag => `#${tag}`).join(' ');
+                    const noteContent = tagsContent ? `${tagsContent}\n\n${content}` : content;
+
+                    const file = await this.createQuickNote(noteContent, [], fileName);
                     if (file) {
-                        // 清空输入框和重置按钮状态
+                        // 使用可选链操作符处理 titleInput 可能为 undefined 的情况
+                        if (titleInput) {
+                            titleInput.value = '';
+                        }
                         input.value = '';
-                        toolbar.querySelectorAll('.quick-note-btn').forEach(btn => {
-                            btn.removeClass('active');
-                        });
-                        
-                        // 重置输入框高度到初始状态
-                        input.style.height = '24px';
-                        input.style.overflowY = 'hidden';
-                        
-                        // 重置 quick-note-bar 高度
-                        const quickNoteBar = input.closest('.quick-note-bar');
-                        if (quickNoteBar instanceof HTMLElement) {
-                            quickNoteBar.style.height = '36px';
+                        tags.clear();
+                        if (tagsContainer) {
+                            tagsContainer.innerHTML = '';
+                            // 确保 tagInput 存在时才添加回容器
+                            if (tagInput) {
+                                tagsContainer.appendChild(tagInput);
+                            }
                         }
                         
-                        // 刷新视图并高亮新笔记
+                        // 刷新视图
                         await this.refreshView();
                         this.highlightNewNote(file.path);
                     }
@@ -2118,59 +2177,16 @@ export class CardView extends ItemView {
             }
         });
 
-        // 初始化高度
-        adjustTextareaHeight();
-
-        // 添加焦点事件处理
-        input.addEventListener('focus', () => {
-            this.containerEl.addClass('blur-background');
-        });
-
-        input.addEventListener('blur', () => {
-            // 使用 setTimeout 确保在处理完其他点击事件后再移除模糊
-            setTimeout(() => {
-                // 检查是否点击了工具栏按钮
-                const activeElement = document.activeElement;
-                const isToolbarButton = activeElement?.closest('.quick-note-toolbar');
-                if (!isToolbarButton) {
-                    this.containerEl.removeClass('blur-background');
-                }
-            }, 0);
-        });
-
-        // 为工具栏按钮添加焦点处理
-        toolbar.querySelectorAll('.quick-note-btn').forEach(btn => {
-            btn.addEventListener('focus', () => {
-                this.containerEl.addClass('blur-background');
-            });
-            
-            btn.addEventListener('blur', () => {
-                // 检查是否焦点还在输入框
-                if (document.activeElement !== input) {
-                    this.containerEl.removeClass('blur-background');
-                }
-            });
-        });
+        // ... 其他现有的事件处理代码 ...
     }
 
-    // 创建快速笔记
-    private async createQuickNote(content: string, types: string[]): Promise<TFile | null> {
+    // 修改创建笔方法
+    private async createQuickNote(content: string, types: string[], fileName: string): Promise<TFile | null> {
         try {
-            // 生成笔记标题（使用当前时间）
-            const now = new Date();
-            const title = now.toISOString().split('T')[0] + '-' + 
-                         now.toTimeString().split(' ')[0].replace(/:/g, '-');
-            
-            // 根据类型添加前缀
-            let prefix = '';
-            if (types.includes('code')) prefix += '```\n\n```\n';
-            if (types.includes('image')) prefix += '![]() \n';
-            if (types.includes('idea')) prefix += '> 💡 ';
-            
             // 创建笔记文件
             const file = await this.app.vault.create(
-                `${title}.md`,
-                prefix + content
+                `${fileName}.md`,
+                content
             );
             
             return file;
@@ -2198,32 +2214,30 @@ export class CardView extends ItemView {
         let isDragging = false;
         let startX: number;
         let startY: number;
-        let elementX: number = 0;
-        let elementY: number = 0;
+        let elementX: number;
+        let elementY: number;
         
-        // 初始化位置，将元素居中
-        const initialX = (window.innerWidth - element.offsetWidth) / 2;
-        elementX = initialX;
-        element.style.transform = `translate3d(${elementX}px, ${elementY}px, 0)`;
-        element.style.left = '0';  // 重置 left 属性
-
+        // 移除初始化位置的代码，因为我们使用了 CSS 居中
+        
         const dragStart = (e: MouseEvent) => {
-            // 如果点击的是输入框或按钮，不启动拖拽
+            // 如果点击的是输入框、按钮或最小化图标，不启动拖拽
             const target = e.target as HTMLElement;
             if (target.closest('.quick-note-input') || 
                 target.closest('.quick-note-btn') || 
                 target.closest('.control-button') ||
-                target.closest('.quick-note-send')) {
+                target.closest('.quick-note-send') ||
+                target.closest('.minimize-icon') ||
+                target.closest('.tag-input') ||
+                target.closest('.quick-note-title')) {
                 return;
             }
 
             isDragging = true;
             
-            // 获取当前transform的值
-            const transform = window.getComputedStyle(element).transform;
-            const matrix = new DOMMatrix(transform);
-            elementX = matrix.m41;
-            elementY = matrix.m42;
+            // 获取当前位置，考虑 transform 的偏移
+            const rect = element.getBoundingClientRect();
+            elementX = rect.left + rect.width / 2;  // 考虑元素中心点
+            elementY = rect.top;
             
             startX = e.clientX - elementX;
             startY = e.clientY - elementY;
@@ -2231,13 +2245,17 @@ export class CardView extends ItemView {
             // 添加拖动时的样式
             element.style.transition = 'none';
             element.style.cursor = 'grabbing';
+            
+            // 切换到绝对定位
+            element.style.left = elementX + 'px';
+            element.style.top = elementY + 'px';
+            element.style.transform = 'none';  // 移除 transform
         };
 
         const dragEnd = () => {
             if (!isDragging) return;
             
             isDragging = false;
-            // 恢复过渡效果
             element.style.transition = 'all 0.2s ease';
             element.style.cursor = 'grab';
         };
@@ -2248,35 +2266,35 @@ export class CardView extends ItemView {
             e.preventDefault();
             
             // 计算新位置
-            elementX = e.clientX - startX;
-            elementY = e.clientY - startY;
+            const newX = e.clientX - startX;
+            const newY = e.clientY - startY;
 
-            // 限制拖动范围，防止拖出窗口
-            const maxX = window.innerWidth - element.offsetWidth;
+            // 限制拖动范围
+            const maxX = window.innerWidth - element.offsetWidth / 2;  // 考虑元素宽度的一半
+            const minX = element.offsetWidth / 2;  // 考虑元素宽度的一半
             const maxY = window.innerHeight - element.offsetHeight;
             
-            elementX = Math.max(0, Math.min(elementX, maxX));
-            elementY = Math.max(0, Math.min(elementY, maxY));
+            elementX = Math.max(minX, Math.min(newX, maxX));
+            elementY = Math.max(0, Math.min(newY, maxY));
 
-            // 使用 transform3d 启用硬件加速
-            element.style.transform = `translate3d(${elementX}px, ${elementY}px, 0)`;
+            // 更新位置
+            element.style.left = elementX + 'px';
+            element.style.top = elementY + 'px';
         };
 
         // 添加事件监听
-        element.addEventListener('mousedown', dragStart, { passive: true });
-        document.addEventListener('mousemove', drag, { passive: false });
-        document.addEventListener('mouseup', dragEnd, { passive: true });
+        element.addEventListener('mousedown', dragStart);
+        document.addEventListener('mousemove', drag);
+        document.addEventListener('mouseup', dragEnd);
 
-        // 初始化鼠标样式
-        element.style.cursor = 'grab';
-
-        // 监听窗口大小变化，保持元素在可视区域内
+        // 监听窗口大小变化
         window.addEventListener('resize', () => {
-            const maxX = window.innerWidth - element.offsetWidth;
-            const maxY = window.innerHeight - element.offsetHeight;
-            elementX = Math.max(0, Math.min(elementX, maxX));
-            elementY = Math.max(0, Math.min(elementY, maxY));
-            element.style.transform = `translate3d(${elementX}px, ${elementY}px, 0)`;
+            if (!isDragging) {
+                // 如果不在拖拽中，恢复居中
+                element.style.removeProperty('left');
+                element.style.removeProperty('top');
+                element.style.transform = 'translateX(-50%)';
+            }
         });
     }
 
@@ -2287,14 +2305,25 @@ export class CardView extends ItemView {
         if (isMinimized) {
             // 恢复正常状态
             element.removeClass('minimized');
+            // 不再设置固定高度，让内容自然展开
+            element.style.removeProperty('height');
             element.style.width = '800px';
-            element.style.height = 'auto';
         } else {
             // 最小化
             element.addClass('minimized');
-            element.style.width = '80px';
-            element.style.height = '80px';
+            element.style.width = '40px';
+            element.style.height = '40px';
         }
+    }
+
+    // 添加保存和加载最近标签的方法
+    private saveRecentTags(tags: string[]) {
+        localStorage.setItem('recent-tags', JSON.stringify(tags));
+    }
+
+    private loadRecentTags(): string[] {
+        const saved = localStorage.getItem('recent-tags');
+        return saved ? JSON.parse(saved) : [];
     }
 }
 

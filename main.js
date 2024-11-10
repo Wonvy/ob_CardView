@@ -217,7 +217,8 @@ var CardView = class extends import_obsidian.ItemView {
       const content = noteInput.value.trim();
       if (content) {
         const activeTypes = Array.from(quickNoteToolbar.querySelectorAll(".quick-note-btn.active")).map((btn) => btn.getAttribute("data-type") || "");
-        const file = await this.createQuickNote(content, activeTypes.filter(Boolean));
+        const fileName = (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
+        const file = await this.createQuickNote(content, activeTypes.filter(Boolean), fileName);
         if (file) {
           noteInput.value = "";
           quickNoteToolbar.querySelectorAll(".quick-note-btn").forEach((btn) => {
@@ -1471,50 +1472,100 @@ ${emptyNotes.map((file) => file.basename).join("\n")}`
     });
   }
   setupQuickNoteEvents(input, toolbar, tagSuggestions) {
-    let recentTags = /* @__PURE__ */ new Set();
-    const adjustTextareaHeight = () => {
-      input.style.height = "auto";
-      const scrollHeight = input.scrollHeight;
-      if (scrollHeight > 800) {
-        input.style.height = "800px";
-        input.style.overflowY = "auto";
-      } else {
-        input.style.height = scrollHeight + "px";
-        input.style.overflowY = "hidden";
-      }
-    };
-    input.addEventListener("input", () => {
-      adjustTextareaHeight();
-      const text = input.value;
-      const lastWord = text.split(/\s/).pop();
-      if (lastWord == null ? void 0 : lastWord.startsWith("#")) {
+    var _a, _b;
+    const titleInput = (_a = input.parentElement) == null ? void 0 : _a.createEl("input", {
+      cls: "quick-note-title",
+      attr: {
+        placeholder: "\u8F93\u5165\u7B14\u8BB0\u6807\u9898...",
+        type: "text"
       }
     });
-    input.addEventListener("paste", () => {
-      setTimeout(adjustTextareaHeight, 0);
+    if (titleInput && input.parentElement) {
+      input.parentElement.insertBefore(titleInput, input.parentElement.firstChild);
+    }
+    const tagsContainer = (_b = input.parentElement) == null ? void 0 : _b.createDiv("tags-container");
+    const tagInput = tagsContainer == null ? void 0 : tagsContainer.createEl("input", {
+      cls: "tag-input",
+      attr: {
+        placeholder: "\u6DFB\u52A0\u6807\u7B7E..."
+      }
     });
-    toolbar.querySelectorAll(".quick-note-btn").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        btn.classList.toggle("active");
+    const recentTags = new Set(this.loadRecentTags());
+    const tags = /* @__PURE__ */ new Set();
+    recentTags.forEach((tag) => {
+      const tagItem = tagsContainer == null ? void 0 : tagsContainer.createDiv("tag-item");
+      tagItem == null ? void 0 : tagItem.addClass("recent-tag");
+      tagItem == null ? void 0 : tagItem.setText(tag);
+      tagItem == null ? void 0 : tagItem.addEventListener("click", () => {
+        tagItem.removeClass("recent-tag");
+        tags.add(tag);
       });
     });
+    const addTag = (tagText) => {
+      if (!tagText || tags.has(tagText)) return;
+      const tagItem = tagsContainer == null ? void 0 : tagsContainer.createDiv("tag-item");
+      tagItem == null ? void 0 : tagItem.setText(tagText);
+      const removeBtn = tagItem == null ? void 0 : tagItem.createDiv("remove-tag");
+      removeBtn == null ? void 0 : removeBtn.setText("\xD7");
+      removeBtn == null ? void 0 : removeBtn.addEventListener("click", () => {
+        tags.delete(tagText);
+        tagItem == null ? void 0 : tagItem.remove();
+        recentTags.add(tagText);
+        this.saveRecentTags(Array.from(recentTags));
+      });
+      tags.add(tagText);
+      if (tagInput) tagInput.value = "";
+      recentTags.add(tagText);
+      this.saveRecentTags(Array.from(recentTags));
+    };
+    if (tagInput) {
+      let inputBuffer = "";
+      tagInput.addEventListener("input", (e) => {
+        inputBuffer = e.target.value;
+        if (inputBuffer.includes(" ")) {
+          const tags2 = inputBuffer.split(" ").filter((t) => t.trim());
+          tags2.forEach((tag) => addTag(tag.trim()));
+          inputBuffer = "";
+          tagInput.value = "";
+        }
+      });
+    }
+    input.addEventListener("input", () => {
+      const content = input.value;
+      if (content.includes("```")) {
+        input.addClass("has-code");
+      } else {
+        input.removeClass("has-code");
+      }
+    });
     input.addEventListener("keydown", async (e) => {
+      var _a2, _b2;
       if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
+        const title = (_b2 = (_a2 = titleInput == null ? void 0 : titleInput.value) == null ? void 0 : _a2.trim()) != null ? _b2 : (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
         const content = input.value.trim();
         if (content) {
-          const activeTypes = Array.from(toolbar.querySelectorAll(".quick-note-btn.active")).map((btn) => btn.getAttribute("data-type") || "");
-          const file = await this.createQuickNote(content, activeTypes.filter(Boolean));
+          let fileName = title;
+          let counter = 1;
+          while (this.app.vault.getAbstractFileByPath(`${fileName}.md`)) {
+            fileName = `${title} ${counter++}`;
+          }
+          const tagsContent = Array.from(tags).map((tag) => `#${tag}`).join(" ");
+          const noteContent = tagsContent ? `${tagsContent}
+
+${content}` : content;
+          const file = await this.createQuickNote(noteContent, [], fileName);
           if (file) {
+            if (titleInput) {
+              titleInput.value = "";
+            }
             input.value = "";
-            toolbar.querySelectorAll(".quick-note-btn").forEach((btn) => {
-              btn.removeClass("active");
-            });
-            input.style.height = "24px";
-            input.style.overflowY = "hidden";
-            const quickNoteBar = input.closest(".quick-note-bar");
-            if (quickNoteBar instanceof HTMLElement) {
-              quickNoteBar.style.height = "36px";
+            tags.clear();
+            if (tagsContainer) {
+              tagsContainer.innerHTML = "";
+              if (tagInput) {
+                tagsContainer.appendChild(tagInput);
+              }
             }
             await this.refreshView();
             this.highlightNewNote(file.path);
@@ -1522,42 +1573,13 @@ ${emptyNotes.map((file) => file.basename).join("\n")}`
         }
       }
     });
-    adjustTextareaHeight();
-    input.addEventListener("focus", () => {
-      this.containerEl.addClass("blur-background");
-    });
-    input.addEventListener("blur", () => {
-      setTimeout(() => {
-        const activeElement = document.activeElement;
-        const isToolbarButton = activeElement == null ? void 0 : activeElement.closest(".quick-note-toolbar");
-        if (!isToolbarButton) {
-          this.containerEl.removeClass("blur-background");
-        }
-      }, 0);
-    });
-    toolbar.querySelectorAll(".quick-note-btn").forEach((btn) => {
-      btn.addEventListener("focus", () => {
-        this.containerEl.addClass("blur-background");
-      });
-      btn.addEventListener("blur", () => {
-        if (document.activeElement !== input) {
-          this.containerEl.removeClass("blur-background");
-        }
-      });
-    });
   }
-  // 创建快速笔记
-  async createQuickNote(content, types) {
+  // 修改创建笔方法
+  async createQuickNote(content, types, fileName) {
     try {
-      const now = /* @__PURE__ */ new Date();
-      const title = now.toISOString().split("T")[0] + "-" + now.toTimeString().split(" ")[0].replace(/:/g, "-");
-      let prefix = "";
-      if (types.includes("code")) prefix += "```\n\n```\n";
-      if (types.includes("image")) prefix += "![]() \n";
-      if (types.includes("idea")) prefix += "> \u{1F4A1} ";
       const file = await this.app.vault.create(
-        `${title}.md`,
-        prefix + content
+        `${fileName}.md`,
+        content
       );
       return file;
     } catch (error) {
@@ -1581,26 +1603,24 @@ ${emptyNotes.map((file) => file.basename).join("\n")}`
     let isDragging = false;
     let startX;
     let startY;
-    let elementX = 0;
-    let elementY = 0;
-    const initialX = (window.innerWidth - element.offsetWidth) / 2;
-    elementX = initialX;
-    element.style.transform = `translate3d(${elementX}px, ${elementY}px, 0)`;
-    element.style.left = "0";
+    let elementX;
+    let elementY;
     const dragStart = (e) => {
       const target = e.target;
-      if (target.closest(".quick-note-input") || target.closest(".quick-note-btn") || target.closest(".control-button") || target.closest(".quick-note-send")) {
+      if (target.closest(".quick-note-input") || target.closest(".quick-note-btn") || target.closest(".control-button") || target.closest(".quick-note-send") || target.closest(".minimize-icon") || target.closest(".tag-input") || target.closest(".quick-note-title")) {
         return;
       }
       isDragging = true;
-      const transform = window.getComputedStyle(element).transform;
-      const matrix = new DOMMatrix(transform);
-      elementX = matrix.m41;
-      elementY = matrix.m42;
+      const rect = element.getBoundingClientRect();
+      elementX = rect.left + rect.width / 2;
+      elementY = rect.top;
       startX = e.clientX - elementX;
       startY = e.clientY - elementY;
       element.style.transition = "none";
       element.style.cursor = "grabbing";
+      element.style.left = elementX + "px";
+      element.style.top = elementY + "px";
+      element.style.transform = "none";
     };
     const dragEnd = () => {
       if (!isDragging) return;
@@ -1611,24 +1631,25 @@ ${emptyNotes.map((file) => file.basename).join("\n")}`
     const drag = (e) => {
       if (!isDragging) return;
       e.preventDefault();
-      elementX = e.clientX - startX;
-      elementY = e.clientY - startY;
-      const maxX = window.innerWidth - element.offsetWidth;
+      const newX = e.clientX - startX;
+      const newY = e.clientY - startY;
+      const maxX = window.innerWidth - element.offsetWidth / 2;
+      const minX = element.offsetWidth / 2;
       const maxY = window.innerHeight - element.offsetHeight;
-      elementX = Math.max(0, Math.min(elementX, maxX));
-      elementY = Math.max(0, Math.min(elementY, maxY));
-      element.style.transform = `translate3d(${elementX}px, ${elementY}px, 0)`;
+      elementX = Math.max(minX, Math.min(newX, maxX));
+      elementY = Math.max(0, Math.min(newY, maxY));
+      element.style.left = elementX + "px";
+      element.style.top = elementY + "px";
     };
-    element.addEventListener("mousedown", dragStart, { passive: true });
-    document.addEventListener("mousemove", drag, { passive: false });
-    document.addEventListener("mouseup", dragEnd, { passive: true });
-    element.style.cursor = "grab";
+    element.addEventListener("mousedown", dragStart);
+    document.addEventListener("mousemove", drag);
+    document.addEventListener("mouseup", dragEnd);
     window.addEventListener("resize", () => {
-      const maxX = window.innerWidth - element.offsetWidth;
-      const maxY = window.innerHeight - element.offsetHeight;
-      elementX = Math.max(0, Math.min(elementX, maxX));
-      elementY = Math.max(0, Math.min(elementY, maxY));
-      element.style.transform = `translate3d(${elementX}px, ${elementY}px, 0)`;
+      if (!isDragging) {
+        element.style.removeProperty("left");
+        element.style.removeProperty("top");
+        element.style.transform = "translateX(-50%)";
+      }
     });
   }
   // 添加最小化切换方法
@@ -1636,13 +1657,21 @@ ${emptyNotes.map((file) => file.basename).join("\n")}`
     const isMinimized = element.hasClass("minimized");
     if (isMinimized) {
       element.removeClass("minimized");
+      element.style.removeProperty("height");
       element.style.width = "800px";
-      element.style.height = "auto";
     } else {
       element.addClass("minimized");
-      element.style.width = "80px";
-      element.style.height = "80px";
+      element.style.width = "40px";
+      element.style.height = "40px";
     }
+  }
+  // 添加保存和加载最近标签的方法
+  saveRecentTags(tags) {
+    localStorage.setItem("recent-tags", JSON.stringify(tags));
+  }
+  loadRecentTags() {
+    const saved = localStorage.getItem("recent-tags");
+    return saved ? JSON.parse(saved) : [];
   }
 };
 var ConfirmModal = class extends import_obsidian.Modal {
