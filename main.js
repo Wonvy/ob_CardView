@@ -231,7 +231,7 @@ var CardView = class extends import_obsidian.ItemView {
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
         `;
     sendButton.addEventListener("click", async (e) => {
-      var _a;
+      var _a, _b;
       e.preventDefault();
       e.stopPropagation();
       const title = (_a = titleInput == null ? void 0 : titleInput.value) == null ? void 0 : _a.trim();
@@ -241,7 +241,12 @@ var CardView = class extends import_obsidian.ItemView {
         return;
       }
       try {
-        const tagsContent = Array.from(tags).map((tag) => `#${tag}`).join(" ");
+        const tagItems = (_b = tagsContainer == null ? void 0 : tagsContainer.querySelectorAll(".tag-item")) != null ? _b : [];
+        const tagTexts = Array.from(tagItems).map((item) => {
+          var _a2, _b2;
+          return (_b2 = (_a2 = item.textContent) == null ? void 0 : _a2.replace("\xD7", "").trim()) != null ? _b2 : "";
+        });
+        const tagsContent = tagTexts.map((tag) => `#${tag}`).join(" ");
         const finalContent = tagsContent ? `${tagsContent}
 
 ${content}` : content;
@@ -254,11 +259,6 @@ ${content}` : content;
         if (file) {
           this.clearQuickNoteInputs(titleInput != null ? titleInput : null, noteInput, tags, tagsContainer != null ? tagsContainer : null, tagInput != null ? tagInput : null);
           await this.refreshView();
-          this.highlightNewNote(file.path);
-          const quickNoteBar2 = noteInput.closest(".quick-note-bar");
-          if (quickNoteBar2 instanceof HTMLElement) {
-            this.minimizeQuickNote(quickNoteBar2);
-          }
           new import_obsidian.Notice("\u7B14\u8BB0\u521B\u5EFA\u6210\u529F");
         }
       } catch (error) {
@@ -266,6 +266,7 @@ ${content}` : content;
         new import_obsidian.Notice("\u521B\u5EFA\u7B14\u8BB0\u5931\u8D25");
       }
     });
+    const quickNoteBackdrop = mainLayout.createDiv("quick-note-backdrop");
   }
   /**
    * 获取所有笔记中的标签
@@ -295,7 +296,7 @@ ${content}` : content;
     return tagCounts;
   }
   /**
-   * 加载所有标签并创建标签过滤器
+   * 加载有标签并创标签过滤器
    */
   async loadTags() {
     const tagCounts = this.getTagsWithCount();
@@ -674,7 +675,6 @@ ${content}` : content;
         content
       );
       if (file) {
-        await this.openInAppropriateLeaf(file);
         return file;
       }
       return null;
@@ -1379,7 +1379,7 @@ ${emptyNotes.map((file) => file.basename).join("\n")}`
       }
     }
   }
-  // 获取指定月份笔记
+  // 获取定月份笔记
   getNotesByDate(year, month) {
     const notesByDate = {};
     const files = this.app.vault.getMarkdownFiles();
@@ -1597,7 +1597,7 @@ ${emptyNotes.map((file) => file.basename).join("\n")}`
       }
     });
     const handleSendNote = async () => {
-      var _a2;
+      var _a2, _b2;
       const title = (_a2 = titleInput == null ? void 0 : titleInput.value) == null ? void 0 : _a2.trim();
       const content = input.value.trim();
       if (!content) {
@@ -1605,7 +1605,12 @@ ${emptyNotes.map((file) => file.basename).join("\n")}`
         return;
       }
       try {
-        const tagsContent = Array.from(tags).map((tag) => `#${tag}`).join(" ");
+        const tagItems = (_b2 = tagsContainer == null ? void 0 : tagsContainer.querySelectorAll(".tag-item.active")) != null ? _b2 : [];
+        const tagTexts = Array.from(tagItems).map((item) => {
+          var _a3, _b3;
+          return (_b3 = (_a3 = item.textContent) == null ? void 0 : _a3.replace("\xD7", "").trim()) != null ? _b3 : "";
+        });
+        const tagsContent = tagTexts.map((tag) => `#${tag}`).join(" ");
         const finalContent = tagsContent ? `${tagsContent}
 
 ${content}` : content;
@@ -1617,16 +1622,15 @@ ${content}` : content;
         const file = await this.createQuickNote(finalContent, [], fileName);
         if (file) {
           this.clearQuickNoteInputs(titleInput != null ? titleInput : null, input, tags, tagsContainer != null ? tagsContainer : null, tagInput != null ? tagInput : null);
+          tagsContainer == null ? void 0 : tagsContainer.querySelectorAll(".tag-item").forEach((item) => {
+            item.removeClass("active");
+            item.addClass("inactive");
+          });
           await this.refreshView();
-          this.highlightNewNote(file.path);
-          const quickNoteBar = input.closest(".quick-note-bar");
-          if (quickNoteBar instanceof HTMLElement) {
-            this.minimizeQuickNote(quickNoteBar);
-          }
           new import_obsidian.Notice("\u7B14\u8BB0\u521B\u5EFA\u6210\u529F");
         }
       } catch (error) {
-        console.error("\u521B\u7B14\u8BB0\u5931\u8D25:", error);
+        console.error("\u521B\u5EFA\u7B14\u8BB0\u5931\u8D25:", error);
         new import_obsidian.Notice("\u521B\u5EFA\u7B14\u8BB0\u5931\u8D25");
       }
     };
@@ -1644,6 +1648,34 @@ ${content}` : content;
         await handleSendNote();
       }
     });
+    if (tagInput) {
+      tagInput.addEventListener("keydown", (e) => {
+        if (e.key === " " && tagInput.value.trim()) {
+          e.preventDefault();
+          const tagText = tagInput.value.trim();
+          if (tagText && !tags.has(tagText)) {
+            const tagItem = tagsContainer == null ? void 0 : tagsContainer.createDiv("tag-item");
+            tagItem == null ? void 0 : tagItem.addClass("active");
+            tagItem == null ? void 0 : tagItem.setText(tagText);
+            const removeBtn = tagItem == null ? void 0 : tagItem.createDiv("remove-tag");
+            removeBtn == null ? void 0 : removeBtn.setText("\xD7");
+            removeBtn == null ? void 0 : removeBtn.addEventListener("click", (e2) => {
+              e2.stopPropagation();
+              tags.delete(tagText);
+              tagItem == null ? void 0 : tagItem.remove();
+            });
+            tagItem == null ? void 0 : tagItem.addEventListener("click", (e2) => {
+              if (e2.target !== removeBtn) {
+                tagItem.toggleClass("active", !tagItem.hasClass("active"));
+                tagItem.toggleClass("inactive", tagItem.hasClass("active"));
+              }
+            });
+            tags.add(tagText);
+            tagInput.value = "";
+          }
+        }
+      });
+    }
   }
   // 添加清理输入状态的辅助方法
   clearQuickNoteInputs(titleInput, contentInput, tags, tagsContainer, tagInput) {
@@ -1654,23 +1686,11 @@ ${content}` : content;
     contentInput.value = "";
     contentInput.style.height = "24px";
     contentInput.style.overflowY = "hidden";
-    tags.clear();
-    if (tagsContainer) {
-      tagsContainer.innerHTML = "";
-      if (tagInput) {
-        tagsContainer.appendChild(tagInput);
-        tagInput.value = "";
-      }
-    }
     const toolbar = (_a = contentInput.closest(".quick-note-bar")) == null ? void 0 : _a.querySelector(".quick-note-toolbar");
     if (toolbar) {
       toolbar.querySelectorAll(".quick-note-btn").forEach((btn) => {
         btn.removeClass("active");
       });
-    }
-    const quickNoteBar = contentInput.closest(".quick-note-bar");
-    if (quickNoteBar instanceof HTMLElement) {
-      quickNoteBar.style.height = "36px";
     }
   }
   // 高亮新笔记
@@ -1688,22 +1708,22 @@ ${content}` : content;
     let isDragging = false;
     let offsetX;
     let offsetY;
+    let startX;
+    let startY;
+    let isClick = true;
     const dragStart = (e) => {
       const target = e.target;
       if (!element.hasClass("minimized") && (target.closest(".quick-note-input") || target.closest(".quick-note-btn") || target.closest(".control-button") || target.closest(".quick-note-send") || target.closest(".tag-input") || target.closest(".quick-note-title"))) {
         return;
       }
       isDragging = true;
+      isClick = true;
+      startX = e.clientX;
+      startY = e.clientY;
       const elementRect = element.getBoundingClientRect();
       const workspaceLeafContent2 = this.containerEl.closest(".workspace-leaf-content");
-      const workspaceLeafRect = workspaceLeafContent2 == null ? void 0 : workspaceLeafContent2.getBoundingClientRect();
-      console.log("--- \u62D6\u62FD\u5F00\u59CB ---");
-      console.log("\u9F20\u6807\u4F4D\u7F6E:", { clientX: e.clientX, clientY: e.clientY });
-      console.log("\u5143\u7D20\u4F4D\u7F6E:", elementRect);
-      console.log("workspace-leaf\u4F4D\u7F6E:", workspaceLeafRect);
       offsetX = e.clientX - elementRect.left;
       offsetY = e.clientY - elementRect.top;
-      console.log("\u504F\u79FB\u91CF:", { offsetX, offsetY });
       element.style.transition = "none";
       element.style.cursor = "grabbing";
       element.addClass("dragging");
@@ -1712,6 +1732,11 @@ ${content}` : content;
     };
     const drag = (e) => {
       if (!isDragging) return;
+      const moveX = Math.abs(e.clientX - startX);
+      const moveY = Math.abs(e.clientY - startY);
+      if (moveX > 5 || moveY > 5) {
+        isClick = false;
+      }
       e.preventDefault();
       e.stopPropagation();
       const workspaceLeafContent2 = this.containerEl.closest(".workspace-leaf-content");
@@ -1719,27 +1744,23 @@ ${content}` : content;
       const leafRect = workspaceLeafContent2.getBoundingClientRect();
       const newX = e.clientX - leafRect.left - offsetX;
       const newY = e.clientY - leafRect.top - offsetY;
-      console.log("--- \u62D6\u62FD\u4E2D ---");
-      console.log("\u9F20\u6807\u4F4D\u7F6E:", { clientX: e.clientX, clientY: e.clientY });
-      console.log("Leaf\u4F4D\u7F6E:", leafRect);
-      console.log("\u8BA1\u7B97\u4F4D\u7F6E:", { newX, newY });
       const maxX = workspaceLeafContent2.offsetWidth - element.offsetWidth;
       const maxY = workspaceLeafContent2.offsetHeight - element.offsetHeight;
       const boundedX = Math.max(0, Math.min(newX, maxX));
       const boundedY = Math.max(0, Math.min(newY, maxY));
-      console.log("\u6700\u7EC8\u4F4D\u7F6E:", { boundedX, boundedY });
       element.style.left = `${boundedX}px`;
       element.style.top = `${boundedY}px`;
       element.style.transform = "none";
     };
     const dragEnd = (e) => {
       if (!isDragging) return;
-      console.log("--- \u62D6\u62FD\u7ED3\u675F ---");
-      console.log("\u6700\u7EC8\u5143\u7D20\u4F4D\u7F6E:", element.getBoundingClientRect());
       isDragging = false;
       element.style.transition = "all 0.2s ease";
       element.style.cursor = element.hasClass("minimized") ? "grab" : "default";
       element.removeClass("dragging");
+      if (element.hasClass("minimized") && isClick) {
+        this.restoreQuickNote(element);
+      }
       e.stopPropagation();
     };
     element.addEventListener("mousedown", dragStart);
@@ -1800,31 +1821,120 @@ ${content}` : content;
     if (!workspaceLeafContent) return;
     const leafRect = workspaceLeafContent.getBoundingClientRect();
     const elementRect = element.getBoundingClientRect();
+    const position = this.getQuickNotePosition(element);
     const relativeLeft = elementRect.left - leafRect.left;
     const relativeTop = elementRect.top - leafRect.top;
-    console.log("\u6700\u5C0F\u5316 - \u76F8\u5BF9\u4F4D\u7F6E:", { relativeLeft, relativeTop });
-    element.style.width = "40px";
-    element.style.height = "40px";
-    element.style.left = `${relativeLeft}px`;
-    element.style.top = `${relativeTop}px`;
-    element.style.transform = "none";
+    const minimizedSize = 40;
+    element.style.width = `${minimizedSize}px`;
+    element.style.height = `${minimizedSize}px`;
+    switch (position) {
+      case "top-right":
+        element.style.left = `${relativeLeft + (element.offsetWidth - minimizedSize)}px`;
+        element.style.top = `${relativeTop}px`;
+        break;
+      case "top-left":
+        element.style.left = `${relativeLeft}px`;
+        element.style.top = `${relativeTop}px`;
+        break;
+      case "bottom-right":
+        element.style.left = `${relativeLeft + (element.offsetWidth - minimizedSize)}px`;
+        element.style.top = `${relativeTop}px`;
+        break;
+      case "bottom-left":
+        element.style.left = `${relativeLeft}px`;
+        element.style.top = `${relativeTop}px`;
+        break;
+      default:
+        element.style.left = "50%";
+        element.style.transform = "translateX(-50%)";
+    }
     element.addClass("minimized");
+    const backdrop = this.containerEl.querySelector(".quick-note-backdrop");
+    backdrop == null ? void 0 : backdrop.removeClass("active");
   }
+  // 恢复快速笔记
   restoreQuickNote(element) {
     if (!element.hasClass("minimized")) return;
     const workspaceLeafContent = this.containerEl.closest(".workspace-leaf-content");
     if (!workspaceLeafContent) return;
     const leafRect = workspaceLeafContent.getBoundingClientRect();
     const elementRect = element.getBoundingClientRect();
-    const relativeLeft = elementRect.left - leafRect.left;
-    const relativeTop = elementRect.top - leafRect.top;
-    console.log("\u5C55\u5F00 - \u76F8\u5BF9\u4F4D\u7F6E:", { relativeLeft, relativeTop });
+    const position = this.getQuickNotePosition(element);
     element.removeClass("minimized");
     element.style.width = "800px";
     element.style.removeProperty("height");
-    element.style.left = `${relativeLeft}px`;
-    element.style.top = `${relativeTop}px`;
-    element.style.transform = "none";
+    const relativeLeft = elementRect.left - leafRect.left;
+    const relativeTop = elementRect.top - leafRect.top;
+    switch (position) {
+      case "top-right":
+        element.style.left = `${relativeLeft - (800 - 40)}px`;
+        element.style.top = `${relativeTop}px`;
+        break;
+      case "top-left":
+        element.style.left = `${relativeLeft}px`;
+        element.style.top = `${relativeTop}px`;
+        break;
+      case "bottom-right":
+        element.style.left = `${relativeLeft - (800 - 40)}px`;
+        element.style.top = `${relativeTop}px`;
+        break;
+      case "bottom-left":
+        element.style.left = `${relativeLeft}px`;
+        element.style.top = `${relativeTop}px`;
+        break;
+      default:
+        element.style.left = "50%";
+        element.style.top = "20px";
+        element.style.transform = "translateX(-50%)";
+    }
+    const backdrop = this.containerEl.querySelector(".quick-note-backdrop");
+    backdrop == null ? void 0 : backdrop.addClass("active");
+  }
+  // 添加更新高亮标签的方法
+  updateHighlightedTags() {
+    const tagButtons = this.tagContainer.querySelectorAll(".tag-btn");
+    tagButtons.forEach((btn) => {
+      btn.removeClass("highlighted");
+    });
+    tagButtons.forEach((btn) => {
+      var _a;
+      const tagText = (_a = btn.textContent) == null ? void 0 : _a.split(" ")[0];
+      if (tagText && this.selectedTags.has(tagText)) {
+        btn.addClass("highlighted");
+      }
+    });
+  }
+  // 修改 addTag 方法
+  addTag(tagText, tags, tagsContainer) {
+    if (!tagText || tags.has(tagText)) return;
+    const tagItem = tagsContainer.createDiv("tag-item");
+    tagItem.setText(tagText);
+    const removeBtn = tagItem.createDiv("remove-tag");
+    removeBtn.setText("\xD7");
+    removeBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      tags.delete(tagText);
+      tagItem.remove();
+      this.updateHighlightedTags();
+    });
+    tags.add(tagText);
+    this.updateHighlightedTags();
+  }
+  // 添加位置判断方法
+  getQuickNotePosition(element) {
+    const workspaceLeafContent = this.containerEl.closest(".workspace-leaf-content");
+    if (!workspaceLeafContent) return "center";
+    const leafRect = workspaceLeafContent.getBoundingClientRect();
+    const elementRect = element.getBoundingClientRect();
+    const centerX = elementRect.left + elementRect.width / 2;
+    const centerY = elementRect.top + elementRect.height / 2;
+    const isRight = centerX > leafRect.left + leafRect.width / 2;
+    const isBottom = centerY > leafRect.top + leafRect.height / 2;
+    if (isRight && !isBottom) return "top-right";
+    if (!isRight && !isBottom) return "top-left";
+    if (isRight && isBottom) return "bottom-right";
+    if (!isRight && isBottom) return "bottom-left";
+    return "center";
   }
 };
 var ConfirmModal = class extends import_obsidian.Modal {

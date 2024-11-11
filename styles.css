@@ -675,6 +675,42 @@
   font-size: 0.9em;
   transition: color 0.2s ease;
 }
+.tag-btn.highlighted {
+  background-color: var(--interactive-accent);
+  color: var(--text-on-accent);
+  border-color: var(--interactive-accent);
+  animation: tag-highlight 0.3s ease;
+}
+.tag-btn.highlighted .tag-count {
+  color: var(--text-on-accent);
+}
+
+@keyframes tag-highlight {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+.tag-input {
+  border: none;
+  background: transparent;
+  padding: 2px 8px;
+  font-size: 13px;
+  color: var(--text-normal);
+  min-width: 80px;
+}
+.tag-input:focus {
+  outline: none;
+  border-bottom: 1px solid var(--interactive-accent);
+}
+.tag-input::placeholder {
+  color: var(--text-muted);
+}
 
 /* 隐藏卡片内容中的标题 */
 .note-content h1:first-child,
@@ -1181,14 +1217,18 @@
   align-items: center;
   gap: 4px;
   padding: 2px 8px;
-  background: var(--background-modifier-hover);
   border-radius: 12px;
   font-size: 12px;
-  color: var(--text-muted);
   transition: all 0.2s ease;
+  cursor: pointer;
 }
-.quick-note-bar .quick-note-input-container .tags-container .tag-item:hover {
-  background: var(--background-modifier-border);
+.quick-note-bar .quick-note-input-container .tags-container .tag-item.inactive {
+  background: var(--background-modifier-hover);
+  color: var(--text-muted);
+}
+.quick-note-bar .quick-note-input-container .tags-container .tag-item.active {
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
 }
 .quick-note-bar .quick-note-input-container .tags-container .tag-item .remove-tag {
   cursor: pointer;
@@ -1364,6 +1404,25 @@
 .tag-suggestions .suggestion-item.selected {
   background: var(--background-modifier-hover);
   color: var(--interactive-accent);
+}
+
+.quick-note-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 999;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+.quick-note-backdrop.active {
+  opacity: 1;
+  pointer-events: auto;
 }
 
 /*# sourceMappingURL=styles.css.map */
