@@ -1155,13 +1155,12 @@
 }
 .quick-note-bar .quick-note-input-container .quick-note-title {
   width: 100%;
-  padding: 8px 0;
+  padding: 8px;
   border: none;
   background: transparent;
   font-size: 16px;
   font-weight: 500;
   color: var(--text-normal);
-  border-bottom: 1px solid var(--background-modifier-border);
 }
 .quick-note-bar .quick-note-input-container .quick-note-title::placeholder {
   color: var(--text-muted);
@@ -1169,7 +1168,6 @@
 }
 .quick-note-bar .quick-note-input-container .quick-note-title:focus {
   outline: none;
-  border-bottom-color: var(--interactive-accent);
 }
 .quick-note-bar .quick-note-input-container .tags-container {
   display: flex;
@@ -1217,7 +1215,7 @@
 .quick-note-bar .quick-note-input-container .quick-note-input {
   width: 100%;
   min-height: 100px;
-  padding: 8px 0;
+  padding: 8px;
   border: none;
   background: transparent;
   font-size: 14px;
@@ -1241,7 +1239,6 @@
   display: flex;
   gap: 8px;
   padding: 8px 0;
-  border-top: 1px solid var(--background-modifier-border);
   margin-top: 8px;
 }
 .quick-note-bar .quick-note-toolbar .quick-note-btn {
