@@ -599,7 +599,7 @@
 
 
 
-// 添加预览容器相关样式   
+// 添加预容器相关样式   
 .preview-wrapper 
   position: relative
   display: flex
@@ -1327,11 +1327,7 @@
 
 // 快速创建笔记栏
 .quick-note-bar
-  position: fixed
-  top: 20px
-  left: 50%
-  transform: translate(-50%, 0)
-  width: 800px
+  position: absolute
   z-index: 1000
   background: var(--background-primary)
   padding: 16px 20px
@@ -1345,10 +1341,44 @@
   touch-action: none
   -webkit-user-select: none
   user-select: none
-  cursor: grab  // 添加抓取光标
+  cursor: grab
 
-  &:active
-    cursor: grabbing  // 拖动时的光标
+  // 最小化状态样式
+  &.minimized
+    width: 40px !important
+    height: 40px !important
+    padding: 0
+    border-radius: 20px
+    background: var(--interactive-accent)
+    opacity: 0.9
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1)
+    cursor: pointer
+    
+    // 悬停效果
+    &:hover
+      opacity: 1
+      transform: translateY(-2px)
+
+    // 隐藏其他元素
+    .quick-note-input-container,
+    .quick-note-toolbar,
+    .quick-note-send,
+    .quick-note-controls,
+    .tags-container
+      display: none !important
+    
+    // 只显示最小化图标
+    .minimize-icon
+      display: flex !important
+      align-items: center
+      justify-content: center
+      width: 100%
+      height: 100%
+      color: var(--text-on-accent)
+      
+      svg
+        width: 18px
+        height: 18px
 
   // 拖动时的样式
   &.dragging
@@ -1513,38 +1543,6 @@
     
     span
       font-size: 14px
-
-  // 最小化状态
-  &.minimized
-    width: 40px
-    height: 40px
-    padding: 0
-    border-radius: 20px
-    background: var(--interactive-accent)
-    opacity: 0.9
-    transform: translate(-50%, 0)
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1)
-    
-    // 隐藏所有其他元素
-    .quick-note-input-container,
-    .quick-note-toolbar,
-    .quick-note-send,
-    .quick-note-controls,
-    .tags-container
-      display: none !important
-    
-    // 只显示最小化图标
-    .minimize-icon
-      display: flex !important
-      align-items: center
-      justify-content: center
-      width: 100%
-      height: 100%
-      color: var(--text-on-accent)
-      
-      svg
-        width: 18px
-        height: 18px
 
   // 控制按钮
   .quick-note-controls

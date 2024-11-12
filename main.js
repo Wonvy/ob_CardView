@@ -155,6 +155,23 @@ var CardView = class extends import_obsidian.ItemView {
       cls: "search-input"
     });
     const quickNoteBar = mainLayout.createDiv("quick-note-bar");
+    quickNoteBar.addClass("minimized");
+    const workspaceLeafContent = this.containerEl.closest(".workspace-leaf-content");
+    if (workspaceLeafContent) {
+      requestAnimationFrame(() => {
+        const leafRect = workspaceLeafContent.getBoundingClientRect();
+        const right = 20;
+        const bottom = 20;
+        quickNoteBar.style.position = "absolute";
+        quickNoteBar.style.right = `${right}px`;
+        quickNoteBar.style.bottom = `${bottom}px`;
+        quickNoteBar.style.left = "auto";
+        quickNoteBar.style.top = "auto";
+        quickNoteBar.style.transform = "none";
+        quickNoteBar.style.width = "40px";
+        quickNoteBar.style.height = "40px";
+      });
+    }
     const controls = quickNoteBar.createDiv("quick-note-controls");
     const minimizeBtn = controls.createEl("button", {
       cls: "control-button minimize-btn"
@@ -1225,7 +1242,7 @@ ${content}` : content;
           const confirm = await new ConfirmModal(
             this.app,
             "\u786E\u8BA4\u5220\u9664",
-            `\u662F\u5426\u786E\u5B9A\u8981\u5220\u9664\u9009\u4E2D\u7684 ${files.length} \u4E2A\uFFFD\uFFFD\u4EF6\uFF1F`
+            `\u662F\u5426\u786E\u5B9A\u8981\u5220\u9664\u9009\u4E2D\u7684 ${files.length} \u4E2A\u4EF6\uFF1F`
           ).show();
           if (confirm) {
             try {

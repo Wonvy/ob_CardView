@@ -171,6 +171,28 @@ export class CardView extends ItemView {
 
         // 创建快速笔记栏（放在主布局容器的最前面）
         const quickNoteBar = mainLayout.createDiv('quick-note-bar');
+        quickNoteBar.addClass('minimized'); // 默认添加最小化类
+
+        // 设置初始位置在右下角
+        const workspaceLeafContent = this.containerEl.closest('.workspace-leaf-content');
+        if (workspaceLeafContent) {
+            // 使用 requestAnimationFrame 确保在 DOM 完全加载后设置位置
+            requestAnimationFrame(() => {
+                const leafRect = workspaceLeafContent.getBoundingClientRect();
+                // 计算右下角位置
+                const right = 20; // 距右边距
+                const bottom = 20; // 距底边距
+                
+                quickNoteBar.style.position = 'absolute';
+                quickNoteBar.style.right = `${right}px`;
+                quickNoteBar.style.bottom = `${bottom}px`;
+                quickNoteBar.style.left = 'auto';
+                quickNoteBar.style.top = 'auto';
+                quickNoteBar.style.transform = 'none';
+                quickNoteBar.style.width = '40px';
+                quickNoteBar.style.height = '40px';
+            });
+        }
 
         // 添加控制按钮
         const controls = quickNoteBar.createDiv('quick-note-controls');
@@ -930,7 +952,7 @@ export class CardView extends ItemView {
         card.addClass('note-card');
         card.setAttribute('data-path', file.path);
         
-        // 设置卡片宽度和高度
+        // 设置卡片宽度���高度
         card.style.width = `${this.cardSize}px`;
         card.style.height = `${this.cardHeight}px`;
         
@@ -1122,7 +1144,7 @@ export class CardView extends ItemView {
                 this.handleCardSelection(file.path, e);
             });
 
-            // 双击打开
+            // 双击打���
             card.addEventListener('dblclick', async () => {
                 await this.openInAppropriateLeaf(file);
             });
@@ -1278,7 +1300,7 @@ export class CardView extends ItemView {
             while (this.app.vault.getAbstractFileByPath(`${fileName}.md`)) {
             const file = this.app.vault.getAbstractFileByPath(`${fileName}.md`);
             if (file instanceof TFile && file.stat.size === 0) {
-                // 如果笔记内容为空，则打开这个笔记
+                // 如果��记内容为空，则打开这个笔记
                 await this.openInAppropriateLeaf(file);
                 return;
             } else {
@@ -1440,7 +1462,7 @@ export class CardView extends ItemView {
                 });
             }
 
-            // 一次���添加所有内���到容器
+            // 一次添加所有内到容器
             container.appendChild(fragment);
             
             this.timelineCurrentPage++;
@@ -1663,7 +1685,7 @@ export class CardView extends ItemView {
                         const confirm = await new ConfirmModal(
                             this.app,
                             "确认删除",
-                            `是否确定要删除选中的 ${files.length} 个��件？`
+                            `是否确定要删除选中的 ${files.length} 个件？`
                         ).show();
 
                         if (confirm) {
@@ -2767,7 +2789,7 @@ export class CardView extends ItemView {
                         item.addClass('inactive');
                     });
                     
-                    // 刷新视图
+                    // 刷���视图
                     await this.refreshView();
                     
                     new Notice('笔记创建成功');
@@ -3415,7 +3437,7 @@ class EnhancedFileSelectionModal extends Modal {
         const folders = this.getFoldersWithHierarchy();
         this.createFolderTree(folderList, folders);
 
-        // 添加操作按钮
+        // 添加��作按钮
         const buttonContainer = contentEl.createDiv('modal-button-container');
         
         const confirmButton = buttonContainer.createEl('button', {

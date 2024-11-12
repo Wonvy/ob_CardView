@@ -1255,11 +1255,7 @@
 }
 
 .quick-note-bar {
-  position: fixed;
-  top: 20px;
-  left: 50%;
-  transform: translate(-50%, 0);
-  width: 800px;
+  position: absolute;
   z-index: 1000;
   background: var(--background-primary);
   padding: 16px 20px;
@@ -1275,8 +1271,38 @@
   user-select: none;
   cursor: grab;
 }
-.quick-note-bar:active {
-  cursor: grabbing;
+.quick-note-bar.minimized {
+  width: 40px !important;
+  height: 40px !important;
+  padding: 0;
+  border-radius: 20px;
+  background: var(--interactive-accent);
+  opacity: 0.9;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+}
+.quick-note-bar.minimized:hover {
+  opacity: 1;
+  transform: translateY(-2px);
+}
+.quick-note-bar.minimized .quick-note-input-container,
+.quick-note-bar.minimized .quick-note-toolbar,
+.quick-note-bar.minimized .quick-note-send,
+.quick-note-bar.minimized .quick-note-controls,
+.quick-note-bar.minimized .tags-container {
+  display: none !important;
+}
+.quick-note-bar.minimized .minimize-icon {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  color: var(--text-on-accent);
+}
+.quick-note-bar.minimized .minimize-icon svg {
+  width: 18px;
+  height: 18px;
 }
 .quick-note-bar.dragging {
   transition: none !important;
@@ -1430,35 +1456,6 @@
 }
 .quick-note-bar .quick-note-send span {
   font-size: 14px;
-}
-.quick-note-bar.minimized {
-  width: 40px;
-  height: 40px;
-  padding: 0;
-  border-radius: 20px;
-  background: var(--interactive-accent);
-  opacity: 0.9;
-  transform: translate(-50%, 0);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-.quick-note-bar.minimized .quick-note-input-container,
-.quick-note-bar.minimized .quick-note-toolbar,
-.quick-note-bar.minimized .quick-note-send,
-.quick-note-bar.minimized .quick-note-controls,
-.quick-note-bar.minimized .tags-container {
-  display: none !important;
-}
-.quick-note-bar.minimized .minimize-icon {
-  display: flex !important;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  height: 100%;
-  color: var(--text-on-accent);
-}
-.quick-note-bar.minimized .minimize-icon svg {
-  width: 18px;
-  height: 18px;
 }
 .quick-note-bar .quick-note-controls {
   position: absolute;
