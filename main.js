@@ -3317,6 +3317,9 @@ ${content}` : content;
       case "quicknote":
         await this.renderQuickNoteModule(container);
         break;
+      case "todo":
+        await this.renderTodoModule(container);
+        break;
     }
   }
   // 添加模块编辑功能
@@ -3600,6 +3603,138 @@ ${content}` : content;
       }
     });
   }
+  // 添加待办事项模块的渲染方法
+  async renderTodoModule(container) {
+    const todoContainer = container.createDiv("todo-module");
+    const inputArea = todoContainer.createDiv("todo-input-area");
+    const input = inputArea.createEl("input", {
+      type: "text",
+      placeholder: "\u6DFB\u52A0\u65B0\u7684\u5F85\u529E\u4E8B\u9879...",
+      cls: "todo-input"
+    });
+    const dateInput = inputArea.createEl("input", {
+      type: "date",
+      cls: "todo-date-input"
+    });
+    const addButton = inputArea.createEl("button", {
+      text: "\u6DFB\u52A0",
+      cls: "todo-add-btn"
+    });
+    const todoList = todoContainer.createDiv("todo-list");
+    const tabs = todoContainer.createDiv("todo-tabs");
+    const allTab = tabs.createDiv("todo-tab active");
+    allTab.setText("\u5168\u90E8");
+    const pendingTab = tabs.createDiv("todo-tab");
+    pendingTab.setText("\u5F85\u5B8C\u6210");
+    const completedTab = tabs.createDiv("todo-tab");
+    completedTab.setText("\u5DF2\u5B8C\u6210");
+    const todos = await this.loadTodos();
+    this.renderTodoList(todoList, todos, "all");
+    addButton.addEventListener("click", async () => {
+      const content = input.value.trim();
+      const dueDate = dateInput.value;
+      if (content) {
+        const newTodo = {
+          id: Date.now().toString(),
+          content,
+          completed: false,
+          dueDate: dueDate || void 0,
+          createdAt: (/* @__PURE__ */ new Date()).toISOString()
+        };
+        todos.push(newTodo);
+        await this.saveTodos(todos);
+        this.renderTodoList(todoList, todos, "all");
+        input.value = "";
+        dateInput.value = "";
+      }
+    });
+    input.addEventListener("keypress", (e) => {
+      if (e.key === "Enter") {
+        addButton.click();
+      }
+    });
+    allTab.addEventListener("click", () => {
+      tabs.querySelectorAll(".todo-tab").forEach((tab) => tab.removeClass("active"));
+      allTab.addClass("active");
+      this.renderTodoList(todoList, todos, "all");
+    });
+    pendingTab.addEventListener("click", () => {
+      tabs.querySelectorAll(".todo-tab").forEach((tab) => tab.removeClass("active"));
+      pendingTab.addClass("active");
+      this.renderTodoList(todoList, todos, "pending");
+    });
+    completedTab.addEventListener("click", () => {
+      tabs.querySelectorAll(".todo-tab").forEach((tab) => tab.removeClass("active"));
+      completedTab.addClass("active");
+      this.renderTodoList(todoList, todos, "completed");
+    });
+  }
+  // 添加加载待办事项的方法
+  async loadTodos() {
+    try {
+      const data = await this.plugin.loadData();
+      return (data == null ? void 0 : data.todos) || [];
+    } catch (error) {
+      console.error("\u52A0\u8F7D\u5F85\u529E\u4E8B\u9879\u5931\u8D25:", error);
+      return [];
+    }
+  }
+  // 添加保存待办事项的方法
+  async saveTodos(todos) {
+    try {
+      const data = await this.plugin.loadData() || {};
+      data.todos = todos;
+      await this.plugin.saveData(data);
+    } catch (error) {
+      console.error("\u4FDD\u5B58\u5F85\u529E\u4E8B\u9879\u5931\u8D25:", error);
+    }
+  }
+  // 添加渲染待办事项列表的方法
+  renderTodoList(container, todos, filter) {
+    container.empty();
+    const filteredTodos = todos.filter((todo) => {
+      if (filter === "all") return true;
+      if (filter === "pending") return !todo.completed;
+      if (filter === "completed") return todo.completed;
+      return true;
+    });
+    filteredTodos.forEach((todo) => {
+      const todoItem = container.createDiv("todo-item");
+      const checkbox = todoItem.createEl("input", {
+        type: "checkbox",
+        cls: "todo-checkbox"
+      });
+      checkbox.checked = todo.completed;
+      const content = todoItem.createDiv("todo-content");
+      content.setText(todo.content);
+      if (todo.completed) {
+        content.addClass("completed");
+      }
+      if (todo.dueDate) {
+        const dueDate = todoItem.createDiv("todo-due-date");
+        const date = new Date(todo.dueDate);
+        dueDate.setText(date.toLocaleDateString());
+        if (!todo.completed && date < /* @__PURE__ */ new Date()) {
+          dueDate.addClass("overdue");
+        }
+      }
+      const deleteBtn = todoItem.createDiv("todo-delete-btn");
+      deleteBtn.setText("\xD7");
+      checkbox.addEventListener("change", async () => {
+        todo.completed = checkbox.checked;
+        content.toggleClass("completed", todo.completed);
+        await this.saveTodos(todos);
+      });
+      deleteBtn.addEventListener("click", async () => {
+        const index = todos.findIndex((t) => t.id === todo.id);
+        if (index !== -1) {
+          todos.splice(index, 1);
+          await this.saveTodos(todos);
+          this.renderTodoList(container, todos, filter);
+        }
+      });
+    });
+  }
 };
 var ModuleManagerModal = class extends import_obsidian.Modal {
   constructor(app, modules, onSave) {
@@ -3709,6 +3844,14 @@ var DEFAULT_HOME_MODULES = [
     visible: true,
     order: 5,
     columns: 8
+  },
+  {
+    id: "todo",
+    name: "\u5F85\u529E\u4E8B\u9879",
+    type: "todo",
+    visible: true,
+    order: 6,
+    columns: 4
   }
 ];
 

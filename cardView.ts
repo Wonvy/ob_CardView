@@ -18,7 +18,7 @@ export const VIEW_TYPE_HOME = 'home-view';
 export interface HomeModule {
   id: string;
   name: string;
-  type: 'heatmap' | 'recent' | 'weekly' | 'stats' | 'calendar' | 'graph' | 'quicknote'; // 添加新类型
+  type: 'heatmap' | 'recent' | 'weekly' | 'stats' | 'calendar' | 'graph' | 'quicknote' | 'todo'; // 添加 todo 类型
   visible: boolean;
   order: number;
   columns: number; // 添加列数属性
@@ -3669,7 +3669,7 @@ export class CardView extends ItemView {
                 const repeatValue = value > maxColumns ? maxColumns : value;
                 this.container.style.gridTemplateColumns = `repeat(${repeatValue}, minmax(150px, 1fr))`;
             } else if (this.currentView === 'timeline') {
-                // 更新���间轴视图的���片布局
+                // 更新间轴视图的片布局
                 const notesLists = this.container.querySelectorAll('.timeline-notes-list');
                 notesLists.forEach(list => {
                     if (list instanceof HTMLElement) {
@@ -4659,6 +4659,9 @@ export class CardView extends ItemView {
             case 'quicknote':
                 await this.renderQuickNoteModule(container);
                 break;
+            case 'todo':
+                await this.renderTodoModule(container);
+                break;
         }
     }
 
@@ -5027,6 +5030,178 @@ export class CardView extends ItemView {
             }
         });
     }
+
+    // 添加待办事项模块的渲染方法
+    private async renderTodoModule(container: HTMLElement) {
+        const todoContainer = container.createDiv('todo-module');
+        
+        // 创建输入区域
+        const inputArea = todoContainer.createDiv('todo-input-area');
+        
+        // 创建输入框
+        const input = inputArea.createEl('input', {
+            type: 'text',
+            placeholder: '添加新的待办事项...',
+            cls: 'todo-input'
+        });
+
+        // 创建日期选择器
+        const dateInput = inputArea.createEl('input', {
+            type: 'date',
+            cls: 'todo-date-input'
+        });
+
+        // 创建添加按钮
+        const addButton = inputArea.createEl('button', {
+            text: '添加',
+            cls: 'todo-add-btn'
+        });
+
+        // 创建待办事项列表容器
+        const todoList = todoContainer.createDiv('todo-list');
+        
+        // 创建分类标签
+        const tabs = todoContainer.createDiv('todo-tabs');
+        const allTab = tabs.createDiv('todo-tab active');
+        allTab.setText('全部');
+        const pendingTab = tabs.createDiv('todo-tab');
+        pendingTab.setText('待完成');
+        const completedTab = tabs.createDiv('todo-tab');
+        completedTab.setText('已完成');
+
+        // 加载保存的待办事项
+        const todos = await this.loadTodos();
+        this.renderTodoList(todoList, todos, 'all');
+
+        // 添加事件处理
+        addButton.addEventListener('click', async () => {
+            const content = input.value.trim();
+            const dueDate = dateInput.value;
+            if (content) {
+                const newTodo = {
+                    id: Date.now().toString(),
+                    content,
+                    completed: false,
+                    dueDate: dueDate || undefined,
+                    createdAt: new Date().toISOString()
+                };
+                
+                todos.push(newTodo);
+                await this.saveTodos(todos);
+                this.renderTodoList(todoList, todos, 'all');
+                
+                input.value = '';
+                dateInput.value = '';
+            }
+        });
+
+        // 添加回车键处理
+        input.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                addButton.click();
+            }
+        });
+
+        // 添加标签切换事件
+        allTab.addEventListener('click', () => {
+            tabs.querySelectorAll('.todo-tab').forEach(tab => tab.removeClass('active'));
+            allTab.addClass('active');
+            this.renderTodoList(todoList, todos, 'all');
+        });
+
+        pendingTab.addEventListener('click', () => {
+            tabs.querySelectorAll('.todo-tab').forEach(tab => tab.removeClass('active'));
+            pendingTab.addClass('active');
+            this.renderTodoList(todoList, todos, 'pending');
+        });
+
+        completedTab.addEventListener('click', () => {
+            tabs.querySelectorAll('.todo-tab').forEach(tab => tab.removeClass('active'));
+            completedTab.addClass('active');
+            this.renderTodoList(todoList, todos, 'completed');
+        });
+    }
+    // 添加加载待办事项的方法
+    private async loadTodos(): Promise<any[]> {
+        try {
+            const data = await this.plugin.loadData();
+            return data?.todos || [];
+        } catch (error) {
+            console.error('加载待办事项失败:', error);
+            return [];
+        }
+    }
+    // 添加保存待办事项的方法
+    private async saveTodos(todos: any[]) {
+        try {
+            const data = await this.plugin.loadData() || {};
+            data.todos = todos;
+            await this.plugin.saveData(data);
+        } catch (error) {
+            console.error('保存待办事项失败:', error);
+        }
+    }
+    // 添加渲染待办事项列表的方法
+    private renderTodoList(container: HTMLElement, todos: any[], filter: 'all' | 'pending' | 'completed') {
+        container.empty();
+        
+        const filteredTodos = todos.filter((todo: any) => {
+            if (filter === 'all') return true;
+            if (filter === 'pending') return !todo.completed;
+            if (filter === 'completed') return todo.completed;
+            return true;
+        });
+
+        filteredTodos.forEach(todo => {
+            const todoItem = container.createDiv('todo-item');
+            
+            // 创建复选框
+            const checkbox = todoItem.createEl('input', {
+                type: 'checkbox',
+                cls: 'todo-checkbox'
+            });
+            checkbox.checked = todo.completed;
+            
+            // 创建内容区域
+            const content = todoItem.createDiv('todo-content');
+            content.setText(todo.content);
+            if (todo.completed) {
+                content.addClass('completed');
+            }
+            
+            // 如果有截止日期，显示日期
+            if (todo.dueDate) {
+                const dueDate = todoItem.createDiv('todo-due-date');
+                const date = new Date(todo.dueDate);
+                dueDate.setText(date.toLocaleDateString());
+                
+                // 如果已过期且未完成，添加过期样式
+                if (!todo.completed && date < new Date()) {
+                    dueDate.addClass('overdue');
+                }
+            }
+            
+            // 创建删除按钮
+            const deleteBtn = todoItem.createDiv('todo-delete-btn');
+            deleteBtn.setText('×');
+            
+            // 添加事件处理
+            checkbox.addEventListener('change', async () => {
+                todo.completed = checkbox.checked;
+                content.toggleClass('completed', todo.completed);
+                await this.saveTodos(todos);
+            });
+            
+            deleteBtn.addEventListener('click', async () => {
+                const index = todos.findIndex(t => t.id === todo.id);
+                if (index !== -1) {
+                    todos.splice(index, 1);
+                    await this.saveTodos(todos);
+                    this.renderTodoList(container, todos, filter);
+                }
+            });
+        });
+    }
 }
 
 class ModuleManagerModal extends Modal {
@@ -5168,5 +5343,13 @@ export const DEFAULT_HOME_MODULES: HomeModule[] = [
         visible: true,
         order: 5,
         columns: 8
+    },
+    {
+        id: 'todo',
+        name: '待办事项',
+        type: 'todo',
+        visible: true,
+        order: 6,
+        columns: 4
     }
 ];

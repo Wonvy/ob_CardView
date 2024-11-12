@@ -1336,205 +1336,207 @@
   -webkit-user-select: none
   user-select: none
   cursor: grab
-
-  // 最小化状态样式
-  &.minimized
-    width: 40px !important
-    height: 40px !important
-    padding: 0
-    border-radius: 20px
-    background: var(--interactive-accent)
-    opacity: 0.9
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1)
-    cursor: pointer
-    
-    // 悬停效
-    &:hover
-      opacity: 1
-      transform: translateY(-2px)
-
-    // 隐藏其他元素
-    .quick-note-input-container,
-    .quick-note-toolbar,
-    .quick-note-send,
-    .quick-note-controls,
-    .tags-container
-      display: none !important
-    
-    // 只显示最小化图标
-    .minimize-icon
-      display: flex !important
-      align-items: center
-      justify-content: center
-      width: 100%
-      height: 100%
-      color: var(--text-on-accent)
-      
-      svg
-        width: 18px
-        height: 18px
-
   // 拖动时的样式
   &.dragging
     transition: none !important
     opacity: 0.95
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15)
 
-  // 输入
-  .quick-note-input-container
-    display: flex
-    flex-direction: column
-    gap: 12px
+  &:hover .quick-note-controls
+    opacity: 1
+
+
+// 最小化状态样式
+.minimized
+  width: 40px !important
+  height: 40px !important
+  padding: 0
+  border-radius: 20px
+  background: var(--interactive-accent)
+  opacity: 0.9
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1)
+  cursor: pointer
+  
+  // 悬停效
+  &:hover
+    opacity: 1
+    transform: translateY(-2px)
+
+  // 隐藏其他元素
+  .quick-note-input-container,
+  .quick-note-toolbar,
+  .quick-note-send,
+  .quick-note-controls,
+  .tags-container
+    display: none !important
+  
+  // 只显示最小化图标
+  .minimize-icon
+    display: flex !important
+    align-items: center
+    justify-content: center
+    width: 100%
+    height: 100%
+    color: var(--text-on-accent)
     
-    // 标题输入框
-    .quick-note-title
-      width: 100%
-      padding: 8px
+    svg
+      width: 18px
+      height: 18px
+
+
+// 输入
+.quick-note-input-container
+  display: flex
+  flex-direction: column
+  gap: 12px
+  
+  // 标题输入框
+  .quick-note-title
+    width: 100%
+    padding: 8px
+    border: none
+    background: transparent
+    font-size: 16px
+    font-weight: 500
+    color: var(--text-normal)
+    // border-bottom: 1px solid var(--background-modifier-border)
+    
+    &::placeholder
+      color: var(--text-muted)
+      font-weight: normal
+    
+    &:focus
+      outline: none
+      // border-bottom-color: var(--interactive-accent)
+
+  // 标签容器
+  .tags-container
+    display: flex
+    flex-wrap: wrap
+    gap: 6px
+    min-height: 32px
+    padding: 4px 0
+    
+    .tag-item
+      display: inline-flex
+      align-items: center
+      gap: 4px
+      padding: 2px 8px
+      border-radius: 12px
+      font-size: 12px
+      transition: all 0.2s ease
+      cursor: pointer
+      
+      // 未选中状态（灰色）
+      &.inactive
+        background: var(--background-modifier-hover)
+        color: var(--text-muted)
+      
+      // 选中状态（高亮色）
+      &.active
+        background: var(--interactive-accent)
+        color: var(--text-on-accent)
+      
+      .remove-tag
+        cursor: pointer
+        opacity: 0.6
+        transition: opacity 0.2s ease
+        
+        &:hover
+          opacity: 1
+    
+    .tag-input
       border: none
       background: transparent
-      font-size: 16px
-      font-weight: 500
+      padding: 2px 0
+      font-size: 13px
       color: var(--text-normal)
-      // border-bottom: 1px solid var(--background-modifier-border)
-      
-      &::placeholder
-        color: var(--text-muted)
-        font-weight: normal
+      min-width: 80px
       
       &:focus
         outline: none
-        // border-bottom-color: var(--interactive-accent)
+        
+      &::placeholder
+        color: var(--text-muted)
 
-    // 标签容器
-    .tags-container
-      display: flex
-      flex-wrap: wrap
-      gap: 6px
-      min-height: 32px
-      padding: 4px 0
-      
-      .tag-item
-        display: inline-flex
-        align-items: center
-        gap: 4px
-        padding: 2px 8px
-        border-radius: 12px
-        font-size: 12px
-        transition: all 0.2s ease
-        cursor: pointer
-        
-        // 未选中状态（灰色）
-        &.inactive
-          background: var(--background-modifier-hover)
-          color: var(--text-muted)
-        
-        // 选中状态（高亮色）
-        &.active
-          background: var(--interactive-accent)
-          color: var(--text-on-accent)
-        
-        .remove-tag
-          cursor: pointer
-          opacity: 0.6
-          transition: opacity 0.2s ease
-          
-          &:hover
-            opacity: 1
-      
-      .tag-input
-        border: none
-        background: transparent
-        padding: 2px 0
-        font-size: 13px
-        color: var(--text-normal)
-        min-width: 80px
-        
-        &:focus
-          outline: none
-          
-        &::placeholder
-          color: var(--text-muted)
-
-  // 工具栏
-  .quick-note-toolbar
-    display: flex
-    gap: 8px
-    padding: 8px 0
-    margin-top: 8px
-    
-    .quick-note-btn
-      display: flex
-      align-items: center
-      gap: 6px
-      padding: 6px 12px
-      border-radius: 6px
-      background: transparent
-      color: var(--text-muted)
-      border: none
-      cursor: pointer
-      transition: all 0.2s ease
-      
-      &:hover
-        background: var(--background-modifier-hover)
-        color: var(--text-normal)
-      
-      &.active
-        background: var(--background-modifier-hover)
-        color: var(--interactive-accent)
-      
-      svg
-        width: 16px
-        height: 16px
-
-  // 发送按钮
-  .quick-note-send
-    position: absolute
-    right: 20px
-    bottom: 20px
+// 工具栏
+.quick-note-toolbar
+  display: flex
+  gap: 8px
+  padding: 8px 0
+  margin-top: 8px
+  
+  .quick-note-btn
     display: flex
     align-items: center
-    gap: 8px
-    background: var(--interactive-accent)
-    color: var(--text-on-accent)
-    padding: 8px 16px
-    border-radius: 8px
+    gap: 6px
+    padding: 6px 12px
+    border-radius: 6px
+    background: transparent
+    color: var(--text-muted)
     border: none
     cursor: pointer
-    font-weight: 500
     transition: all 0.2s ease
     
     &:hover
-      transform: translateY(-2px)
-      box-shadow: 0 4px 12px rgba(var(--interactive-accent-rgb), 0.2)
+      background: var(--background-modifier-hover)
+      color: var(--text-normal)
+    
+    &.active
+      background: var(--background-modifier-hover)
+      color: var(--interactive-accent)
     
     svg
       width: 16px
       height: 16px
-    
-    span
-      font-size: 14px
 
-  // 控制按钮
-  .quick-note-controls
-    position: absolute
-    top: 16px
-    right: 16px
-    display: flex
-    gap: 4px
-    opacity: 0
-    transition: opacity 0.2s ease
-    
-    .control-button
-      padding: 6px
-      border-radius: 6px
-      color: var(--text-muted)
-      
-      &:hover
-        background: var(--background-modifier-hover)
-        color: var(--text-normal)
+// 发送按钮
+.quick-note-send
+  position: absolute
+  right: 20px
+  bottom: 20px
+  display: flex
+  align-items: center
+  gap: 8px
+  background: var(--interactive-accent)
+  color: var(--text-on-accent)
+  padding: 8px 16px
+  border-radius: 8px
+  border: none
+  cursor: pointer
+  font-weight: 500
+  transition: all 0.2s ease
+  
+  &:hover
+    transform: translateY(-2px)
+    box-shadow: 0 4px 12px rgba(var(--interactive-accent-rgb), 0.2)
+  
+  svg
+    width: 16px
+    height: 16px
+  
+  span
+    font-size: 14px
 
-  &:hover .quick-note-controls
-    opacity: 1
+// 控制按钮
+.quick-note-controls
+  position: absolute
+  top: 16px
+  right: 16px
+  display: flex
+  gap: 4px
+  opacity: 0
+  transition: opacity 0.2s ease
+  
+  .control-button
+    padding: 6px
+    border-radius: 6px
+    color: var(--text-muted)
+    
+    &:hover
+      background: var(--background-modifier-hover)
+      color: var(--text-normal)
+
 
 // 标签建议
 .tag-suggestions
@@ -1633,6 +1635,13 @@
     background-color: var(--scrollbar-thumb-bg)
     border-radius: 4px
 
+  // 添加加载状态的样式
+  &.loading
+    .loading-spinner
+      display: block
+    
+    svg
+      display: none
 
 
 // 添加状态栏样式
@@ -1736,13 +1745,6 @@
       color: var(--text-muted)
       transition: color 0.2s ease
 
-    // 添加加载状态的样式
-    &.loading
-      .loading-spinner
-        display: block
-      
-      svg
-        display: none
 
   // 滚动状态样式优化
   .scroll-status
@@ -2787,3 +2789,127 @@
     .quick-note-send
         align-self: flex-end
         margin-top: 8px
+
+// 待办事项模块样式
+.todo-module
+    display: flex
+    flex-direction: column
+    gap: 16px
+    padding: 16px
+    height: 100%
+    
+    .todo-input-area
+        display: flex
+        gap: 8px
+        
+        .todo-input
+            flex: 1
+            padding: 8px 12px
+            border: 1px solid var(--background-modifier-border)
+            border-radius: 4px
+            background: var(--background-primary)
+            
+            &:focus
+                border-color: var(--interactive-accent)
+                outline: none
+        
+        .todo-date-input
+            width: 130px
+            padding: 8px 12px
+            border: 1px solid var(--background-modifier-border)
+            border-radius: 4px
+            background: var(--background-primary)
+            cursor: pointer
+            
+            &:focus
+                border-color: var(--interactive-accent)
+                outline: none
+        
+        .todo-add-btn
+            padding: 8px 16px
+            background: var(--interactive-accent)
+            color: var(--text-on-accent)
+            border: none
+            border-radius: 4px
+            cursor: pointer
+            transition: all 0.2s ease
+            
+            &:hover
+                opacity: 0.9
+                transform: translateY(-1px)
+    
+    .todo-tabs
+        display: flex
+        gap: 8px
+        border-bottom: 1px solid var(--background-modifier-border)
+        padding-bottom: 8px
+        
+        .todo-tab
+            padding: 4px 12px
+            border-radius: 4px
+            cursor: pointer
+            color: var(--text-muted)
+            transition: all 0.2s ease
+            
+            &:hover
+                background: var(--background-modifier-hover)
+                color: var(--text-normal)
+            
+            &.active
+                background: var(--interactive-accent)
+                color: var(--text-on-accent)
+    
+    .todo-list
+        flex: 1
+        overflow-y: auto
+        display: flex
+        flex-direction: column
+        gap: 8px
+        
+        .todo-item
+            display: flex
+            align-items: center
+            gap: 8px
+            padding: 8px 12px
+            background: var(--background-primary)
+            border: 1px solid var(--background-modifier-border)
+            border-radius: 4px
+            transition: all 0.2s ease
+            
+            &:hover
+                transform: translateX(4px)
+                border-color: var(--interactive-accent)
+            
+            .todo-checkbox
+                width: 16px
+                height: 16px
+                cursor: pointer
+            
+            .todo-content
+                flex: 1
+                color: var(--text-normal)
+                
+                &.completed
+                    text-decoration: line-through
+                    color: var(--text-muted)
+            
+            .todo-due-date
+                font-size: 0.9em
+                color: var(--text-muted)
+                padding: 2px 6px
+                border-radius: 4px
+                background: var(--background-modifier-border)
+                
+                &.overdue
+                    color: var(--text-error)
+                    background: var(--background-modifier-error)
+            
+            .todo-delete-btn
+                color: var(--text-muted)
+                cursor: pointer
+                padding: 4px
+                border-radius: 4px
+                
+                &:hover
+                    color: var(--text-error)
+                    background: var(--background-modifier-error)
