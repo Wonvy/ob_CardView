@@ -2,7 +2,7 @@ import { App, PluginManifest,Plugin, PluginSettingTab, Setting, TFile, Workspace
 import { CardView, VIEW_TYPE_CARD } from './cardView';
 
 interface CardViewPluginSettings {
-    defaultView: 'card' | 'list' | 'timeline' | 'month';
+    defaultView: 'card' | 'list' | 'timeline' | 'month' | 'week';
     cardWidth: number;
     minCardWidth: number;
     maxCardWidth: number;
@@ -37,17 +37,18 @@ class CardViewSettingTab extends PluginSettingTab {
 
         new Setting(containerEl)
             .setName('默认视图')
-            .setDesc('选择默认的视图1模式')
+            .setDesc('选择默认的视图模式')
             .addDropdown(dropdown => {
                 dropdown
                     .addOption('card', '卡片视图')
                     .addOption('list', '列表视图')
                     .addOption('timeline', '时间轴视图')
                     .addOption('month', '月视图')
+                    .addOption('week', '周视图')
                     .setValue(this.plugin.settings.defaultView);
                 
                 dropdown.onChange(async (value) => {
-                    if (value === 'card' || value === 'list' || value === 'timeline' || value === 'month') {
+                    if (value === 'card' || value === 'list' || value === 'timeline' || value === 'month' || value === 'week') {
                         this.plugin.settings.defaultView = value;
                         await this.plugin.saveSettings();
                     }

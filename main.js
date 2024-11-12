@@ -33,6 +33,157 @@ var import_obsidian2 = require("obsidian");
 // cardView.ts
 var import_obsidian = require("obsidian");
 var VIEW_TYPE_CARD = "card-view";
+var ConfirmModal = class extends import_obsidian.Modal {
+  constructor(app, title, message) {
+    super(app);
+    this.result = false;
+    this.resolvePromise = () => {
+    };
+    this.title = title;
+    this.message = message;
+  }
+  async show() {
+    return new Promise((resolve) => {
+      this.resolvePromise = resolve;
+      this.open();
+    });
+  }
+  onOpen() {
+    const { contentEl } = this;
+    contentEl.createEl("h3", { text: this.title });
+    contentEl.createEl("p", { text: this.message });
+    const buttonContainer = contentEl.createDiv("button-container");
+    const confirmButton = buttonContainer.createEl("button", { text: "\u786E\u8BA4" });
+    confirmButton.addEventListener("click", () => {
+      this.result = true;
+      this.close();
+    });
+    const cancelButton = buttonContainer.createEl("button", { text: "\u53D6\u6D88" });
+    cancelButton.addEventListener("click", () => {
+      this.result = false;
+      this.close();
+    });
+  }
+  onClose() {
+    const { contentEl } = this;
+    contentEl.empty();
+    this.resolvePromise(this.result);
+  }
+};
+var EnhancedFileSelectionModal = class extends import_obsidian.Modal {
+  constructor(app, files, recentFolders, onFoldersUpdate) {
+    super(app);
+    this.selectedFolder = null;
+    this.files = files;
+    this.recentFolders = recentFolders;
+    this.onFoldersUpdate = onFoldersUpdate;
+  }
+  // 打开模态框
+  async onOpen() {
+    const { contentEl } = this;
+    contentEl.empty();
+    contentEl.createEl("h3", {
+      text: `\u79FB\u52A8 ${this.files.length} \u4E2A\u6587\u4EF6`
+    });
+    if (this.recentFolders.length > 0) {
+      const recentSection = contentEl.createDiv("recent-folders-section");
+      recentSection.createEl("h4", { text: "\u6700\u4F7F\u7528" });
+      const recentList = recentSection.createDiv("recent-folders-list");
+      this.recentFolders.forEach((folder) => {
+        const item = recentList.createDiv("folder-item recent");
+        item.setText(folder);
+        item.addEventListener("click", () => this.selectFolder(item, folder));
+      });
+    }
+    const folderList = contentEl.createDiv("folder-list");
+    const folders = this.getFoldersWithHierarchy();
+    this.createFolderTree(folderList, folders);
+    const buttonContainer = contentEl.createDiv("modal-button-container");
+    const confirmButton = buttonContainer.createEl("button", {
+      text: "\u786E\u8BA4\u79FB\u52A8",
+      cls: "mod-cta"
+    });
+    confirmButton.addEventListener("click", () => {
+      if (this.selectedFolder) {
+        this.moveFiles(this.selectedFolder);
+      }
+    });
+    const cancelButton = buttonContainer.createEl("button", {
+      text: "\u53D6\u6D88"
+    });
+    cancelButton.addEventListener("click", () => this.close());
+  }
+  // 获取文件夹层次结构
+  getFoldersWithHierarchy() {
+    const folders = [];
+    const seen = /* @__PURE__ */ new Set();
+    this.app.vault.getAllLoadedFiles().forEach((file) => {
+      if (file instanceof import_obsidian.TFolder) {
+        const parts = file.path.split("/");
+        let currentPath = "";
+        let level = 0;
+        parts.forEach((part) => {
+          if (part) {
+            currentPath += (currentPath ? "/" : "") + part;
+            if (!seen.has(currentPath)) {
+              seen.add(currentPath);
+              folders.push({
+                path: currentPath,
+                name: part,
+                level
+              });
+            }
+            level++;
+          }
+        });
+      }
+    });
+    return folders.sort((a, b) => a.path.localeCompare(b.path));
+  }
+  // 创建文件夹树
+  createFolderTree(container, folders) {
+    folders.forEach((folder) => {
+      const item = container.createDiv({
+        cls: "folder-item"
+      });
+      item.style.paddingLeft = `${folder.level * 20 + 10}px`;
+      const icon = item.createSpan({
+        cls: "folder-icon"
+      });
+      icon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>`;
+      const nameSpan = item.createSpan({
+        cls: "folder-name"
+      });
+      nameSpan.textContent = folder.name;
+      item.addEventListener("click", () => this.selectFolder(item, folder.path));
+    });
+  }
+  // 选择文件夹
+  selectFolder(element, path) {
+    this.contentEl.querySelectorAll(".folder-item").forEach((item) => {
+      item.removeClass("selected");
+    });
+    element.addClass("selected");
+    this.selectedFolder = path;
+  }
+  // 移动文件
+  async moveFiles(targetFolder) {
+    const confirmModal = new ConfirmModal(
+      this.app,
+      "\u786E\u8BA4 \u79FB\u52A8",
+      `\u662F\u5426\u5C06\u9009\u4E2D\u7684 ${this.files.length} \u4E2A\u6587\u4EF6\u79FB\u52A8\u5230 "${targetFolder}"\uFF1F`
+    );
+    if (await confirmModal.show()) {
+      for (const file of this.files) {
+        const newPath = `${targetFolder}/${file.name}`;
+        await this.app.fileManager.renameFile(file, newPath);
+      }
+      this.recentFolders = [targetFolder, ...this.recentFolders.filter((f) => f !== targetFolder)].slice(0, 5);
+      this.onFoldersUpdate(this.recentFolders);
+      this.close();
+    }
+  }
+};
 var CardView = class extends import_obsidian.ItemView {
   // 构造函数
   constructor(leaf, plugin) {
@@ -106,7 +257,14 @@ var CardView = class extends import_obsidian.ItemView {
     this.statusRight = createDiv("status-right");
     this.loadingStatus = createDiv("status-item");
     this.currentLoadingView = null;
+    this.weekViewContainer = createDiv();
+    this.currentWeek = this.getWeekNumber(/* @__PURE__ */ new Date());
+    this.currentYear = (/* @__PURE__ */ new Date()).getFullYear();
     this.setupIntersectionObserver();
+    const today = /* @__PURE__ */ new Date();
+    this.currentYear = today.getFullYear();
+    this.currentWeek = this.getWeekNumber(today);
+    console.log("\u521D\u59CB\u5316\u5468\u89C6\u56FE - \u5E74\u4EFD:", this.currentYear, "\u5468\u6570:", this.currentWeek);
   }
   /**
    * 获取视图类型
@@ -458,7 +616,8 @@ ${content}` : content;
       { id: "card", icon: "grid", text: "\u5361\u7247\u89C6\u56FE" },
       { id: "list", icon: "list", text: "\u5217\u8868\u89C6\u56FE" },
       { id: "timeline", icon: "clock", text: "\u65F6\u95F4\u8F74\u89C6\u56FE" },
-      { id: "month", icon: "calendar", text: "\u6708\u5386\u89C6\u56FE" }
+      { id: "month", icon: "calendar", text: "\u6708\u5386\u89C6\u56FE" },
+      { id: "week", icon: "calendar", text: "\u5468\u89C6\u56FE" }
     ];
     views.forEach((view) => {
       const btn = container.createEl("button", {
@@ -468,7 +627,8 @@ ${content}` : content;
         "grid": '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>',
         "list": '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>',
         "clock": '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>',
-        "calendar": '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>'
+        "calendar": '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>',
+        "week": '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>'
       };
       const iconSpan = btn.createSpan({ cls: "view-switch-icon" });
       iconSpan.innerHTML = iconHtml[view.icon];
@@ -482,7 +642,10 @@ ${content}` : content;
   }
   // 切换视图
   switchView(view) {
-    if (this.currentLoadingView && this.currentLoadingView !== view) {
+    if (this.currentLoadingView === view) {
+      return;
+    }
+    if (this.currentLoadingView) {
       console.log(`\u4E2D\u65AD ${this.currentLoadingView} \u89C6\u56FE\u7684\u52A0\u8F7D`);
       this.isLoading = false;
       this.timelineIsLoading = false;
@@ -491,33 +654,42 @@ ${content}` : content;
     }
     this.currentView = view;
     this.currentLoadingView = view;
-    this.container.setAttribute("data-view", view);
     this.container.empty();
+    this.container.setAttribute("data-view", view);
     const contentSection = this.containerEl.querySelector(".content-section");
     if (contentSection) {
-      contentSection.removeClass("view-card", "view-list", "view-timeline", "view-month");
+      contentSection.removeClass("view-card", "view-list", "view-timeline", "view-month", "view-week");
       contentSection.addClass(`view-${view}`);
     }
     let statusMessage = "";
-    switch (view) {
-      case "card":
-        statusMessage = "\u5207\u6362\u5230\u5361\u7247\u89C6\u56FE";
-        this.loadNotes();
-        break;
-      case "list":
-        statusMessage = "\u5207\u6362\u5230\u5217\u8868\u89C6\u56FE - \u6309\u6587\u4EF6\u5939\u5206\u7EC4";
-        this.createListView();
-        break;
-      case "timeline":
-        statusMessage = "\u5207\u6362\u65F6\u95F4\u8F74\u89C6\u56FE - \u6309\u65E5\u671F\u5206\u7EC4";
-        this.createTimelineView();
-        break;
-      case "month":
-        statusMessage = "\u5207\u6362\u5230\u6708\u5386\u89C6\u56FE";
-        this.createMonthView();
-        break;
+    try {
+      switch (view) {
+        case "card":
+          statusMessage = "\u5207\u6362\u5230\u5361\u7247\u89C6\u56FE";
+          this.loadNotes();
+          break;
+        case "list":
+          statusMessage = "\u5207\u6362\u5230\u5217\u8868\u89C6\u56FE - \u6309\u6587\u4EF6\u5939\u5206\u7EC4";
+          this.createListView();
+          break;
+        case "timeline":
+          statusMessage = "\u5207\u6362\u65F6\u95F4\u8F74\u89C6\u56FE - \u6309\u65E5\u671F\u5206\u7EC4";
+          this.createTimelineView();
+          break;
+        case "month":
+          statusMessage = "\u5207\u6362\u5230\u6708\u5386\u89C6\u56FE";
+          this.createMonthView();
+          break;
+        case "week":
+          statusMessage = "\u5207\u6362\u5230\u5468\u89C6\u56FE";
+          this.createWeekView();
+          break;
+      }
+      this.updateLoadingStatus(statusMessage);
+    } catch (error) {
+      console.error(`\u5207\u6362\u5230${view}\u89C6\u56FE\u65F6\u51FA\u9519:`, error);
+      this.currentLoadingView = null;
     }
-    this.updateLoadingStatus(statusMessage);
   }
   // 加载笔记
   async loadNotes() {
@@ -1341,7 +1513,7 @@ ${content}` : content;
       this.filterNotesByMonth(this.currentDate);
     });
     header.createDiv("calendar-title").setText(
-      `${year}\u5E74${month + 1}\u6708`
+      `${year}${month + 1}\u6708`
     );
     const nextBtn = header.createEl("button", { cls: "calendar-nav-btn" });
     nextBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>';
@@ -2433,7 +2605,7 @@ ${content}` : content;
       }
     });
   }
-  // 创建复选框选项
+  // 创建选框选项
   createCheckboxOption(container, label, defaultChecked) {
     const settingItem = container.createDiv("setting-item");
     const checkbox = document.createElement("input");
@@ -2543,157 +2715,211 @@ ${content}` : content;
       }
     });
   }
-};
-var ConfirmModal = class extends import_obsidian.Modal {
-  constructor(app, title, message) {
-    super(app);
-    this.result = false;
-    this.resolvePromise = () => {
-    };
-    this.title = title;
-    this.message = message;
-  }
-  async show() {
-    return new Promise((resolve) => {
-      this.resolvePromise = resolve;
-      this.open();
-    });
-  }
-  // 打开模态框
-  onOpen() {
-    const { contentEl } = this;
-    contentEl.createEl("h3", { text: this.title });
-    contentEl.createEl("p", { text: this.message });
-    const buttonContainer = contentEl.createDiv("button-container");
-    const confirmButton = buttonContainer.createEl("button", { text: "\u786E\u8BA4" });
-    confirmButton.addEventListener("click", () => {
-      this.result = true;
-      this.close();
-    });
-    const cancelButton = buttonContainer.createEl("button", { text: "\u53D6\u6D88" });
-    cancelButton.addEventListener("click", () => {
-      this.result = false;
-      this.close();
-    });
-  }
-  // 关闭模态框
-  onClose() {
-    const { contentEl } = this;
-    contentEl.empty();
-    this.resolvePromise(this.result);
-  }
-};
-var EnhancedFileSelectionModal = class extends import_obsidian.Modal {
-  constructor(app, files, recentFolders, onFoldersUpdate) {
-    super(app);
-    this.selectedFolder = null;
-    this.files = files;
-    this.recentFolders = recentFolders;
-    this.onFoldersUpdate = onFoldersUpdate;
-  }
-  // 打开模态框
-  async onOpen() {
-    const { contentEl } = this;
-    contentEl.empty();
-    contentEl.createEl("h3", {
-      text: `\u79FB\u52A8 ${this.files.length} \u4E2A\u6587\u4EF6`
-    });
-    if (this.recentFolders.length > 0) {
-      const recentSection = contentEl.createDiv("recent-folders-section");
-      recentSection.createEl("h4", { text: "\u6700\u4F7F\u7528" });
-      const recentList = recentSection.createDiv("recent-folders-list");
-      this.recentFolders.forEach((folder) => {
-        const item = recentList.createDiv("folder-item recent");
-        item.setText(folder);
-        item.addEventListener("click", () => this.selectFolder(item, folder));
-      });
+  // 添加获取周数的方法
+  getWeekNumber(date) {
+    const target = new Date(date.valueOf());
+    const dayNr = (date.getDay() + 6) % 7;
+    target.setDate(target.getDate() - dayNr + 3);
+    const firstThursday = target.valueOf();
+    target.setMonth(0, 1);
+    if (target.getDay() !== 4) {
+      target.setMonth(0, 1 + (4 - target.getDay() + 7) % 7);
     }
-    const folderList = contentEl.createDiv("folder-list");
-    const folders = this.getFoldersWithHierarchy();
-    this.createFolderTree(folderList, folders);
-    const buttonContainer = contentEl.createDiv("modal-button-container");
-    const confirmButton = buttonContainer.createEl("button", {
-      text: "\u786E\u8BA4\u79FB\u52A8",
-      cls: "mod-cta"
-    });
-    confirmButton.addEventListener("click", () => {
-      if (this.selectedFolder) {
-        this.moveFiles(this.selectedFolder);
-      }
-    });
-    const cancelButton = buttonContainer.createEl("button", {
-      text: "\u53D6\u6D88"
-    });
-    cancelButton.addEventListener("click", () => this.close());
+    const weekNum = 1 + Math.ceil((firstThursday - target.valueOf()) / 6048e5);
+    console.log(`\u8BA1\u7B97\u5468\u6570 - \u65E5\u671F:${date.toISOString()}, \u5468\u6570:${weekNum}`);
+    return weekNum;
   }
-  // 获取文件夹层次结构
-  getFoldersWithHierarchy() {
-    const folders = [];
-    const seen = /* @__PURE__ */ new Set();
-    this.app.vault.getAllLoadedFiles().forEach((file) => {
-      if (file instanceof import_obsidian.TFolder) {
-        const parts = file.path.split("/");
-        let currentPath = "";
-        let level = 0;
-        parts.forEach((part) => {
-          if (part) {
-            currentPath += (currentPath ? "/" : "") + part;
-            if (!seen.has(currentPath)) {
-              seen.add(currentPath);
-              folders.push({
-                path: currentPath,
-                name: part,
-                level
-              });
-            }
-            level++;
-          }
+  // 创建周视图
+  async createWeekView() {
+    if (this.currentLoadingView !== "week") {
+      return;
+    }
+    try {
+      console.log("\u5F00\u59CB\u521B\u5EFA\u5468\u89C6\u56FE");
+      this.container.empty();
+      const weekContainer = this.container.createDiv("week-view");
+      const header = weekContainer.createDiv("week-header");
+      const navGroup = header.createDiv("week-nav-group");
+      const prevWeekBtn = navGroup.createEl("button", {
+        cls: "week-nav-btn",
+        attr: { title: "\u4E0A\u4E00\u5468" }
+      });
+      prevWeekBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>';
+      const weekInfo = navGroup.createDiv("week-info");
+      const currentMonth = this.getMonthForWeek(this.currentYear, this.currentWeek);
+      weekInfo.setText(`${this.currentYear}\u5E74${currentMonth}\u6708 \u7B2C${this.currentWeek}\u5468`);
+      const currentWeekBtn = navGroup.createEl("button", {
+        cls: "week-nav-btn current-week",
+        attr: { title: "\u8FD4\u56DE\u672C\u5468" }
+      });
+      currentWeekBtn.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+            `;
+      const nextWeekBtn = navGroup.createEl("button", {
+        cls: "week-nav-btn",
+        attr: { title: "\u4E0B\u4E00\u5468" }
+      });
+      nextWeekBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>';
+      prevWeekBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        this.navigateWeek(-1);
+      });
+      currentWeekBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        this.goToCurrentWeek();
+      });
+      nextWeekBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        this.navigateWeek(1);
+      });
+      const weekContent = weekContainer.createDiv("week-content");
+      const weekDates = this.getWeekDates(this.currentYear, this.currentWeek);
+      const daysHeader = weekContent.createDiv("week-days-header");
+      const weekdays = ["\u5468\u4E00", "\u5468\u4E8C", "\u5468\u4E09", "\u5468\u56DB", "\u5468\u4E94", "\u5468\u516D", "\u5468\u65E5"];
+      weekdays.forEach((day, index) => {
+        const dayHeader = daysHeader.createDiv("week-day-header");
+        const dateIndex = index === 6 ? 0 : index + 1;
+        const date = weekDates[dateIndex];
+        dayHeader.innerHTML = `
+                    <div class="weekday-name">${day}</div>
+                    <div class="date-number">${date.getDate()}</div>
+                `;
+      });
+      const notesContainer = weekContent.createDiv("week-notes-container");
+      const reorderedDates = [
+        ...weekDates.slice(1),
+        // 周一到周六
+        weekDates[0]
+        // 周日
+      ];
+      reorderedDates.forEach(async (date) => {
+        const dayNotes = notesContainer.createDiv("day-notes-column");
+        const notes = await this.getNotesForDate(date);
+        notes.forEach((note) => {
+          const noteCard = this.createWeekNoteCard(note);
+          dayNotes.appendChild(noteCard);
         });
+      });
+    } catch (error) {
+      console.error("\u521B\u5EFA\u5468\u89C6\u56FE\u5931\u8D25:", error);
+      new import_obsidian.Notice("\u521B\u5EFA\u5468\u89C6\u56FE\u5931\u8D25");
+    } finally {
+      if (this.currentLoadingView === "week") {
+        this.currentLoadingView = null;
+      }
+    }
+  }
+  // 添加返回本周的方法
+  goToCurrentWeek() {
+    const today = /* @__PURE__ */ new Date();
+    this.currentYear = today.getFullYear();
+    this.currentWeek = this.getWeekNumber(today);
+    this.createWeekView();
+  }
+  // 修改获取指定日期的笔记方法
+  async getNotesForDate(date) {
+    const files = this.app.vault.getMarkdownFiles();
+    return files.filter((file) => {
+      const fileDate = new Date(file.stat.ctime);
+      return this.isSameDay(fileDate, date);
+    });
+  }
+  // 添加日期比较方法
+  isSameDay(date1, date2) {
+    return date1.getFullYear() === date2.getFullYear() && date1.getMonth() === date2.getMonth() && date1.getDate() === date2.getDate();
+  }
+  // 获取指定周的日期范围
+  getWeekDates(year, week) {
+    console.log("\u83B7\u53D6\u5468\u65E5\u671F\u8303\u56F4 - \u5E74\u4EFD:", year, "\u5468\u6570:", week);
+    const firstDayOfYear = new Date(year, 0, 1);
+    console.log("\u5E74\u521D\u7B2C\u4E00\u5929:", firstDayOfYear.toISOString());
+    const daysToFirstMonday = (8 - firstDayOfYear.getDay()) % 7;
+    const firstMonday = new Date(year, 0, 1 + daysToFirstMonday);
+    console.log("\u7B2C\u4E00\u4E2A\u5468\u4E00:", firstMonday.toISOString());
+    const weekStart = new Date(firstMonday);
+    weekStart.setDate(weekStart.getDate() + (week - 1) * 7);
+    console.log("\u76EE\u6807\u5468\u7684\u5468\u4E00:", weekStart.toISOString());
+    const dates = [];
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(weekStart);
+      date.setDate(date.getDate() + i);
+      dates.push(date);
+    }
+    console.log("\u751F\u6210\u7684\u65E5\u671F\u8303\u56F4:", dates.map((d) => d.toISOString()));
+    return dates;
+  }
+  // 创建周视图的笔记卡片
+  createWeekNoteCard(file) {
+    const card = createDiv("week-note-card");
+    const title = card.createDiv("week-note-title");
+    title.setText(file.basename);
+    card.addEventListener("click", async () => {
+      await this.openInAppropriateLeaf(file);
+    });
+    card.addEventListener("mouseenter", async () => {
+      try {
+        this.previewContainer.empty();
+        const content = await this.app.vault.read(file);
+        await import_obsidian.MarkdownRenderer.render(
+          this.app,
+          content,
+          this.previewContainer,
+          file.path,
+          this
+        );
+      } catch (error) {
+        console.error("\u9884\u89C8\u52A0\u8F7D\u5931\u8D25:", error);
       }
     });
-    return folders.sort((a, b) => a.path.localeCompare(b.path));
+    return card;
   }
-  // 创建文件夹树
-  createFolderTree(container, folders) {
-    folders.forEach((folder) => {
-      const item = container.createDiv({
-        cls: "folder-item"
-      });
-      item.style.paddingLeft = `${folder.level * 20 + 10}px`;
-      const icon = item.createSpan({
-        cls: "folder-icon"
-      });
-      icon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>`;
-      const nameSpan = item.createSpan({
-        cls: "folder-name"
-      });
-      nameSpan.textContent = folder.name;
-      item.addEventListener("click", () => this.selectFolder(item, folder.path));
-    });
-  }
-  // 选择文件夹
-  selectFolder(element, path) {
-    this.contentEl.querySelectorAll(".folder-item").forEach((item) => {
-      item.removeClass("selected");
-    });
-    element.addClass("selected");
-    this.selectedFolder = path;
-  }
-  // 移动文件
-  async moveFiles(targetFolder) {
-    const confirmModal = new ConfirmModal(
-      this.app,
-      "\u786E\u8BA4 \u79FB\u52A8",
-      `\u662F\u5426\u5C06\u9009\u4E2D\u7684 ${this.files.length} \u4E2A\u6587\u4EF6\u79FB\u52A8\u5230 "${targetFolder}"\uFF1F`
-    );
-    if (await confirmModal.show()) {
-      for (const file of this.files) {
-        const newPath = `${targetFolder}/${file.name}`;
-        await this.app.fileManager.renameFile(file, newPath);
+  // 周视图导航
+  navigateWeek(delta) {
+    console.log("\u5BFC\u822A\u524D - \u5E74\u4EFD:", this.currentYear, "\u5468\u6570:", this.currentWeek, "\u589E\u91CF:", delta);
+    let newWeek = this.currentWeek;
+    let newYear = this.currentYear;
+    newWeek += delta;
+    const getWeeksInYear = (year) => {
+      const lastDay = new Date(year, 11, 31);
+      const weekNum = this.getWeekNumber(lastDay);
+      console.log(`${year}\u5E74\u7684\u603B\u5468\u6570:`, weekNum);
+      return weekNum;
+    };
+    if (newWeek < 1) {
+      newYear--;
+      newWeek = getWeeksInYear(newYear);
+      console.log("\u5207\u6362\u5230\u4E0A\u4E00\u5E74\u7684\u6700\u540E\u4E00\u5468");
+    } else {
+      const weeksInYear = getWeeksInYear(newYear);
+      if (newWeek > weeksInYear) {
+        newYear++;
+        newWeek = 1;
+        console.log("\u5207\u6362\u5230\u4E0B\u4E00\u5E74\u7684\u7B2C\u4E00\u5468");
       }
-      this.recentFolders = [targetFolder, ...this.recentFolders.filter((f) => f !== targetFolder)].slice(0, 5);
-      this.onFoldersUpdate(this.recentFolders);
-      this.close();
+    }
+    this.currentYear = newYear;
+    this.currentWeek = newWeek;
+    console.log("\u5BFC\u822A\u540E - \u5E74\u4EFD:", this.currentYear, "\u5468\u6570:", this.currentWeek);
+    const weekInfo = this.containerEl.querySelector(".week-info");
+    if (weekInfo) {
+      const currentMonth = this.getMonthForWeek(this.currentYear, this.currentWeek);
+      weekInfo.setText(`${this.currentYear}\u5E74${currentMonth}\u6708 \u7B2C${this.currentWeek}\u5468`);
+    }
+    this.createWeekView();
+  }
+  // 获取指定周所在的月份
+  getMonthForWeek(year, week) {
+    try {
+      const weekDates = this.getWeekDates(year, week);
+      const middleDate = weekDates[3];
+      console.log("\u5468\u4E2D\u95F4\u65E5\u671F:", middleDate);
+      return middleDate.getMonth() + 1;
+    } catch (error) {
+      console.error("\u83B7\u53D6\u6708\u4EFD\u5931\u8D25:", error);
+      return 1;
     }
   }
 };
@@ -2717,10 +2943,10 @@ var CardViewSettingTab = class extends import_obsidian2.PluginSettingTab {
   display() {
     const { containerEl } = this;
     containerEl.empty();
-    new import_obsidian2.Setting(containerEl).setName("\u9ED8\u8BA4\u89C6\u56FE").setDesc("\u9009\u62E9\u9ED8\u8BA4\u7684\u89C6\u56FE1\u6A21\u5F0F").addDropdown((dropdown) => {
-      dropdown.addOption("card", "\u5361\u7247\u89C6\u56FE").addOption("list", "\u5217\u8868\u89C6\u56FE").addOption("timeline", "\u65F6\u95F4\u8F74\u89C6\u56FE").addOption("month", "\u6708\u89C6\u56FE").setValue(this.plugin.settings.defaultView);
+    new import_obsidian2.Setting(containerEl).setName("\u9ED8\u8BA4\u89C6\u56FE").setDesc("\u9009\u62E9\u9ED8\u8BA4\u7684\u89C6\u56FE\u6A21\u5F0F").addDropdown((dropdown) => {
+      dropdown.addOption("card", "\u5361\u7247\u89C6\u56FE").addOption("list", "\u5217\u8868\u89C6\u56FE").addOption("timeline", "\u65F6\u95F4\u8F74\u89C6\u56FE").addOption("month", "\u6708\u89C6\u56FE").addOption("week", "\u5468\u89C6\u56FE").setValue(this.plugin.settings.defaultView);
       dropdown.onChange(async (value) => {
-        if (value === "card" || value === "list" || value === "timeline" || value === "month") {
+        if (value === "card" || value === "list" || value === "timeline" || value === "month" || value === "week") {
           this.plugin.settings.defaultView = value;
           await this.plugin.saveSettings();
         }

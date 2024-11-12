@@ -13,9 +13,220 @@ import CardViewPlugin from './main';
 
 export const VIEW_TYPE_CARD = 'card-view';
 
+// 将 ConfirmModal 类移到 CardView 类外部
+class ConfirmModal extends Modal {
+    private result: boolean = false;
+    private resolvePromise: (value: boolean) => void = () => {};
+    private title: string;
+    private message: string;
+
+    constructor(app: App, title: string, message: string) {
+        super(app);
+        this.title = title;
+        this.message = message;
+    }
+
+    async show(): Promise<boolean> {
+        return new Promise((resolve) => {
+            this.resolvePromise = resolve;
+            this.open();
+        });
+    }
+
+    onOpen() {
+        const { contentEl } = this;
+        contentEl.createEl('h3', { text: this.title });
+        contentEl.createEl('p', { text: this.message });
+
+        const buttonContainer = contentEl.createDiv('button-container');
+        
+        const confirmButton = buttonContainer.createEl('button', { text: '确认' });
+        confirmButton.addEventListener('click', () => {
+            this.result = true;
+            this.close();
+        });
+
+        const cancelButton = buttonContainer.createEl('button', { text: '取消' });
+        cancelButton.addEventListener('click', () => {
+            this.result = false;
+            this.close();
+        });
+    }
+
+    onClose() {
+        const { contentEl } = this;
+        contentEl.empty();
+        this.resolvePromise(this.result);
+    }
+}
+
+// 将 FolderItem 接口移到类外部
+interface FolderItem {
+    path: string;
+    name: string;
+    level: number;
+}
+
+// 将 EnhancedFileSelectionModal 类移到 CardView 类外部
+class EnhancedFileSelectionModal extends Modal {
+    private files: TFile[];
+    private recentFolders: string[];
+    private onFoldersUpdate: (folders: string[]) => void;
+    private selectedFolder: string | null = null;
+
+    constructor(
+        app: App,
+        files: TFile[],
+        recentFolders: string[],
+        onFoldersUpdate: (folders: string[]) => void
+    ) {
+        super(app);
+        this.files = files;
+        this.recentFolders = recentFolders;
+        this.onFoldersUpdate = onFoldersUpdate;
+    }
+
+    // 打开模态框
+    async onOpen() {
+        const { contentEl } = this;
+        contentEl.empty();
+
+        // 标题
+        contentEl.createEl('h3', { 
+            text: `移动 ${this.files.length} 个文件` 
+        });
+
+        // 最近使用的文件夹
+        if (this.recentFolders.length > 0) {
+            const recentSection = contentEl.createDiv('recent-folders-section');
+            recentSection.createEl('h4', { text: '最使用' });
+            
+            const recentList = recentSection.createDiv('recent-folders-list');
+            this.recentFolders.forEach(folder => {
+                const item = recentList.createDiv('folder-item recent');
+                item.setText(folder);
+                item.addEventListener('click', () => this.selectFolder(item, folder));
+            });
+        }
+
+        // 所有文件夹列表
+        const folderList = contentEl.createDiv('folder-list');
+        const folders = this.getFoldersWithHierarchy();
+        this.createFolderTree(folderList, folders);
+
+        // 添加按钮
+        const buttonContainer = contentEl.createDiv('modal-button-container');
+        
+        const confirmButton = buttonContainer.createEl('button', {
+            text: '确认移动',
+            cls: 'mod-cta'
+        });
+        confirmButton.addEventListener('click', () => {
+            if (this.selectedFolder) {
+                this.moveFiles(this.selectedFolder);
+            }
+        });
+
+        const cancelButton = buttonContainer.createEl('button', {
+            text: '取消'
+        });
+        cancelButton.addEventListener('click', () => this.close());
+    }
+
+    // 获取文件夹层次结构
+    private getFoldersWithHierarchy(): FolderItem[] {
+        const folders: FolderItem[] = [];
+        const seen = new Set<string>();
+
+        this.app.vault.getAllLoadedFiles().forEach(file => {
+            if (file instanceof TFolder) {
+                const parts = file.path.split('/');
+                let currentPath = '';
+                let level = 0;
+
+                parts.forEach(part => {
+                    if (part) {
+                        currentPath += (currentPath ? '/' : '') + part;
+                        if (!seen.has(currentPath)) {
+                            seen.add(currentPath);
+                            folders.push({
+                                path: currentPath,
+                                name: part,
+                                level: level
+                            });
+                        }
+                        level++;
+                    }
+                });
+            }
+        });
+
+        return folders.sort((a, b) => a.path.localeCompare(b.path));
+    }
+
+    // 创建文件夹树
+    private createFolderTree(container: HTMLElement, folders: FolderItem[]) {
+        folders.forEach(folder => {
+            const item = container.createDiv({
+                cls: 'folder-item'
+            });
+
+            // 添加缩进
+            item.style.paddingLeft = `${folder.level * 20 + 10}px`;
+
+            // 添加文件夹图标和名称
+            const icon = item.createSpan({
+                cls: 'folder-icon'
+            });
+            icon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>`;
+            const nameSpan = item.createSpan({
+                cls: 'folder-name'
+            });
+            nameSpan.textContent = folder.name;
+
+            item.addEventListener('click', () => this.selectFolder(item, folder.path));
+        });
+    }
+
+    // 选择文件夹
+    private selectFolder(element: HTMLElement, path: string) {
+        // 除其他中状态
+        this.contentEl.querySelectorAll('.folder-item').forEach(item => {
+            item.removeClass('selected');
+        });
+
+        // 添加选中状态
+        element.addClass('selected');
+        this.selectedFolder = path;
+    }
+
+    // 移动文件
+    private async moveFiles(targetFolder: string) {
+        const confirmModal = new ConfirmModal(
+            this.app,
+            "确认 移动",
+            `是否将选中的 ${this.files.length} 个文件移动到 "${targetFolder}"？`
+        );
+
+        if (await confirmModal.show()) {
+            for (const file of this.files) {
+                const newPath = `${targetFolder}/${file.name}`;
+                await this.app.fileManager.renameFile(file, newPath);
+            }
+
+            // 更新最近使用 的文件夹
+            this.recentFolders = [targetFolder, ...this.recentFolders.filter(f => f !== targetFolder)]
+                .slice(0, 5);
+            this.onFoldersUpdate(this.recentFolders);
+
+            this.close();
+        }
+    }
+}
+
 export class CardView extends ItemView {
     private plugin: CardViewPlugin;
-    private currentView: 'card' | 'list' | 'timeline' | 'month';
+    private currentView: 'card' | 'list' | 'timeline' | 'month' | 'week';
     private container: HTMLElement;
     private tagContainer: HTMLElement;
     private previewContainer: HTMLElement;
@@ -50,7 +261,7 @@ export class CardView extends ItemView {
     private statusLeft: HTMLElement;
     private statusRight: HTMLElement;
     private loadingStatus: HTMLElement;
-    private currentLoadingView: 'card' | 'list' | 'timeline' | 'month' | null;
+    private currentLoadingView: 'card' | 'list' | 'timeline' | 'month' | 'week' | null;
     private cardSettings: {
         card: {
             showDate: boolean;
@@ -112,6 +323,9 @@ export class CardView extends ItemView {
     };
     private scrollTimeout: NodeJS.Timeout | null = null;
     private intersectionObserver!: IntersectionObserver;
+    private weekViewContainer: HTMLElement;
+    private currentWeek: number;
+    private currentYear: number;
 
     // 构造函数
     constructor(leaf: WorkspaceLeaf, plugin: CardViewPlugin) {
@@ -153,9 +367,18 @@ export class CardView extends ItemView {
         this.statusRight = createDiv('status-right');
         this.loadingStatus = createDiv('status-item');
         this.currentLoadingView = null;
+        this.weekViewContainer = createDiv();
+        this.currentWeek = this.getWeekNumber(new Date());
+        this.currentYear = new Date().getFullYear();
 
         // 初始化 Intersection Observer
         this.setupIntersectionObserver();
+
+        // 初始化周视图相关属性
+        const today = new Date();
+        this.currentYear = today.getFullYear();
+        this.currentWeek = this.getWeekNumber(today);
+        console.log('初始化周视图 - 年份:', this.currentYear, '周数:', this.currentWeek);
     }
 
     /**
@@ -341,7 +564,7 @@ export class CardView extends ItemView {
         // 创建标签建议容器
         const tagSuggestions = inputContainer.createDiv('tag-suggestions');
 
-        // 添加事件处理
+        // 添事件处理
         this.setupQuickNoteEvents(noteInput, quickNoteToolbar, tagSuggestions);
 
         // 初始化搜索处理
@@ -391,7 +614,7 @@ export class CardView extends ItemView {
         // 添加调整宽度的分隔线
         this.previewResizer = previewWrapper.createDiv('preview-resizer');
 
-        // 创建预览容器
+        // 创建预览器
         this.previewContainer = previewWrapper.createDiv('preview-container');
 
         // 设置预览栏调整功能
@@ -588,7 +811,7 @@ export class CardView extends ItemView {
         // 创建右侧已选标签容器
         const selectedTagsContainer = leftArea.createDiv('selected-tags-container');
 
-        // ���改拉列表示/隐藏逻
+        // 改拉列表示/隐藏逻
         let isMouseOverDropdown = false;
         let isMouseOverPanel = false;
         let hideTimeout: NodeJS.Timeout;
@@ -632,7 +855,7 @@ export class CardView extends ItemView {
             }
         });
 
-        // 点击其他地方时，检查鼠标是否在面板或下拉框上
+        // 点击其他地方时，检查鼠标是否在面板或下拉上
         document.addEventListener('click', (e) => {
             if (!dropdownContainer.contains(e.target as Node)) {
                 dropdownPanel.style.display = 'none';
@@ -680,7 +903,8 @@ export class CardView extends ItemView {
             { id: 'card', icon: 'grid', text: '卡片视图' },
             { id: 'list', icon: 'list', text: '列表视图' },
             { id: 'timeline', icon: 'clock', text: '时间轴视图' },
-            { id: 'month', icon: 'calendar', text: '月历视图' }
+            { id: 'month', icon: 'calendar', text: '月历视图' },
+            { id: 'week', icon: 'calendar', text: '周视图' }
         ];
         
         views.forEach(view => {
@@ -693,7 +917,8 @@ export class CardView extends ItemView {
                 'grid': '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>',
                 'list': '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>',
                 'clock': '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>',
-                'calendar': '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>'
+                'calendar': '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>',
+                'week': '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>'
             };
             
             // 创建图
@@ -706,15 +931,20 @@ export class CardView extends ItemView {
             btn.addEventListener('click', () => {
                 container.querySelectorAll('.view-switch-btn').forEach(b => b.removeClass('active'));
                 btn.addClass('active');
-                this.switchView(view.id as 'card' | 'list' | 'timeline' | 'month');
+                this.switchView(view.id as 'card' | 'list' | 'timeline' | 'month' | 'week');
             });
         });
     }
 
     // 切换视图
-    private switchView(view: 'card' | 'list' | 'timeline' | 'month') {
-        // 如有正在加载的视图，且不是当前要切换的视图，则中断它
-        if (this.currentLoadingView && this.currentLoadingView !== view) {
+    private switchView(view: 'card' | 'list' | 'timeline' | 'month' | 'week') {
+        // 如果当前正在加载的视图与要切换的视图相同，直接返回
+        if (this.currentLoadingView === view) {
+            return;
+        }
+
+        // 如果有其他视图正在加载，中断它
+        if (this.currentLoadingView) {
             console.log(`中断 ${this.currentLoadingView} 视图的加载`);
             this.isLoading = false;
             this.timelineIsLoading = false;
@@ -722,38 +952,51 @@ export class CardView extends ItemView {
             this.timelineHasMore = false;
         }
 
+        // 设置新的当前视图和加载状态
         this.currentView = view;
         this.currentLoadingView = view;
-        this.container.setAttribute('data-view', view);
-        this.container.empty();
         
+        // 清空容器并设置新的视图属性
+        this.container.empty();
+        this.container.setAttribute('data-view', view);
+        
+        // 更新 content-section 的类名
         const contentSection = this.containerEl.querySelector('.content-section');
         if (contentSection) {
-            contentSection.removeClass('view-card', 'view-list', 'view-timeline', 'view-month');
+            contentSection.removeClass('view-card', 'view-list', 'view-timeline', 'view-month', 'view-week');
             contentSection.addClass(`view-${view}`);
         }
 
-        // 更新状态栏信息
+        // 根据视图类型加载相应内容
         let statusMessage = '';
-        switch (view) {
-            case 'card':
-                statusMessage = '切换到卡片视图';
-                this.loadNotes();
-                break;
-            case 'list':
-                statusMessage = '切换到列表视图 - 按文件夹分组';
-                this.createListView();
-                break;
-            case 'timeline':
-                statusMessage = '切换时间轴视图 - 按日期分组';
-                this.createTimelineView();
-                break;
-            case 'month':
-                statusMessage = '切换到月历视图';
-                this.createMonthView();
-                break;
+        try {
+            switch (view) {
+                case 'card':
+                    statusMessage = '切换到卡片视图';
+                    this.loadNotes();
+                    break;
+                case 'list':
+                    statusMessage = '切换到列表视图 - 按文件夹分组';
+                    this.createListView();
+                    break;
+                case 'timeline':
+                    statusMessage = '切换时间轴视图 - 按日期分组';
+                    this.createTimelineView();
+                    break;
+                case 'month':
+                    statusMessage = '切换到月历视图';
+                    this.createMonthView();
+                    break;
+                case 'week':
+                    statusMessage = '切换到周视图';
+                    this.createWeekView();
+                    break;
+            }
+            this.updateLoadingStatus(statusMessage);
+        } catch (error) {
+            console.error(`切换到${view}视图时出错:`, error);
+            this.currentLoadingView = null;
         }
-        this.updateLoadingStatus(statusMessage);
     }
 
     // 加载笔记
@@ -977,7 +1220,7 @@ export class CardView extends ItemView {
         // 创建卡片头部
         const header = card.createDiv('note-card-header');
         // 添加修改日期
-        if (this.cardSettings[this.currentView].showDate) {
+        if (this.cardSettings[this.currentView as keyof typeof this.cardSettings].showDate) {
             const lastModified = header.createDiv('note-date show');
             lastModified.setText(new Date(file.stat.mtime).toLocaleDateString());
         }
@@ -1039,7 +1282,7 @@ export class CardView extends ItemView {
         openButton.setAttribute('title', '在新标签页中打开');
         openButton.style.opacity = '0';  // 默认隐藏
 
-        // 创卡内容容器
+        // 创卡内容器
         const cardContent = card.createDiv('note-card-content');
 
         // 处理标题
@@ -1059,7 +1302,7 @@ export class CardView extends ItemView {
         try {
             // 创建笔记内容容器
             const noteContent = cardContent.createDiv('note-content');
-            if (this.cardSettings[this.currentView].showContent) {
+            if (this.cardSettings[this.currentView as keyof typeof this.cardSettings].showContent) {
                 noteContent.addClass('show');
             }
             noteContent.setAttribute('data-path', file.path);
@@ -1102,7 +1345,7 @@ export class CardView extends ItemView {
                 }
             });
 
-            // 鼠标离开件
+            // 鼠标离件
             card.addEventListener('mouseleave', () => {
                 openButton.style.opacity = '0';
                 // 根据设置决定是否隐藏内容
@@ -1390,7 +1633,7 @@ export class CardView extends ItemView {
             const end = start + this.timelinePageSize;
             const pageDates = sortedDates.slice(start, end);
             
-            // 检查是否还有更多
+            // 检查是否还更多
             this.timelineHasMore = end < sortedDates.length;
             
             // 更新状态信息
@@ -1685,12 +1928,11 @@ export class CardView extends ItemView {
                     });
             });
         }
-
-        menu.showAtMouseEvent(event);//显示右键菜单
+        menu.showAtMouseEvent(event); //显示右键菜单
     }
-
+    
     // 卡片-调整大小
-    private adjustCardSize(delta: number) {
+    public adjustCardSize(delta: number): void {
         const adjustment = delta > 0 ? -10 : 10;
         const newSize = Math.max(
             this.plugin.settings.minCardWidth,
@@ -1700,13 +1942,13 @@ export class CardView extends ItemView {
         if (newSize !== this.cardSize) {
             this.cardSize = newSize;
             this.updateCardSize(newSize);
-            // 保新的宽度
+            // 保存新的宽度
             this.plugin.saveCardWidth(newSize);
         }
     }
 
     // 卡片-调整高度
-    private adjustCardHeight(delta: number) {
+    public adjustCardHeight(delta: number): void {
         const adjustment = delta > 0 ? -10 : 10;
         const newHeight = Math.max(
             this.plugin.settings.minCardHeight ?? 0,
@@ -1882,7 +2124,7 @@ export class CardView extends ItemView {
         
         // 示年月
         header.createDiv('calendar-title').setText(
-            `${year}年${month + 1}月`
+            `${year}${month + 1}月`
         );
         
         // 下个月按钮
@@ -2199,7 +2441,7 @@ export class CardView extends ItemView {
                 // 创建月视图头部
                 const header = monthContainer.createDiv('month-header');
                 
-                // 创建年份显示区域
+                // 年份显示区域
                 const yearGroup = header.createDiv('year-group');
                 
                 // 添加上一年按钮
@@ -2449,7 +2691,7 @@ export class CardView extends ItemView {
             for (const [rootFolder, subFolders] of folderStructure) {
                 const folderGroup = this.container.createDiv('folder-group');
                 
-                // 创建文件夹组标题
+                // 创建文件夹组题
                 const folderHeader = folderGroup.createDiv('folder-header');
                 
                 // 添加文件夹图标
@@ -2593,7 +2835,7 @@ export class CardView extends ItemView {
             // 添加滚动时的鼠标样式
             cardContainer.style.cursor = 'ns-resize';
 
-            // 设置定时器来恢复鼠标样式
+            // 设置时器来恢复鼠标样式
             setTimeout(() => {
                 cardContainer.style.cursor = 'default';
             }, 150);
@@ -3047,7 +3289,7 @@ export class CardView extends ItemView {
         element.style.width = '800px';
         element.style.removeProperty('height');
         
-        // 计算相对于 workspace-leaf-content 的位置
+        // 计算对于 workspace-leaf-content 的位置
         const relativeLeft = elementRect.left - leafRect.left;
         const relativeTop = elementRect.top - leafRect.top;
         
@@ -3245,7 +3487,7 @@ export class CardView extends ItemView {
             const isVisible = settingsPanel.style.display === 'block';
             
             if (!isVisible) {
-                // 打开面板时，更新设置状态以反映当前视图的设置
+                // 打开面板时，更新设置状态以反映当前视图的设
                 this.updateSettingsPanel(settingsPanel);
             }
             
@@ -3264,9 +3506,8 @@ export class CardView extends ItemView {
     private updateSettingsPanel(settingsPanel: HTMLElement) {
         // 清空现有设置
         settingsPanel.empty();
-
         // 获取当前视图的设置
-        const currentSettings = this.cardSettings[this.currentView];
+        const currentSettings = this.cardSettings[this.currentView as keyof typeof this.cardSettings];
 
         // 添加基本设置选项
         const basicSettings = settingsPanel.createDiv('settings-section');
@@ -3313,7 +3554,7 @@ export class CardView extends ItemView {
         // 卡片高度设置
         this.createSliderOption(layoutSettings, '卡片高度', currentSettings.cardHeight, 200, 500, 10, (value) => {
             currentSettings.cardHeight = value;
-            // 统一处理所有卡片的高度调整
+            // 统一处理所有卡片高度调整
             this.container.querySelectorAll('.note-card').forEach((card: Element) => {
                 if (card instanceof HTMLElement) {
                     card.style.height = `${value}px`;
@@ -3422,7 +3663,7 @@ export class CardView extends ItemView {
         });
     }
 
-    // 创建复选框选项
+    // 创建选框选项
     private createCheckboxOption(container: HTMLElement, label: string, defaultChecked: boolean): HTMLInputElement {
         const settingItem = container.createDiv('setting-item');
         
@@ -3445,7 +3686,7 @@ export class CardView extends ItemView {
         const container = this.container;
         if (!container) return;
 
-        const currentSettings = this.cardSettings[this.currentView];
+        const currentSettings = this.cardSettings[this.currentView as keyof typeof this.cardSettings];
 
         // 更新容器样式
         container.style.gap = `${currentSettings.cardGap}px`;
@@ -3471,7 +3712,7 @@ export class CardView extends ItemView {
             container.style.gridTemplateColumns = `repeat(${columns}, ${cardWidth}px)`;
         } else {
             // 自动计算每行卡片数量（使用视图默认值）
-            const defaultColumns = this.cardSettings[this.currentView].cardsPerRow;
+            const defaultColumns = this.cardSettings[this.currentView as keyof typeof this.cardSettings].cardsPerRow;
             const columns = Math.min(defaultColumns, maxPossibleCards);
             const totalGap = currentSettings.cardGap * (columns - 1);
             const cardWidth = (containerWidth - totalGap) / columns;
@@ -3577,217 +3818,284 @@ export class CardView extends ItemView {
             }
         });
     }
-}
 
-// 添加确认对话框
-class ConfirmModal extends Modal {
-    private result: boolean = false;
-    private resolvePromise: (value: boolean) => void = () => {};  // 添加默认值
-    private title: string;
-    private message: string;
-
-    constructor(app: App, title: string, message: string) {
-        super(app);
-        this.title = title;
-        this.message = message;
+    // 添加获取周数的方法
+    private getWeekNumber(date: Date): number {
+        const target = new Date(date.valueOf());
+        const dayNr = (date.getDay() + 6) % 7; // 调整为周一为一周的开始
+        target.setDate(target.getDate() - dayNr + 3);
+        const firstThursday = target.valueOf();
+        target.setMonth(0, 1);
+        if (target.getDay() !== 4) {
+            target.setMonth(0, 1 + ((4 - target.getDay()) + 7) % 7);
+        }
+        const weekNum = 1 + Math.ceil((firstThursday - target.valueOf()) / 604800000);
+        console.log(`计算周数 - 日期:${date.toISOString()}, 周数:${weekNum}`);
+        return weekNum;
     }
 
-    async show(): Promise<boolean> {
-        return new Promise((resolve) => {
-            this.resolvePromise = resolve;
-            this.open();
-        });
-    }
+    // 创建周视图
+    private async createWeekView() {
+        // 确保当前正在加载的是周视图
+        if (this.currentLoadingView !== 'week') {
+            return;
+        }
 
-    // 打开模态框
-    onOpen() {
-        const { contentEl } = this;
-        contentEl.createEl('h3', { text: this.title });
-        contentEl.createEl('p', { text: this.message });
-
-        const buttonContainer = contentEl.createDiv('button-container');
-        
-        const confirmButton = buttonContainer.createEl('button', { text: '确认' });
-        confirmButton.addEventListener('click', () => {
-            this.result = true;
-            this.close();
-        });
-
-        const cancelButton = buttonContainer.createEl('button', { text: '取消' });
-        cancelButton.addEventListener('click', () => {
-            this.result = false;
-            this.close();
-        });
-    }
-
-    // 关闭模态框
-    onClose() {
-        const { contentEl } = this;
-        contentEl.empty();
-        this.resolvePromise(this.result);
-    }
-}
-
-// 修改增强的文件选择模态框
-class EnhancedFileSelectionModal extends Modal {
-    private files: TFile[];
-    private recentFolders: string[];
-    private onFoldersUpdate: (folders: string[]) => void;
-    private selectedFolder: string | null = null;
-
-    constructor(
-        app: App,
-        files: TFile[],
-        recentFolders: string[],
-        onFoldersUpdate: (folders: string[]) => void
-    ) {
-        super(app);
-        this.files = files;
-        this.recentFolders = recentFolders;
-        this.onFoldersUpdate = onFoldersUpdate;
-    }
-
-    // 打开模态框
-    async onOpen() {
-        const { contentEl } = this;
-        contentEl.empty();
-
-        // 标题
-        contentEl.createEl('h3', { 
-            text: `移动 ${this.files.length} 个文件` 
-        });
-
-        // 最近使用的文件夹
-        if (this.recentFolders.length > 0) {
-            const recentSection = contentEl.createDiv('recent-folders-section');
-            recentSection.createEl('h4', { text: '最使用' });
+        try {
+            console.log('开始创建周视图');
+            this.container.empty();
+            const weekContainer = this.container.createDiv('week-view');
             
-            const recentList = recentSection.createDiv('recent-folders-list');
-            this.recentFolders.forEach(folder => {
-                const item = recentList.createDiv('folder-item recent');
-                item.setText(folder);
-                item.addEventListener('click', () => this.selectFolder(item, folder));
+            // 创建周视图头部
+            const header = weekContainer.createDiv('week-header');
+            const navGroup = header.createDiv('week-nav-group');
+            
+            // 上一周按钮
+            const prevWeekBtn = navGroup.createEl('button', { 
+                cls: 'week-nav-btn',
+                attr: { title: '上一周' }
             });
-        }
+            prevWeekBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>';
+            
+            // 显示当前周信息
+            const weekInfo = navGroup.createDiv('week-info');
+            const currentMonth = this.getMonthForWeek(this.currentYear, this.currentWeek);
+            weekInfo.setText(`${this.currentYear}年${currentMonth}月 第${this.currentWeek}周`);
+            
+            // 添加本周按钮
+            const currentWeekBtn = navGroup.createEl('button', {
+                cls: 'week-nav-btn current-week',
+                attr: { title: '返回本周' }
+            });
+            currentWeekBtn.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+            `;
+            
+            // 下一周按钮
+            const nextWeekBtn = navGroup.createEl('button', { 
+                cls: 'week-nav-btn',
+                attr: { title: '下一周' }
+            });
+            nextWeekBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>';
 
-        // 所有文件夹列表
-        const folderList = contentEl.createDiv('folder-list');
-        const folders = this.getFoldersWithHierarchy();
-        this.createFolderTree(folderList, folders);
+            // 添加导航事件
+            prevWeekBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.navigateWeek(-1);
+            });
+            
+            currentWeekBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.goToCurrentWeek();
+            });
+            
+            nextWeekBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.navigateWeek(1);
+            });
 
-        // 添加按钮
-        const buttonContainer = contentEl.createDiv('modal-button-container');
-        
-        const confirmButton = buttonContainer.createEl('button', {
-            text: '确认移动',
-            cls: 'mod-cta'
-        });
-        confirmButton.addEventListener('click', () => {
-            if (this.selectedFolder) {
-                this.moveFiles(this.selectedFolder);
-            }
-        });
+            // 创建周视图内容区域
+            const weekContent = weekContainer.createDiv('week-content');
+            
+            // 获取本周的日期范围
+            const weekDates = this.getWeekDates(this.currentYear, this.currentWeek);
+            
+            // 创建日期头部
+            const daysHeader = weekContent.createDiv('week-days-header');
+            // 修改顺序，将周日放到最后
+            const weekdays = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+            weekdays.forEach((day, index) => {
+                const dayHeader = daysHeader.createDiv('week-day-header');
+                // 调整日期索引，将周日对应的日期放到最后
+                const dateIndex = index === 6 ? 0 : index + 1;
+                const date = weekDates[dateIndex];
+                dayHeader.innerHTML = `
+                    <div class="weekday-name">${day}</div>
+                    <div class="date-number">${date.getDate()}</div>
+                `;
+            });
 
-        const cancelButton = buttonContainer.createEl('button', {
-            text: '取消'
-        });
-        cancelButton.addEventListener('click', () => this.close());
-    }
-
-    // 获取文件夹层次结构
-    private getFoldersWithHierarchy(): FolderItem[] {
-        const folders: FolderItem[] = [];
-        const seen = new Set<string>();
-
-        this.app.vault.getAllLoadedFiles().forEach(file => {
-            if (file instanceof TFolder) {
-                const parts = file.path.split('/');
-                let currentPath = '';
-                let level = 0;
-
-                parts.forEach(part => {
-                    if (part) {
-                        currentPath += (currentPath ? '/' : '') + part;
-                        if (!seen.has(currentPath)) {
-                            seen.add(currentPath);
-                            folders.push({
-                                path: currentPath,
-                                name: part,
-                                level: level
-                            });
-                        }
-                        level++;
-                    }
+            // 创建笔记容器
+            const notesContainer = weekContent.createDiv('week-notes-container');
+            
+            // 调整日期顺序，将周日的笔记放到最后
+            const reorderedDates = [
+                ...weekDates.slice(1), // 周一到周六
+                weekDates[0]           // 周日
+            ];
+            
+            // 为每一天创建笔记列表
+            reorderedDates.forEach(async date => {
+                const dayNotes = notesContainer.createDiv('day-notes-column');
+                const notes = await this.getNotesForDate(date);
+                
+                notes.forEach(note => {
+                    const noteCard = this.createWeekNoteCard(note);
+                    dayNotes.appendChild(noteCard);
                 });
+            });
+
+        } catch (error) {
+            console.error('创建周视图失败:', error);
+            new Notice('创建周视图失败');
+        } finally {
+            // 只有当前仍在加载周视图时才清除加载状态
+            if (this.currentLoadingView === 'week') {
+                this.currentLoadingView = null;
+            }
+        }
+    }
+
+    // 添加返回本周的方法
+    private goToCurrentWeek() {
+        const today = new Date();
+        this.currentYear = today.getFullYear();
+        this.currentWeek = this.getWeekNumber(today);
+        this.createWeekView();
+    }
+
+    // 修改获取指定日期的笔记方法
+    private async getNotesForDate(date: Date): Promise<TFile[]> {
+        const files = this.app.vault.getMarkdownFiles();
+        return files.filter(file => {
+            const fileDate = new Date(file.stat.ctime);
+            return this.isSameDay(fileDate, date);
+        });
+    }
+
+    // 添加日期比较方法
+    private isSameDay(date1: Date, date2: Date): boolean {
+        return date1.getFullYear() === date2.getFullYear() &&
+               date1.getMonth() === date2.getMonth() &&
+               date1.getDate() === date2.getDate();
+    }
+
+    // 获取指定周的日期范围
+    private getWeekDates(year: number, week: number): Date[] {
+        console.log('获取周日期范围 - 年份:', year, '周数:', week);
+        
+        // 获取该年第一天
+        const firstDayOfYear = new Date(year, 0, 1);
+        console.log('年初第一天:', firstDayOfYear.toISOString());
+        
+        // 调整到第一个周一
+        const daysToFirstMonday = (8 - firstDayOfYear.getDay()) % 7;
+        const firstMonday = new Date(year, 0, 1 + daysToFirstMonday);
+        console.log('第一个周一:', firstMonday.toISOString());
+        
+        // 计算目标周的周一
+        const weekStart = new Date(firstMonday);
+        weekStart.setDate(weekStart.getDate() + (week - 1) * 7);
+        console.log('目标周的周一:', weekStart.toISOString());
+        
+        // 生成该周的所有日期
+        const dates: Date[] = [];
+        for (let i = 0; i < 7; i++) {
+            const date = new Date(weekStart);
+            date.setDate(date.getDate() + i);
+            dates.push(date);
+        }
+        
+        console.log('生成的日期范围:', dates.map(d => d.toISOString()));
+        return dates;
+    }
+
+    // 创建周视图的笔记卡片
+    private createWeekNoteCard(file: TFile): HTMLElement {
+        const card = createDiv('week-note-card');
+        
+        // 添加标题
+        const title = card.createDiv('week-note-title');
+        title.setText(file.basename);
+        
+        // 添加点击事件
+        card.addEventListener('click', async () => {
+            await this.openInAppropriateLeaf(file);
+        });
+        
+        // 添加预览功能
+        card.addEventListener('mouseenter', async () => {
+            try {
+                this.previewContainer.empty();
+                const content = await this.app.vault.read(file);
+                await MarkdownRenderer.render(
+                    this.app,
+                    content,
+                    this.previewContainer,
+                    file.path,
+                    this
+                );
+            } catch (error) {
+                console.error('预览加载失败:', error);
             }
         });
-
-        return folders.sort((a, b) => a.path.localeCompare(b.path));
+        
+        return card;
     }
 
-    // 创建文件夹树
-    private createFolderTree(container: HTMLElement, folders: FolderItem[]) {
-        folders.forEach(folder => {
-            const item = container.createDiv({
-                cls: 'folder-item'
-            });
-
-            // 添加缩进
-            item.style.paddingLeft = `${folder.level * 20 + 10}px`;
-
-            // 添加文件夹图标和名称
-            const icon = item.createSpan({
-                cls: 'folder-icon'
-            });
-            icon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>`;
-            const nameSpan = item.createSpan({
-                cls: 'folder-name'
-            });
-            nameSpan.textContent = folder.name;
-
-            item.addEventListener('click', () => this.selectFolder(item, folder.path));
-        });
-    }
-
-    // 选择文件夹
-    private selectFolder(element: HTMLElement, path: string) {
-        // 除其他中状态
-        this.contentEl.querySelectorAll('.folder-item').forEach(item => {
-            item.removeClass('selected');
-        });
-
-        // 添加选中状态
-        element.addClass('selected');
-        this.selectedFolder = path;
-    }
-
-    // 移动文件
-    private async moveFiles(targetFolder: string) {
-        const confirmModal = new ConfirmModal(
-            this.app,
-            "确认 移动",
-            `是否将选中的 ${this.files.length} 个文件移动到 "${targetFolder}"？`
-        );
-
-        if (await confirmModal.show()) {
-            for (const file of this.files) {
-                const newPath = `${targetFolder}/${file.name}`;
-                await this.app.fileManager.renameFile(file, newPath);
+    // 周视图导航
+    private navigateWeek(delta: number) {
+        console.log('导航前 - 年份:', this.currentYear, '周数:', this.currentWeek, '增量:', delta);
+        
+        // 保存当前的周和年份
+        let newWeek = this.currentWeek;
+        let newYear = this.currentYear;
+        
+        // 计算新的周数
+        newWeek += delta;
+        
+        // 处理年份变更
+        const getWeeksInYear = (year: number) => {
+            const lastDay = new Date(year, 11, 31);
+            const weekNum = this.getWeekNumber(lastDay);
+            console.log(`${year}年的总周数:`, weekNum);
+            return weekNum;
+        };
+        
+        if (newWeek < 1) {
+            newYear--;
+            newWeek = getWeeksInYear(newYear);
+            console.log('切换到上一年的最后一周');
+        } else {
+            const weeksInYear = getWeeksInYear(newYear);
+            if (newWeek > weeksInYear) {
+                newYear++;
+                newWeek = 1;
+                console.log('切换到下一年的第一周');
             }
+        }
+        
+        // 更新状态
+        this.currentYear = newYear;
+        this.currentWeek = newWeek;
+        
+        console.log('导航后 - 年份:', this.currentYear, '周数:', this.currentWeek);
+        
+        // 更新周信息显示
+        const weekInfo = this.containerEl.querySelector('.week-info');
+        if (weekInfo) {
+            const currentMonth = this.getMonthForWeek(this.currentYear, this.currentWeek);
+            weekInfo.setText(`${this.currentYear}年${currentMonth}月 第${this.currentWeek}周`);
+        }
+        
+        // 重新创建视图
+        this.createWeekView();
+    }
 
-            // 更新最近使用 的文件夹
-            this.recentFolders = [targetFolder, ...this.recentFolders.filter(f => f !== targetFolder)]
-                .slice(0, 5);
-            this.onFoldersUpdate(this.recentFolders);
-
-            this.close();
+    // 获取指定周所在的月份
+    private getMonthForWeek(year: number, week: number): number {
+        try {
+            const weekDates = this.getWeekDates(year, week);
+            // 使用周中间的日期（周四）来确定月份
+            const middleDate = weekDates[3];
+            console.log('周中间日期:', middleDate);
+            return middleDate.getMonth() + 1; // JavaScript 月份从 0 开始，所以要加 1
+        } catch (error) {
+            console.error('获取月份失败:', error);
+            return 1; // 返回默认值
         }
     }
 }
-
-// 添加文件夹项接口
-interface FolderItem {
-    path: string;
-    name: string;
-    level: number;
-} 

@@ -566,7 +566,7 @@
 
 
 
-// 添预容器相关样式   
+// 添容器相关样式   
 .preview-wrapper 
   position: relative
   display: flex
@@ -855,7 +855,7 @@
     border-radius: 2px
     font-weight: bold
 
-// 修改卡片内容样式，确保高亮常显示
+// 修改卡片内容样式，
 .note-card 
     .note-content 
         p, li, h1, h2, h3, h4, h5, h6 
@@ -1203,7 +1203,7 @@
                 transition: all 0.2s ease
                 border: 1px solid transparent
                 display: flex
-                flex-direction: row  // 改为横向布局
+                flex-direction: row  // 改为横向局
                 align-items: center  // 垂直居中
                 justify-content: space-between  // 两端对齐
                 gap: 8px
@@ -1321,7 +1321,7 @@
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1)
     cursor: pointer
     
-    // 悬停效果
+    // 悬停效
     &:hover
       opacity: 1
       transform: translateY(-2px)
@@ -1427,30 +1427,6 @@
           
         &::placeholder
           color: var(--text-muted)
-
-    // 内容输入框
-    .quick-note-input
-      width: 100%
-      min-height: 100px
-      padding: 8px
-      border: none
-      background: transparent
-      font-size: 14px
-      line-height: 1.6
-      color: var(--text-normal)
-      resize: none
-      
-      &:focus
-        outline: none
-      
-      &.has-code
-        font-family: var(--font-monospace)
-        background: var(--background-secondary)
-        padding: 12px
-        border-radius: 8px
-        
-        .code-block
-          margin: 0
 
   // 工具栏
   .quick-note-toolbar
@@ -1789,7 +1765,7 @@
       display: none
 
 
-// 修改笔记内容样式
+// 改笔记内容样式
 .note-card-content 
     .note-content
         // 默认隐藏
@@ -2059,3 +2035,167 @@
                 border-top-left-radius: 0
                 border-top-right-radius: 0
                 margin-top: -1px  // 与下拉框对齐
+
+// 周视图样式优化
+.week-view
+    display: flex
+    flex-direction: column
+    height: 100%
+    background: var(--background-primary)
+    overflow: hidden  // 防止整体出现滚动条
+    
+    // 头部样式优化 - 固定头部
+    .week-header
+        display: flex
+        justify-content: space-between
+        align-items: center
+        padding: 16px 24px
+        border-bottom: 1px solid var(--background-modifier-border)
+        background: var(--background-primary)  // 确保背景色
+        position: sticky  // 固定定位
+        top: 0
+        z-index: 10
+        flex-shrink: 0  // 防止头部被压缩
+        
+        .week-nav-group
+            display: flex
+            align-items: center
+            gap: 16px
+            
+            .week-nav-btn
+                background: transparent
+                border: 1px solid var(--background-modifier-border)
+                border-radius: 4px
+                padding: 6px
+                color: var(--text-muted)
+                cursor: pointer
+                transition: all 0.2s ease
+                
+                &:hover
+                    background: var(--background-modifier-hover)
+                    color: var(--text-normal)
+                    border-color: var(--interactive-accent)
+            
+            .week-info
+                font-size: 1.1em
+                font-weight: 500
+                color: var(--text-normal)
+                min-width: 150px
+                text-align: center
+    
+    // 内容区域样式优化
+    .week-content
+        flex: 1
+        display: flex
+        flex-direction: column
+        height: 100%  // 确保占满高度
+        overflow: hidden  // 防止自身滚动
+        
+        // 日期头部优化 - 固定在内容区顶部
+        .week-days-header
+            display: flex
+            padding: 0
+            border-bottom: 1px solid var(--background-modifier-border)
+            background: var(--background-primary)
+            flex-shrink: 0  // 防止头部压缩
+            
+            .week-day-header
+                flex: 1
+                text-align: center
+                padding: 12px 8px
+                min-width: 200px
+                border-right: 1px solid var(--background-modifier-border)
+                
+                &:last-child
+                    border-right: none
+                
+                .weekday-name
+                    color: var(--text-muted)
+                    font-size: 0.9em
+                    margin-bottom: 4px
+                
+                .date-number
+                    font-size: 1.2em
+                    font-weight: 500
+                    color: var(--text-normal)
+        
+        // 笔记容器优化
+        .week-notes-container
+            display: flex
+            flex: 1  // 占满剩余空间
+            overflow-y: auto  // 只在容器级别添加垂直滚动
+            overflow-x: hidden  // 防止水平滚动
+            
+            // 日列优化
+            .day-notes-column
+                flex: 1
+                min-width: 200px  // 与头部对齐
+                padding: 8px
+                display: flex
+                flex-direction: column
+                gap: 8px
+                border-right: 1px solid var(--background-modifier-border)
+                overflow: visible  // 移除单独的滚动条
+                
+                &:last-child
+                    border-right: none
+                
+                // 笔记卡片样式优化
+                .week-note-card
+                    background: var(--background-secondary)
+                    border: 1px solid var(--background-modifier-border)
+                    border-radius: 6px
+                    padding: 12px
+                    cursor: pointer
+                    transition: all 0.2s ease
+                    flex-shrink: 0  // 防止卡片被压缩
+                    
+                    &:hover
+                        transform: translateY(-2px)
+                        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1)
+                        border-color: var(--interactive-accent)
+                    
+                    .week-note-title
+                        font-size: 0.9em
+                        color: var(--text-normal)
+                        white-space: nowrap
+                        overflow: hidden
+                        text-overflow: ellipsis
+
+            // 优化滚动条样式
+            &::-webkit-scrollbar
+                width: 8px
+                height: 8px
+            
+            &::-webkit-scrollbar-track
+                background: var(--background-secondary)
+                border-radius: 4px
+            
+            &::-webkit-scrollbar-thumb
+                background: var(--background-modifier-border)
+                border-radius: 4px
+                
+                &:hover
+                    background: var(--text-muted)
+
+// 适配周视图的容器样式
+.main-layout .content-section.view-week
+    .card-view-content
+        padding: 0
+        height: 100%
+        overflow: hidden
+        
+        .card-container
+            display: block  // 覆盖原有的 grid 布局
+            height: 100%
+            padding: 0
+            margin: 0
+            gap: 0
+            grid-template-columns: none  // 移除网格列设置
+            justify-content: initial  // 移除原有的居中对齐
+            
+            // 移除原有的卡片间距和对齐方式
+            &.grid-view
+                display: block
+                gap: 0
+                grid-template-columns: none

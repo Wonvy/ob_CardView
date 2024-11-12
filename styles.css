@@ -1349,29 +1349,6 @@
 .quick-note-bar .quick-note-input-container .tags-container .tag-input::placeholder {
   color: var(--text-muted);
 }
-.quick-note-bar .quick-note-input-container .quick-note-input {
-  width: 100%;
-  min-height: 100px;
-  padding: 8px;
-  border: none;
-  background: transparent;
-  font-size: 14px;
-  line-height: 1.6;
-  color: var(--text-normal);
-  resize: none;
-}
-.quick-note-bar .quick-note-input-container .quick-note-input:focus {
-  outline: none;
-}
-.quick-note-bar .quick-note-input-container .quick-note-input.has-code {
-  font-family: var(--font-monospace);
-  background: var(--background-secondary);
-  padding: 12px;
-  border-radius: 8px;
-}
-.quick-note-bar .quick-note-input-container .quick-note-input.has-code .code-block {
-  margin: 0;
-}
 .quick-note-bar .quick-note-toolbar {
   display: flex;
   gap: 8px;
@@ -1944,6 +1921,161 @@
   border-top-left-radius: 0;
   border-top-right-radius: 0;
   margin-top: -1px;
+}
+
+.week-view {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--background-primary);
+  overflow: hidden;
+}
+.week-view .week-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--background-modifier-border);
+  background: var(--background-primary);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  flex-shrink: 0;
+}
+.week-view .week-header .week-nav-group {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.week-view .week-header .week-nav-group .week-nav-btn {
+  background: transparent;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 4px;
+  padding: 6px;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.week-view .week-header .week-nav-group .week-nav-btn:hover {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+  border-color: var(--interactive-accent);
+}
+.week-view .week-header .week-nav-group .week-info {
+  font-size: 1.1em;
+  font-weight: 500;
+  color: var(--text-normal);
+  min-width: 150px;
+  text-align: center;
+}
+.week-view .week-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+.week-view .week-content .week-days-header {
+  display: flex;
+  padding: 0;
+  border-bottom: 1px solid var(--background-modifier-border);
+  background: var(--background-primary);
+  flex-shrink: 0;
+}
+.week-view .week-content .week-days-header .week-day-header {
+  flex: 1;
+  text-align: center;
+  padding: 12px 8px;
+  min-width: 200px;
+  border-right: 1px solid var(--background-modifier-border);
+}
+.week-view .week-content .week-days-header .week-day-header:last-child {
+  border-right: none;
+}
+.week-view .week-content .week-days-header .week-day-header .weekday-name {
+  color: var(--text-muted);
+  font-size: 0.9em;
+  margin-bottom: 4px;
+}
+.week-view .week-content .week-days-header .week-day-header .date-number {
+  font-size: 1.2em;
+  font-weight: 500;
+  color: var(--text-normal);
+}
+.week-view .week-content .week-notes-container {
+  display: flex;
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+.week-view .week-content .week-notes-container .day-notes-column {
+  flex: 1;
+  min-width: 200px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border-right: 1px solid var(--background-modifier-border);
+  overflow: visible;
+}
+.week-view .week-content .week-notes-container .day-notes-column:last-child {
+  border-right: none;
+}
+.week-view .week-content .week-notes-container .day-notes-column .week-note-card {
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 6px;
+  padding: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+.week-view .week-content .week-notes-container .day-notes-column .week-note-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-color: var(--interactive-accent);
+}
+.week-view .week-content .week-notes-container .day-notes-column .week-note-card .week-note-title {
+  font-size: 0.9em;
+  color: var(--text-normal);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.week-view .week-content .week-notes-container::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.week-view .week-content .week-notes-container::-webkit-scrollbar-track {
+  background: var(--background-secondary);
+  border-radius: 4px;
+}
+.week-view .week-content .week-notes-container::-webkit-scrollbar-thumb {
+  background: var(--background-modifier-border);
+  border-radius: 4px;
+}
+.week-view .week-content .week-notes-container::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+.main-layout .content-section.view-week .card-view-content {
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+}
+.main-layout .content-section.view-week .card-view-content .card-container {
+  display: block;
+  height: 100%;
+  padding: 0;
+  margin: 0;
+  gap: 0;
+  grid-template-columns: none;
+  justify-content: initial;
+}
+.main-layout .content-section.view-week .card-view-content .card-container.grid-view {
+  display: block;
+  gap: 0;
+  grid-template-columns: none;
 }
 
 /*# sourceMappingURL=styles.css.map */
