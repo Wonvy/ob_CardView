@@ -36,6 +36,37 @@ var VIEW_TYPE_CARD = "card-view";
 var CardView = class extends import_obsidian.ItemView {
   constructor(leaf, plugin) {
     super(leaf);
+    this.cardSettings = {
+      card: {
+        showDate: true,
+        showContent: true,
+        cardGap: 16,
+        cardsPerRow: 4,
+        cardHeight: 280
+        // 默认高度
+      },
+      list: {
+        showDate: true,
+        showContent: true,
+        cardGap: 16,
+        cardsPerRow: 1,
+        cardHeight: 280
+      },
+      timeline: {
+        showDate: true,
+        showContent: true,
+        cardGap: 16,
+        cardsPerRow: 2,
+        cardHeight: 280
+      },
+      month: {
+        showDate: true,
+        showContent: true,
+        cardGap: 8,
+        cardsPerRow: 1,
+        cardHeight: 280
+      }
+    };
     this.scrollTimeout = null;
     this.plugin = plugin;
     this.currentView = "card";
@@ -74,14 +105,6 @@ var CardView = class extends import_obsidian.ItemView {
     this.statusRight = createDiv("status-right");
     this.loadingStatus = createDiv("status-item");
     this.currentLoadingView = null;
-    this.cardSettings = {
-      showDate: true,
-      showContent: true,
-      cardWidth: 280,
-      cardHeight: 280,
-      cardGap: 16,
-      cardsPerRow: 0
-    };
     this.setupIntersectionObserver();
   }
   /**
@@ -683,7 +706,7 @@ ${content}` : content;
     card.style.width = `${this.cardSize}px`;
     card.style.height = `${this.cardHeight}px`;
     const header = card.createDiv("note-card-header");
-    if (this.cardSettings.showDate) {
+    if (this.cardSettings.list.showDate) {
       const lastModified = header.createDiv("note-date show");
       lastModified.setText(new Date(file.stat.mtime).toLocaleDateString());
     }
@@ -737,7 +760,7 @@ ${content}` : content;
     }
     try {
       const noteContent = cardContent.createDiv("note-content");
-      if (this.cardSettings.showContent) {
+      if (this.cardSettings.card.showContent) {
         noteContent.addClass("show");
       }
       noteContent.setAttribute("data-path", file.path);
@@ -746,7 +769,7 @@ ${content}` : content;
       this.observeNoteContent(noteContent, file);
       card.addEventListener("mouseenter", async () => {
         openButton.style.opacity = "1";
-        if (!this.cardSettings.showContent) {
+        if (!this.cardSettings.card.showContent) {
           const noteContent2 = cardContent.querySelector(".note-content");
           if (noteContent2) {
             noteContent2.addClass("hover-show");
@@ -771,7 +794,7 @@ ${content}` : content;
       });
       card.addEventListener("mouseleave", () => {
         openButton.style.opacity = "0";
-        if (!this.cardSettings.showContent) {
+        if (!this.cardSettings.card.showContent) {
           const noteContent2 = cardContent.querySelector(".note-content");
           if (noteContent2) {
             noteContent2.removeClass("hover-show");
@@ -816,7 +839,7 @@ ${content}` : content;
     card.addEventListener("mouseleave", () => {
       openButton.style.opacity = "0";
     });
-    if (this.cardSettings.showContent) {
+    if (this.cardSettings.card.showContent) {
       const noteContent = cardContent.createDiv("note-content");
     }
     return card;
@@ -2387,34 +2410,31 @@ ${content}` : content;
     });
     settingsBtn.innerHTML = `
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-            <span>\u5361\u7247\u8BBE\u7F6E</span>
+            <span>${this.currentView}\u89C6\u56FE\u8BBE\u7F6E</span>
         `;
     const settingsPanel = settingsContainer.createDiv("card-settings-panel");
     settingsPanel.style.display = "none";
+    const currentSettings = this.cardSettings[this.currentView];
     const basicSettings = settingsPanel.createDiv("settings-section");
     basicSettings.createEl("h3", { text: "\u57FA\u672C\u8BBE\u7F6E" });
-    const showDateOption = this.createCheckboxOption(basicSettings, "\u663E\u793A\u65E5\u671F", this.cardSettings.showDate);
+    const showDateOption = this.createCheckboxOption(basicSettings, "\u663E\u793A\u65E5\u671F", currentSettings.showDate);
     showDateOption.addEventListener("change", (e) => {
-      this.cardSettings.showDate = e.target.checked;
+      currentSettings.showDate = e.target.checked;
       this.refreshView();
     });
-    const showContentOption = this.createCheckboxOption(basicSettings, "\u663E\u793A\u7B14\u8BB0\u5185\u5BB9", this.cardSettings.showContent);
+    const showContentOption = this.createCheckboxOption(basicSettings, "\u663E\u793A\u7B14\u8BB0\u5185\u5BB9", currentSettings.showContent);
     showContentOption.addEventListener("change", (e) => {
-      this.cardSettings.showContent = e.target.checked;
+      currentSettings.showContent = e.target.checked;
       this.refreshView();
     });
     const layoutSettings = settingsPanel.createDiv("settings-section");
     layoutSettings.createEl("h3", { text: "\u5E03\u5C40\u8BBE\u7F6E" });
-    this.createSliderOption(layoutSettings, "\u5361\u7247\u5BBD\u5EA6", this.cardSettings.cardWidth, 200, 500, 10, (value) => {
-      this.cardSettings.cardWidth = value;
+    this.createSliderOption(layoutSettings, "\u5361\u7247\u9AD8\u5EA6", currentSettings.cardHeight, 200, 500, 10, (value) => {
+      currentSettings.cardHeight = value;
       this.updateCardLayout();
     });
-    this.createSliderOption(layoutSettings, "\u5361\u7247\u9AD8\u5EA6", this.cardSettings.cardHeight, 200, 500, 10, (value) => {
-      this.cardSettings.cardHeight = value;
-      this.updateCardLayout();
-    });
-    this.createSliderOption(layoutSettings, "\u5361\u7247\u95F4\u8DDD", this.cardSettings.cardGap, 8, 40, 4, (value) => {
-      this.cardSettings.cardGap = value;
+    this.createSliderOption(layoutSettings, "\u5361\u7247\u95F4\u8DDD", currentSettings.cardGap, 8, 40, 4, (value) => {
+      currentSettings.cardGap = value;
       this.updateCardLayout();
     });
     const cardsPerRowContainer = layoutSettings.createDiv("setting-item");
@@ -2426,7 +2446,7 @@ ${content}` : content;
     });
     const cardsPerRowInput = controlGroup.createEl("input", {
       type: "number",
-      value: this.cardSettings.cardsPerRow.toString(),
+      value: currentSettings.cardsPerRow.toString(),
       placeholder: "\u81EA\u52A8"
     });
     const increaseBtn = controlGroup.createEl("button", {
@@ -2434,22 +2454,31 @@ ${content}` : content;
       text: "+"
     });
     const updateCardsPerRow = (value) => {
-      value = Math.max(0, Math.min(10, value));
+      const minCardWidth = 200;
+      const containerWidth = this.container.offsetWidth;
+      const maxPossibleCards = Math.floor((containerWidth + currentSettings.cardGap) / (minCardWidth + currentSettings.cardGap));
+      if (value > maxPossibleCards) {
+        new import_obsidian.Notice(`\u6BCF\u884C\u6700\u591A\u663E\u793A ${maxPossibleCards} \u5F20\u5361\u7247\uFF08\u53D7\u5BB9\u5668\u5BBD\u5EA6\u9650\u5236\uFF09`);
+        value = maxPossibleCards;
+      }
+      value = Math.max(0, value);
       cardsPerRowInput.value = value.toString();
-      this.cardSettings.cardsPerRow = value;
+      currentSettings.cardsPerRow = value;
       this.updateCardLayout();
     };
     decreaseBtn.addEventListener("click", () => {
-      const currentValue = parseInt(cardsPerRowInput.value) || 0;
-      updateCardsPerRow(currentValue - 1);
+      const currentValue = parseInt(cardsPerRowInput.value) || 4;
+      if (currentValue > 0) {
+        updateCardsPerRow(currentValue - 1);
+      }
     });
     increaseBtn.addEventListener("click", () => {
-      const currentValue = parseInt(cardsPerRowInput.value) || 0;
+      const currentValue = parseInt(cardsPerRowInput.value) || 4;
       updateCardsPerRow(currentValue + 1);
     });
     cardsPerRowInput.addEventListener("change", (e) => {
       const value = parseInt(e.target.value);
-      updateCardsPerRow(isNaN(value) ? 0 : value);
+      updateCardsPerRow(isNaN(value) ? 4 : value);
     });
     settingsBtn.addEventListener("click", (e) => {
       e.stopPropagation();
@@ -2467,13 +2496,10 @@ ${content}` : content;
     const settingItem = container.createDiv("setting-item");
     settingItem.createEl("label", { text: label });
     const controlGroup = settingItem.createDiv("setting-control-group");
-    const slider = document.createElement("input");
-    slider.type = "range";
-    slider.value = defaultValue.toString();
-    slider.min = min.toString();
-    slider.max = max.toString();
-    slider.step = step.toString();
-    controlGroup.appendChild(slider);
+    const decreaseBtn = controlGroup.createEl("button", {
+      cls: "setting-control-btn decrease",
+      text: "-"
+    });
     const numberInput = document.createElement("input");
     numberInput.type = "number";
     numberInput.value = defaultValue.toString();
@@ -2481,15 +2507,34 @@ ${content}` : content;
     numberInput.max = max.toString();
     numberInput.step = step.toString();
     controlGroup.appendChild(numberInput);
-    slider.addEventListener("input", (e) => {
-      const value = parseInt(e.target.value);
+    const increaseBtn = controlGroup.createEl("button", {
+      cls: "setting-control-btn increase",
+      text: "+"
+    });
+    const updateValue = (value) => {
+      value = Math.max(min, Math.min(max, value));
       numberInput.value = value.toString();
       onChange(value);
+    };
+    decreaseBtn.addEventListener("click", () => {
+      const currentValue = parseInt(numberInput.value) || defaultValue;
+      updateValue(currentValue - step);
+    });
+    increaseBtn.addEventListener("click", () => {
+      const currentValue = parseInt(numberInput.value) || defaultValue;
+      updateValue(currentValue + step);
     });
     numberInput.addEventListener("change", (e) => {
       const value = parseInt(e.target.value);
-      slider.value = value.toString();
-      onChange(value);
+      updateValue(isNaN(value) ? defaultValue : value);
+    });
+    numberInput.addEventListener("wheel", (e) => {
+      e.preventDefault();
+      if (document.activeElement === numberInput) {
+        const delta = e.deltaY > 0 ? -1 : 1;
+        const currentValue = parseInt(numberInput.value) || defaultValue;
+        updateValue(currentValue + delta);
+      }
     });
   }
   // 创建复选框选项的辅助方法
@@ -2508,21 +2553,28 @@ ${content}` : content;
   updateCardLayout() {
     const container = this.container;
     if (!container) return;
-    container.style.gap = `${this.cardSettings.cardGap}px`;
-    if (this.cardSettings.cardsPerRow > 0) {
-      const totalWidth = container.offsetWidth;
-      const totalGap = this.cardSettings.cardGap * (this.cardSettings.cardsPerRow - 1);
-      const cardWidth = (totalWidth - totalGap) / this.cardSettings.cardsPerRow;
-      container.style.gridTemplateColumns = `repeat(${this.cardSettings.cardsPerRow}, ${cardWidth}px)`;
-    } else {
-      container.style.gridTemplateColumns = `repeat(auto-fill, minmax(${this.cardSettings.cardWidth}px, 1fr))`;
-    }
+    const currentSettings = this.cardSettings[this.currentView];
+    container.style.gap = `${currentSettings.cardGap}px`;
     container.querySelectorAll(".note-card").forEach((card) => {
       if (card instanceof HTMLElement) {
-        card.style.width = "100%";
-        card.style.height = `${this.cardSettings.cardHeight}px`;
+        card.style.height = `${currentSettings.cardHeight}px`;
       }
     });
+    const minCardWidth = 200;
+    const containerWidth = container.offsetWidth;
+    const maxPossibleCards = Math.floor((containerWidth + currentSettings.cardGap) / (minCardWidth + currentSettings.cardGap));
+    if (currentSettings.cardsPerRow > 0) {
+      const columns = Math.min(currentSettings.cardsPerRow, maxPossibleCards);
+      const totalGap = currentSettings.cardGap * (columns - 1);
+      const cardWidth = (containerWidth - totalGap) / columns;
+      container.style.gridTemplateColumns = `repeat(${columns}, ${cardWidth}px)`;
+    } else {
+      const defaultColumns = this.cardSettings[this.currentView].cardsPerRow;
+      const columns = Math.min(defaultColumns, maxPossibleCards);
+      const totalGap = currentSettings.cardGap * (columns - 1);
+      const cardWidth = (containerWidth - totalGap) / columns;
+      container.style.gridTemplateColumns = `repeat(${columns}, ${cardWidth}px)`;
+    }
   }
   // 添加 setupIntersectionObserver 方法
   setupIntersectionObserver() {

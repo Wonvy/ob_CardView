@@ -52,12 +52,63 @@ export class CardView extends ItemView {
     private loadingStatus: HTMLElement;
     private currentLoadingView: 'card' | 'list' | 'timeline' | 'month' | null;
     private cardSettings: {
-        showDate: boolean;
-        showContent: boolean;
-        cardWidth: number;
-        cardHeight: number;
-        cardGap: number;
-        cardsPerRow: number;
+        card: {
+            showDate: boolean;
+            showContent: boolean;
+            cardGap: number;
+            cardsPerRow: number;
+            cardHeight: number;  // 新增
+        };
+        list: {
+            showDate: boolean;
+            showContent: boolean;
+            cardGap: number;
+            cardsPerRow: number;
+            cardHeight: number;  // 新增
+        };
+        timeline: {
+            showDate: boolean;
+            showContent: boolean;
+            cardGap: number;
+            cardsPerRow: number;
+            cardHeight: number;  // 新增
+        };
+        month: {
+            showDate: boolean;
+            showContent: boolean;
+            cardGap: number;
+            cardsPerRow: number;
+            cardHeight: number;  // 新增
+        };
+    } = {
+        card: {
+            showDate: true,
+            showContent: true,
+            cardGap: 16,
+            cardsPerRow: 4,
+            cardHeight: 280  // 默认高度
+        },
+        list: {
+            showDate: true,
+            showContent: true,
+            cardGap: 16,
+            cardsPerRow: 1,
+            cardHeight: 280
+        },
+        timeline: {
+            showDate: true,
+            showContent: true,
+            cardGap: 16,
+            cardsPerRow: 2,
+            cardHeight: 280
+        },
+        month: {
+            showDate: true,
+            showContent: true,
+            cardGap: 8,
+            cardsPerRow: 1,
+            cardHeight: 280
+        }
     };
     private scrollTimeout: NodeJS.Timeout | null = null;
     private intersectionObserver!: IntersectionObserver;
@@ -101,14 +152,6 @@ export class CardView extends ItemView {
         this.statusRight = createDiv('status-right');
         this.loadingStatus = createDiv('status-item');
         this.currentLoadingView = null;
-        this.cardSettings = {
-            showDate: true,
-            showContent: true,
-            cardWidth: 280,
-            cardHeight: 280,
-            cardGap: 16,
-            cardsPerRow: 0
-        };
 
         // 初始化 Intersection Observer
         this.setupIntersectionObserver();
@@ -532,7 +575,7 @@ export class CardView extends ItemView {
             value: ''
         });
 
-        // 创建自定义下拉面板
+        // 创建自定义下拉面
         const dropdownPanel = dropdownContainer.createDiv('dropdown-panel');
 
         // 添加所有标签选项
@@ -956,9 +999,8 @@ export class CardView extends ItemView {
         
         // 创建卡片头部
         const header = card.createDiv('note-card-header');
-        
         // 添加修改日期
-        if (this.cardSettings.showDate) {
+        if (this.cardSettings.list.showDate) {
             const lastModified = header.createDiv('note-date show'); // 添加 show 类
             lastModified.setText(new Date(file.stat.mtime).toLocaleDateString());
         }
@@ -1040,7 +1082,7 @@ export class CardView extends ItemView {
         try {
             // 创建笔记内容容器
             const noteContent = cardContent.createDiv('note-content');
-            if (this.cardSettings.showContent) {
+            if (this.cardSettings.card.showContent) {
                 noteContent.addClass('show'); // 添加 show 类
             }
             noteContent.setAttribute('data-path', file.path);
@@ -1055,13 +1097,11 @@ export class CardView extends ItemView {
             // 鼠标悬停事件
             card.addEventListener('mouseenter', async () => {
                 openButton.style.opacity = '1';
-                
                 // 根据设置决定是否显示/隐藏内容
-                if (!this.cardSettings.showContent) {
+                if (!this.cardSettings.card.showContent) {
                     const noteContent = cardContent.querySelector('.note-content');
                     if (noteContent) {
                         noteContent.addClass('hover-show');
-                        
                         // 确保内容已加载
                         if (!this.loadedNotes.has(file.path)) {
                             await this.loadNoteContent(noteContent as HTMLElement, file);
@@ -1088,9 +1128,8 @@ export class CardView extends ItemView {
             // 鼠标离开件
             card.addEventListener('mouseleave', () => {
                 openButton.style.opacity = '0';
-                
                 // 根据设置决定是否隐藏内容
-                if (!this.cardSettings.showContent) {
+                if (!this.cardSettings.card.showContent) {
                     const noteContent = cardContent.querySelector('.note-content');
                     if (noteContent) {
                         noteContent.removeClass('hover-show');
@@ -1155,9 +1194,8 @@ export class CardView extends ItemView {
             openButton.style.opacity = '0';  // 隐藏打开按钮
             // ... 其他离事件代码 ...
         });
-
         // 修改内容显示逻辑
-        if (this.cardSettings.showContent) {
+        if (this.cardSettings.card.showContent) {
             // 创建笔记内容
             const noteContent = cardContent.createDiv('note-content');
             // ... 内容加载逻辑 ...
@@ -1262,7 +1300,7 @@ export class CardView extends ItemView {
             // 重新计算卡片列数
             const availableWidth = newContentWidth - 32; // 减去内边距
             const columns = Math.floor(availableWidth / this.cardSize);
-            const gap = 16; // 卡片间距
+            const gap = 16; // 片间距
             const actualCardWidth = (availableWidth - (columns - 1) * gap) / columns;
             
             this.container.style.gridTemplateColumns = `repeat(${columns}, ${actualCardWidth}px)`;
@@ -1710,7 +1748,7 @@ export class CardView extends ItemView {
         if (newSize !== this.cardSize) {
             this.cardSize = newSize;
             this.updateCardSize(newSize);
-            // 保存新的宽度
+            // 保新的宽度
             this.plugin.saveCardWidth(newSize);
         }
     }
@@ -2225,7 +2263,7 @@ export class CardView extends ItemView {
                 const nextYearBtn = yearGroup.createEl('button', { cls: 'year-nav-btn' });
                 nextYearBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>';
                 
-                // 添加年份切换事件
+                // 添加份切换事件
                 prevYearBtn.addEventListener('click', () => this.navigateYear(-1));
                 nextYearBtn.addEventListener('click', () => this.navigateYear(1));
 
@@ -3058,7 +3096,7 @@ export class CardView extends ItemView {
         element.style.width = `${minimizedSize}px`;
         element.style.height = `${minimizedSize}px`;
         
-        // 根据位置计算最小化后的位置
+        // 根据位置计算最化后的位置
         switch (position) {
             case 'top-right':
                 element.style.left = `${relativeLeft + (element.offsetWidth - minimizedSize)}px`;
@@ -3329,28 +3367,31 @@ export class CardView extends ItemView {
         });
         settingsBtn.innerHTML = `
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-            <span>卡片设置</span>
+            <span>${this.currentView}视图设置</span>
         `;
 
         // 创建设置面板
         const settingsPanel = settingsContainer.createDiv('card-settings-panel');
         settingsPanel.style.display = 'none';
 
+        // 获取当前视图的设置
+        const currentSettings = this.cardSettings[this.currentView];
+
         // 添加基本设置选项
         const basicSettings = settingsPanel.createDiv('settings-section');
         basicSettings.createEl('h3', { text: '基本设置' });
 
         // 显示日期选项
-        const showDateOption = this.createCheckboxOption(basicSettings, '显示日期', this.cardSettings.showDate);
+        const showDateOption = this.createCheckboxOption(basicSettings, '显示日期', currentSettings.showDate);
         showDateOption.addEventListener('change', (e) => {
-            this.cardSettings.showDate = (e.target as HTMLInputElement).checked;
+            currentSettings.showDate = (e.target as HTMLInputElement).checked;
             this.refreshView();
         });
 
         // 显示内容选项
-        const showContentOption = this.createCheckboxOption(basicSettings, '显示笔记内容', this.cardSettings.showContent);
+        const showContentOption = this.createCheckboxOption(basicSettings, '显示笔记内容', currentSettings.showContent);
         showContentOption.addEventListener('change', (e) => {
-            this.cardSettings.showContent = (e.target as HTMLInputElement).checked;
+            currentSettings.showContent = (e.target as HTMLInputElement).checked;
             this.refreshView();
         });
 
@@ -3358,21 +3399,15 @@ export class CardView extends ItemView {
         const layoutSettings = settingsPanel.createDiv('settings-section');
         layoutSettings.createEl('h3', { text: '布局设置' });
 
-        // 卡片宽度设置
-        this.createSliderOption(layoutSettings, '卡片宽度', this.cardSettings.cardWidth, 200, 500, 10, (value) => {
-            this.cardSettings.cardWidth = value;
-            this.updateCardLayout();
-        });
-
-        // 卡片高度设置
-        this.createSliderOption(layoutSettings, '卡片高度', this.cardSettings.cardHeight, 200, 500, 10, (value) => {
-            this.cardSettings.cardHeight = value;
+        // 卡片高度设置（新增）
+        this.createSliderOption(layoutSettings, '卡片高度', currentSettings.cardHeight, 200, 500, 10, (value) => {
+            currentSettings.cardHeight = value;
             this.updateCardLayout();
         });
 
         // 卡片间距设置
-        this.createSliderOption(layoutSettings, '卡片间距', this.cardSettings.cardGap, 8, 40, 4, (value) => {
-            this.cardSettings.cardGap = value;
+        this.createSliderOption(layoutSettings, '卡片间距', currentSettings.cardGap, 8, 40, 4, (value) => {
+            currentSettings.cardGap = value;
             this.updateCardLayout();
         });
 
@@ -3392,7 +3427,7 @@ export class CardView extends ItemView {
         // 数字输入框
         const cardsPerRowInput = controlGroup.createEl('input', {
             type: 'number',
-            value: this.cardSettings.cardsPerRow.toString(),
+            value: currentSettings.cardsPerRow.toString(),
             placeholder: '自动'
         });
         
@@ -3404,28 +3439,40 @@ export class CardView extends ItemView {
 
         // 更新卡片布局的函数
         const updateCardsPerRow = (value: number) => {
-            // 确保值在合理范围内（0表示自动，最大10列）
-            value = Math.max(0, Math.min(10, value));
+            // 计算最大可能的卡片数量
+            const minCardWidth = 200;
+            const containerWidth = this.container.offsetWidth;
+            const maxPossibleCards = Math.floor((containerWidth + currentSettings.cardGap) / (minCardWidth + currentSettings.cardGap));
+
+            // 确保值在合理范围内
+            if (value > maxPossibleCards) {
+                new Notice(`每行最多显示 ${maxPossibleCards} 张卡片（受容器宽度限制）`);
+                value = maxPossibleCards;
+            }
+            value = Math.max(0, value);
+            
             cardsPerRowInput.value = value.toString();
-            this.cardSettings.cardsPerRow = value;
+            currentSettings.cardsPerRow = value;
             this.updateCardLayout();
         };
 
         // 添加按钮事件
         decreaseBtn.addEventListener('click', () => {
-            const currentValue = parseInt(cardsPerRowInput.value) || 0;
-            updateCardsPerRow(currentValue - 1);
+            const currentValue = parseInt(cardsPerRowInput.value) || 4;
+            if (currentValue > 0) { // 只有当值大于0时才减少
+                updateCardsPerRow(currentValue - 1);
+            }
         });
 
         increaseBtn.addEventListener('click', () => {
-            const currentValue = parseInt(cardsPerRowInput.value) || 0;
+            const currentValue = parseInt(cardsPerRowInput.value) || 4;
             updateCardsPerRow(currentValue + 1);
         });
 
         // 输入框事件
         cardsPerRowInput.addEventListener('change', (e) => {
             const value = parseInt((e.target as HTMLInputElement).value);
-            updateCardsPerRow(isNaN(value) ? 0 : value);
+            updateCardsPerRow(isNaN(value) ? 4 : value);
         });
 
         // 切换面板显示
@@ -3450,14 +3497,11 @@ export class CardView extends ItemView {
         
         const controlGroup = settingItem.createDiv('setting-control-group');
         
-        // 创建滑块
-        const slider = document.createElement('input');
-        slider.type = 'range';
-        slider.value = defaultValue.toString();
-        slider.min = min.toString();
-        slider.max = max.toString();
-        slider.step = step.toString();
-        controlGroup.appendChild(slider);
+        // 减少按钮
+        const decreaseBtn = controlGroup.createEl('button', {
+            cls: 'setting-control-btn decrease',
+            text: '-'
+        });
         
         // 创建数字输入框
         const numberInput = document.createElement('input');
@@ -3467,18 +3511,46 @@ export class CardView extends ItemView {
         numberInput.max = max.toString();
         numberInput.step = step.toString();
         controlGroup.appendChild(numberInput);
-
-        // 同步滑块和输入框的值
-        slider.addEventListener('input', (e) => {
-            const value = parseInt((e.target as HTMLInputElement).value);
-            numberInput.value = value.toString();
-            onChange(value);
+        
+        // 增加按钮
+        const increaseBtn = controlGroup.createEl('button', {
+            cls: 'setting-control-btn increase',
+            text: '+'
         });
 
+        // 更新值的函数
+        const updateValue = (value: number) => {
+            // 确保值在范围内
+            value = Math.max(min, Math.min(max, value));
+            numberInput.value = value.toString();
+            onChange(value);
+        };
+
+        // 添加按钮事件
+        decreaseBtn.addEventListener('click', () => {
+            const currentValue = parseInt(numberInput.value) || defaultValue;
+            updateValue(currentValue - step);
+        });
+
+        increaseBtn.addEventListener('click', () => {
+            const currentValue = parseInt(numberInput.value) || defaultValue;
+            updateValue(currentValue + step);
+        });
+
+        // 输入框事件
         numberInput.addEventListener('change', (e) => {
             const value = parseInt((e.target as HTMLInputElement).value);
-            slider.value = value.toString();
-            onChange(value);
+            updateValue(isNaN(value) ? defaultValue : value);
+        });
+
+        // 添加滚轮支持
+        numberInput.addEventListener('wheel', (e) => {
+            e.preventDefault(); // 防止页面滚动
+            if (document.activeElement === numberInput) { // 只在输入框获得焦点时响应
+                const delta = e.deltaY > 0 ? -1 : 1; // 向上滚动增加，向下滚动减少
+                const currentValue = parseInt(numberInput.value) || defaultValue;
+                updateValue(currentValue + delta);
+            }
         });
     }
 
@@ -3505,28 +3577,38 @@ export class CardView extends ItemView {
         const container = this.container;
         if (!container) return;
 
+        const currentSettings = this.cardSettings[this.currentView];
+
         // 更新容器样式
-        container.style.gap = `${this.cardSettings.cardGap}px`;
+        container.style.gap = `${currentSettings.cardGap}px`;
 
-        // 计算每行卡片数量
-        if (this.cardSettings.cardsPerRow > 0) {
-            // 固定每行卡片数量
-            const totalWidth = container.offsetWidth;
-            const totalGap = this.cardSettings.cardGap * (this.cardSettings.cardsPerRow - 1);
-            const cardWidth = (totalWidth - totalGap) / this.cardSettings.cardsPerRow;
-            container.style.gridTemplateColumns = `repeat(${this.cardSettings.cardsPerRow}, ${cardWidth}px)`;
-        } else {
-            // 自动计算每行卡片数量
-            container.style.gridTemplateColumns = `repeat(auto-fill, minmax(${this.cardSettings.cardWidth}px, 1fr))`;
-        }
-
-        // 更新所有卡片的尺寸
+        // 更新所有卡片的高度
         container.querySelectorAll('.note-card').forEach((card: Element) => {
             if (card instanceof HTMLElement) {
-                card.style.width = '100%';
-                card.style.height = `${this.cardSettings.cardHeight}px`;
+                card.style.height = `${currentSettings.cardHeight}px`;
             }
         });
+
+        // 计算每行最大可能的卡片数量
+        const minCardWidth = 200;
+        const containerWidth = container.offsetWidth;
+        const maxPossibleCards = Math.floor((containerWidth + currentSettings.cardGap) / (minCardWidth + currentSettings.cardGap));
+
+        // 计算每行卡片数量
+        if (currentSettings.cardsPerRow > 0) {
+            // 固定每行卡片数量，但不超过最大可能数量
+            const columns = Math.min(currentSettings.cardsPerRow, maxPossibleCards);
+            const totalGap = currentSettings.cardGap * (columns - 1);
+            const cardWidth = (containerWidth - totalGap) / columns;
+            container.style.gridTemplateColumns = `repeat(${columns}, ${cardWidth}px)`;
+        } else {
+            // 自动计算每行卡片数量（使用视图默认值）
+            const defaultColumns = this.cardSettings[this.currentView].cardsPerRow;
+            const columns = Math.min(defaultColumns, maxPossibleCards);
+            const totalGap = currentSettings.cardGap * (columns - 1);
+            const cardWidth = (containerWidth - totalGap) / columns;
+            container.style.gridTemplateColumns = `repeat(${columns}, ${cardWidth}px)`;
+        }
     }
 
     // 添加 setupIntersectionObserver 方法
