@@ -742,7 +742,7 @@ ${content}` : content;
           try {
             return await this.createNoteCard(file);
           } catch (error) {
-            console.error("\u521B\u5EFA\u5361\u7247\u5931\u8D25:", file.path, error);
+            console.error("\u521B\u5EFA\u5361\u7247\u5931\uFFFD\uFFFD:", file.path, error);
             return null;
           }
         })
@@ -1235,7 +1235,7 @@ ${content}` : content;
       container.addEventListener("scroll", () => {
         const { scrollTop, scrollHeight, clientHeight } = container;
         if (scrollHeight - scrollTop - clientHeight < 100 && !this.timelineIsLoading && this.timelineHasMore) {
-          console.log("\u6EDA\u52A8\u89E6\u53D1\u65F6\u95F4\u8F74\u52A0\u8F7D\u66F4\u591A");
+          console.log("\u6EDA\u52A8\u89E6\u53D1\u65F6\uFFFD\uFFFD\u8F74\u52A0\u8F7D\u66F4\u591A");
           this.loadTimelinePage(container);
         }
       });
@@ -2819,13 +2819,13 @@ ${content}` : content;
     this.currentWeek = this.getWeekNumber(today);
     this.createWeekView();
   }
-  // 修改获取指定日期的笔记方法
+  // 修改获取指定日期的笔记方法，添加日期范围检查
   async getNotesForDate(date) {
     const files = this.app.vault.getMarkdownFiles();
     return files.filter((file) => {
       const fileDate = new Date(file.stat.ctime);
       return this.isSameDay(fileDate, date);
-    });
+    }).sort((a, b) => b.stat.mtime - a.stat.mtime);
   }
   // 添加日期比较方法
   isSameDay(date1, date2) {
@@ -2856,6 +2856,11 @@ ${content}` : content;
     const card = createDiv("week-note-card");
     const title = card.createDiv("week-note-title");
     title.setText(file.basename);
+    const time = card.createDiv("week-note-time");
+    time.setText(new Date(file.stat.mtime).toLocaleTimeString("zh-CN", {
+      hour: "2-digit",
+      minute: "2-digit"
+    }));
     card.addEventListener("click", async () => {
       await this.openInAppropriateLeaf(file);
     });
@@ -2908,7 +2913,25 @@ ${content}` : content;
       const currentMonth = this.getMonthForWeek(this.currentYear, this.currentWeek);
       weekInfo.setText(`${this.currentYear}\u5E74${currentMonth}\u6708 \u7B2C${this.currentWeek}\u5468`);
     }
-    this.createWeekView();
+    const notesContainer = this.containerEl.querySelector(".week-notes-container");
+    if (notesContainer) {
+      notesContainer.empty();
+      const weekDates = this.getWeekDates(this.currentYear, this.currentWeek);
+      const reorderedDates = [
+        ...weekDates.slice(1),
+        // 周一到周六
+        weekDates[0]
+        // 周日
+      ];
+      reorderedDates.forEach(async (date) => {
+        const dayNotes = notesContainer.createDiv("day-notes-column");
+        const notes = await this.getNotesForDate(date);
+        notes.forEach((note) => {
+          const noteCard = this.createWeekNoteCard(note);
+          dayNotes.appendChild(noteCard);
+        });
+      });
+    }
   }
   // 获取指定周所在的月份
   getMonthForWeek(year, week) {

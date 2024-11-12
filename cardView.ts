@@ -637,7 +637,7 @@ export class CardView extends ItemView {
         `;
         this.statusLeft.appendChild(this.loadingStatus);
         
-        // 添其他状态信息
+        // 添其他状态���息
         const totalNotesStatus = createDiv('status-item');
         totalNotesStatus.innerHTML = `
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
@@ -1070,7 +1070,7 @@ export class CardView extends ItemView {
                     try {
                         return await this.createNoteCard(file);
                     } catch (error) {
-                        console.error('创建卡片失败:', file.path, error);
+                        console.error('创建卡片失��:', file.path, error);
                         return null;
                     }
                 })
@@ -1746,7 +1746,7 @@ export class CardView extends ItemView {
             container.addEventListener('scroll', () => {
                 const { scrollTop, scrollHeight, clientHeight } = container;
                 if (scrollHeight - scrollTop - clientHeight < 100 && !this.timelineIsLoading && this.timelineHasMore) {
-                    console.log('滚动触发时间轴加载更多');
+                    console.log('滚动触发时��轴加载更多');
                     this.loadTimelinePage(container);
                 }
             });
@@ -3957,13 +3957,13 @@ export class CardView extends ItemView {
         this.createWeekView();
     }
 
-    // 修改获取指定日期的笔记方法
+    // 修改获取指定日期的笔记方法，添加日期范围检查
     private async getNotesForDate(date: Date): Promise<TFile[]> {
         const files = this.app.vault.getMarkdownFiles();
         return files.filter(file => {
             const fileDate = new Date(file.stat.ctime);
             return this.isSameDay(fileDate, date);
-        });
+        }).sort((a, b) => b.stat.mtime - a.stat.mtime); // 按修改时间降序排序
     }
 
     // 添加日期比较方法
@@ -4010,6 +4010,13 @@ export class CardView extends ItemView {
         // 添加标题
         const title = card.createDiv('week-note-title');
         title.setText(file.basename);
+        
+        // 添加修改时间
+        const time = card.createDiv('week-note-time');
+        time.setText(new Date(file.stat.mtime).toLocaleTimeString('zh-CN', {
+            hour: '2-digit',
+            minute: '2-digit'
+        }));
         
         // 添加点击事件
         card.addEventListener('click', async () => {
@@ -4080,9 +4087,33 @@ export class CardView extends ItemView {
             const currentMonth = this.getMonthForWeek(this.currentYear, this.currentWeek);
             weekInfo.setText(`${this.currentYear}年${currentMonth}月 第${this.currentWeek}周`);
         }
-        
-        // 重新创建视图
-        this.createWeekView();
+
+        // 清空现有笔记列表
+        const notesContainer = this.containerEl.querySelector('.week-notes-container');
+        if (notesContainer) {
+            notesContainer.empty();
+            
+            // 获取新的日期范围
+            const weekDates = this.getWeekDates(this.currentYear, this.currentWeek);
+            
+            // 调整日期顺序，将周日的笔记放到最后
+            const reorderedDates = [
+                ...weekDates.slice(1), // 周一到周六
+                weekDates[0]           // 周日
+            ];
+            
+            // 为每一天创建笔记列表
+            reorderedDates.forEach(async date => {
+                const dayNotes = notesContainer.createDiv('day-notes-column');
+                const notes = await this.getNotesForDate(date);
+                
+                // 为每个笔记创建卡片
+                notes.forEach(note => {
+                    const noteCard = this.createWeekNoteCard(note);
+                    dayNotes.appendChild(noteCard);
+                });
+            });
+        }
     }
 
     // 获取指定周所在的月份
