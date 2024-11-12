@@ -2106,20 +2106,102 @@
 }
 .home-container .module-manager {
   display: flex;
+  gap: 8px;
   justify-content: flex-end;
   margin-bottom: 16px;
 }
-.home-container .module-manager .module-manage-btn {
+.home-container .module-manager .module-manage-btn,
+.home-container .module-manager .module-edit-btn {
   background: var(--interactive-accent);
   color: var(--text-on-accent);
   padding: 8px 16px;
   border-radius: 4px;
   cursor: pointer;
   transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
-.home-container .module-manager .module-manage-btn:hover {
+.home-container .module-manager .module-manage-btn:hover,
+.home-container .module-manager .module-edit-btn:hover {
   opacity: 0.9;
   transform: translateY(-1px);
+}
+.home-container .module-manager .module-manage-btn svg,
+.home-container .module-manager .module-edit-btn svg {
+  width: 16px;
+  height: 16px;
+}
+.home-container.edit-mode .module-container {
+  cursor: move;
+  border: 2px dashed var(--interactive-accent);
+}
+.home-container.edit-mode .module-container .resize-handle {
+  position: absolute;
+  background: var(--interactive-accent);
+  opacity: 0.5;
+  transition: opacity 0.2s ease;
+}
+.home-container.edit-mode .module-container .resize-handle:hover {
+  opacity: 1;
+}
+.home-container.edit-mode .module-container .resize-handle.top, .home-container.edit-mode .module-container .resize-handle.bottom {
+  left: 50%;
+  transform: translateX(-50%);
+  width: 40px;
+  height: 4px;
+  cursor: ns-resize;
+}
+.home-container.edit-mode .module-container .resize-handle.left, .home-container.edit-mode .module-container .resize-handle.right {
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 40px;
+  cursor: ew-resize;
+}
+.home-container.edit-mode .module-container .resize-handle.top {
+  top: -2px;
+}
+.home-container.edit-mode .module-container .resize-handle.bottom {
+  bottom: -2px;
+}
+.home-container.edit-mode .module-container .resize-handle.left {
+  left: -2px;
+}
+.home-container.edit-mode .module-container .resize-handle.right {
+  right: -2px;
+}
+.home-container.edit-mode .module-container .resize-handle.top-left, .home-container.edit-mode .module-container .resize-handle.top-right, .home-container.edit-mode .module-container .resize-handle.bottom-left, .home-container.edit-mode .module-container .resize-handle.bottom-right {
+  width: 10px;
+  height: 10px;
+  background: var(--interactive-accent);
+  border-radius: 50%;
+}
+.home-container.edit-mode .module-container .resize-handle.top-left {
+  top: -5px;
+  left: -5px;
+  cursor: nw-resize;
+}
+.home-container.edit-mode .module-container .resize-handle.top-right {
+  top: -5px;
+  right: -5px;
+  cursor: ne-resize;
+}
+.home-container.edit-mode .module-container .resize-handle.bottom-left {
+  bottom: -5px;
+  left: -5px;
+  cursor: sw-resize;
+}
+.home-container.edit-mode .module-container .resize-handle.bottom-right {
+  bottom: -5px;
+  right: -5px;
+  cursor: se-resize;
+}
+.home-container.edit-mode .module-container .grid-snap-indicator {
+  position: absolute;
+  background: rgba(var(--interactive-accent-rgb), 0.2);
+  pointer-events: none;
+  z-index: 1000;
 }
 .home-container .module-grid {
   display: grid;

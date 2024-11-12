@@ -3041,6 +3041,17 @@ ${content}` : content;
       for (const module2 of visibleModules) {
         await this.createModule(moduleGrid, module2);
       }
+      const editBtn = moduleManager.createEl("button", {
+        cls: "module-edit-btn",
+        text: "\u7F16\u8F91\u5E03\u5C40"
+      });
+      let isEditMode = false;
+      editBtn.addEventListener("click", () => {
+        isEditMode = !isEditMode;
+        homeContainer.toggleClass("edit-mode", isEditMode);
+        editBtn.setText(isEditMode ? "\u5B8C\u6210\u7F16\u8F91" : "\u7F16\u8F91\u5E03\u5C40");
+        this.toggleModuleEditing(isEditMode);
+      });
     } catch (error) {
       console.error("\u521B\u5EFA\u4E3B\u9875\u89C6\u56FE\u5931\u8D25:", error);
       new import_obsidian.Notice("\u521B\u5EFA\u4E3B\u9875\u89C6\u56FE\u5931\u8D25");
@@ -3306,6 +3317,164 @@ ${content}` : content;
         await this.renderCalendarModule(container);
         break;
     }
+  }
+  // 添加模块编辑功能
+  toggleModuleEditing(enable) {
+    const modules = this.container.querySelectorAll(".module-container");
+    modules.forEach((module2) => {
+      if (enable) {
+        this.setupModuleEditing(module2);
+      } else {
+        this.cleanupModuleEditing(module2);
+      }
+    });
+  }
+  setupModuleEditing(module2) {
+    const handles = [
+      "top",
+      "right",
+      "bottom",
+      "left",
+      "top-left",
+      "top-right",
+      "bottom-left",
+      "bottom-right"
+    ];
+    handles.forEach((position) => {
+      const handle = module2.createDiv(`resize-handle ${position}`);
+      this.setupResizeHandle(handle, module2, position);
+    });
+    this.setupModuleDragging(module2);
+  }
+  setupResizeHandle(handle, module2, position) {
+    let startX;
+    let startY;
+    let startWidth;
+    let startHeight;
+    let startColumns;
+    const startResize = (e) => {
+      e.preventDefault();
+      startX = e.pageX;
+      startY = e.pageY;
+      startWidth = module2.offsetWidth;
+      startHeight = module2.offsetHeight;
+      startColumns = parseInt(module2.style.gridColumn.split(" ")[1]) || 4;
+      document.addEventListener("mousemove", resize);
+      document.addEventListener("mouseup", stopResize);
+    };
+    const resize = (e) => {
+      const dx = e.pageX - startX;
+      const dy = e.pageY - startY;
+      const gridUnit = this.container.offsetWidth / 12;
+      if (position.includes("right")) {
+        const newColumns = Math.round((startWidth + dx) / gridUnit);
+        if (newColumns >= 1 && newColumns <= 12) {
+          module2.style.gridColumn = `span ${newColumns}`;
+          this.showGridSnapIndicator(module2, newColumns * gridUnit);
+        }
+      }
+      if (position.includes("bottom")) {
+        const newHeight = Math.max(100, startHeight + dy);
+        module2.style.height = `${newHeight}px`;
+      }
+    };
+    const stopResize = () => {
+      document.removeEventListener("mousemove", resize);
+      document.removeEventListener("mouseup", stopResize);
+      this.hideGridSnapIndicator();
+      this.saveModuleSettings();
+    };
+    handle.addEventListener("mousedown", startResize);
+  }
+  setupModuleDragging(module2) {
+    let isDragging = false;
+    let startX;
+    let startY;
+    let startOrder;
+    const startDrag = (e) => {
+      var _a;
+      if (e.target instanceof HTMLElement && e.target.closest(".resize-handle")) {
+        return;
+      }
+      isDragging = true;
+      startX = e.pageX;
+      startY = e.pageY;
+      startOrder = Array.from(((_a = module2.parentElement) == null ? void 0 : _a.children) || []).indexOf(module2);
+      module2.style.zIndex = "1000";
+      module2.style.opacity = "0.8";
+      document.addEventListener("mousemove", drag);
+      document.addEventListener("mouseup", stopDrag);
+    };
+    const drag = (e) => {
+      if (!isDragging) return;
+      const dx = e.pageX - startX;
+      const dy = e.pageY - startY;
+      module2.style.transform = `translate(${dx}px, ${dy}px)`;
+      this.checkModulePosition(module2, e.pageX, e.pageY);
+    };
+    const stopDrag = () => {
+      if (!isDragging) return;
+      isDragging = false;
+      module2.style.zIndex = "";
+      module2.style.opacity = "";
+      module2.style.transform = "";
+      document.removeEventListener("mousemove", drag);
+      document.removeEventListener("mouseup", stopDrag);
+      this.saveModuleSettings();
+    };
+    module2.addEventListener("mousedown", startDrag);
+  }
+  checkModulePosition(dragModule, x, y) {
+    const modules = Array.from(this.container.querySelectorAll(".module-container"));
+    const dragIndex = modules.indexOf(dragModule);
+    modules.forEach((module2, index) => {
+      var _a, _b;
+      if (module2 === dragModule) return;
+      const rect = module2.getBoundingClientRect();
+      if (y >= rect.top && y <= rect.bottom) {
+        if (index < dragIndex) {
+          (_a = module2.parentElement) == null ? void 0 : _a.insertBefore(dragModule, module2);
+        } else {
+          (_b = module2.parentElement) == null ? void 0 : _b.insertBefore(dragModule, module2.nextSibling);
+        }
+        this.updateModuleOrder();
+      }
+    });
+  }
+  updateModuleOrder() {
+    const modules = Array.from(this.container.querySelectorAll(".module-container"));
+    modules.forEach((module2, index) => {
+      const moduleId = module2.getAttribute("data-module-id");
+      const moduleConfig = this.homeModules.find((m) => m.id === moduleId);
+      if (moduleConfig) {
+        moduleConfig.order = index;
+      }
+    });
+  }
+  showGridSnapIndicator(module2, width) {
+    let indicator = this.container.querySelector(".grid-snap-indicator");
+    if (!indicator) {
+      indicator = this.container.createDiv("grid-snap-indicator");
+    }
+    const rect = module2.getBoundingClientRect();
+    if (indicator instanceof HTMLElement) {
+      indicator.style.top = `${rect.top}px`;
+      indicator.style.left = `${rect.left}px`;
+      indicator.style.width = `${width}px`;
+      indicator.style.height = `${rect.height}px`;
+    }
+  }
+  hideGridSnapIndicator() {
+    const indicator = this.container.querySelector(".grid-snap-indicator");
+    if (indicator) {
+      indicator.remove();
+    }
+  }
+  cleanupModuleEditing(module2) {
+    module2.querySelectorAll(".resize-handle").forEach((handle) => handle.remove());
+    module2.style.transform = "";
+    module2.style.zIndex = "";
+    module2.style.opacity = "";
   }
 };
 var ModuleManagerModal = class extends import_obsidian.Modal {

@@ -1043,7 +1043,7 @@ export class CardView extends ItemView {
             contentSection.addClass(`view-${view}`);
         }
 
-        // 根据视图类型加��相内容
+        // 根据视图类型加相内容
         let statusMessage = '';
         try {
             switch (view) {
@@ -1570,7 +1570,7 @@ export class CardView extends ItemView {
                 }
                 this.adjustContentWidth();
                 
-                // 如果正在调整大小，确保预览栏是展开的
+                // 如果正在调整大小，确保预��栏是展开的
                 if (this.isPreviewCollapsed) {
                     this.isPreviewCollapsed = false;
                     this.previewContainer.removeClass('collapsed');
@@ -1785,7 +1785,7 @@ export class CardView extends ItemView {
                 });
             }
 
-            // 一次添加所有内到容器
+            // 一次���加所有内到容器
             container.appendChild(fragment);
             
             this.timelineCurrentPage++;
@@ -2095,7 +2095,7 @@ export class CardView extends ItemView {
         
         if (this.isCalendarVisible) {
             this.showCalendar();
-            // 显示当前月份的所有笔记
+            // 显示当前月份的所有��记
             this.filterNotesByMonth(this.currentDate);
         } else {
             this.hideCalendar();
@@ -3673,7 +3673,7 @@ export class CardView extends ItemView {
                 // 只更新网格布局
                 const containerWidth = this.container.offsetWidth;
                 const totalGap = value >= 0 ? currentSettings.cardGap : 0; // 确保不小于0
-                // ���大列数
+                // 大列数
                 const maxColumns = Math.floor(containerWidth / (180 + totalGap));
                 console.log('containerWidth', containerWidth);
                 console.log('totalGap', totalGap);
@@ -4246,6 +4246,20 @@ export class CardView extends ItemView {
                 await this.createModule(moduleGrid, module);
             }
 
+            // 添加编辑按钮
+            const editBtn = moduleManager.createEl('button', {
+                cls: 'module-edit-btn',
+                text: '编辑布局'
+            });
+            
+            let isEditMode = false;
+            editBtn.addEventListener('click', () => {
+                isEditMode = !isEditMode;
+                homeContainer.toggleClass('edit-mode', isEditMode);
+                editBtn.setText(isEditMode ? '完成编辑' : '编辑布局');
+                this.toggleModuleEditing(isEditMode);
+            });
+
         } catch (error) {
             console.error('创建主页视图失败:', error);
             new Notice('创建主页视图失败');
@@ -4635,6 +4649,203 @@ export class CardView extends ItemView {
                 await this.renderCalendarModule(container);
                 break;
         }
+    }
+
+    // 添加模块编辑功能
+    private toggleModuleEditing(enable: boolean) {
+        const modules = this.container.querySelectorAll('.module-container');
+        
+        modules.forEach(module => {
+            if (enable) {
+                this.setupModuleEditing(module as HTMLElement);
+            } else {
+                this.cleanupModuleEditing(module as HTMLElement);
+            }
+        });
+    }
+
+    private setupModuleEditing(module: HTMLElement) {
+        // 添加调整大小的手柄
+        const handles = [
+            'top', 'right', 'bottom', 'left',
+            'top-left', 'top-right', 'bottom-left', 'bottom-right'
+        ];
+        
+        handles.forEach(position => {
+            const handle = module.createDiv(`resize-handle ${position}`);
+            this.setupResizeHandle(handle, module, position);
+        });
+        
+        // 设置拖拽
+        this.setupModuleDragging(module);
+    }
+
+    private setupResizeHandle(handle: HTMLElement, module: HTMLElement, position: string) {
+        let startX: number;
+        let startY: number;
+        let startWidth: number;
+        let startHeight: number;
+        let startColumns: number;
+        
+        const startResize = (e: MouseEvent) => {
+            e.preventDefault();
+            startX = e.pageX;
+            startY = e.pageY;
+            startWidth = module.offsetWidth;
+            startHeight = module.offsetHeight;
+            startColumns = parseInt(module.style.gridColumn.split(' ')[1]) || 4;
+            
+            document.addEventListener('mousemove', resize);
+            document.addEventListener('mouseup', stopResize);
+        };
+        
+        const resize = (e: MouseEvent) => {
+            const dx = e.pageX - startX;
+            const dy = e.pageY - startY;
+            
+            // 计算网格单位
+            const gridUnit = this.container.offsetWidth / 12;
+            
+            // 根据拖拽方向调整大小
+            if (position.includes('right')) {
+                const newColumns = Math.round((startWidth + dx) / gridUnit);
+                if (newColumns >= 1 && newColumns <= 12) {
+                    module.style.gridColumn = `span ${newColumns}`;
+                    this.showGridSnapIndicator(module, newColumns * gridUnit);
+                }
+            }
+            
+            if (position.includes('bottom')) {
+                const newHeight = Math.max(100, startHeight + dy);
+                module.style.height = `${newHeight}px`;
+            }
+        };
+        
+        const stopResize = () => {
+            document.removeEventListener('mousemove', resize);
+            document.removeEventListener('mouseup', stopResize);
+            this.hideGridSnapIndicator();
+            this.saveModuleSettings();
+        };
+        
+        handle.addEventListener('mousedown', startResize);
+    }
+
+    private setupModuleDragging(module: HTMLElement) {
+        let isDragging = false;
+        let startX: number;
+        let startY: number;
+        let startOrder: number;
+        
+        const startDrag = (e: MouseEvent) => {
+            if (e.target instanceof HTMLElement && e.target.closest('.resize-handle')) {
+                return;
+            }
+            
+            isDragging = true;
+            startX = e.pageX;
+            startY = e.pageY;
+            startOrder = Array.from(module.parentElement?.children || []).indexOf(module);
+            
+            module.style.zIndex = '1000';
+            module.style.opacity = '0.8';
+            
+            document.addEventListener('mousemove', drag);
+            document.addEventListener('mouseup', stopDrag);
+        };
+        
+        const drag = (e: MouseEvent) => {
+            if (!isDragging) return;
+            
+            const dx = e.pageX - startX;
+            const dy = e.pageY - startY;
+            
+            module.style.transform = `translate(${dx}px, ${dy}px)`;
+            
+            // 检查与其他模块的位置关系
+            this.checkModulePosition(module, e.pageX, e.pageY);
+        };
+        
+        const stopDrag = () => {
+            if (!isDragging) return;
+            
+            isDragging = false;
+            module.style.zIndex = '';
+            module.style.opacity = '';
+            module.style.transform = '';
+            
+            document.removeEventListener('mousemove', drag);
+            document.removeEventListener('mouseup', stopDrag);
+            
+            this.saveModuleSettings();
+        };
+        
+        module.addEventListener('mousedown', startDrag);
+    }
+
+    private checkModulePosition(dragModule: HTMLElement, x: number, y: number) {
+        const modules = Array.from(this.container.querySelectorAll('.module-container'));
+        const dragIndex = modules.indexOf(dragModule);
+        
+        modules.forEach((module, index) => {
+            if (module === dragModule) return;
+            
+            const rect = module.getBoundingClientRect();
+            if (y >= rect.top && y <= rect.bottom) {
+                // 交换模块位置
+                if (index < dragIndex) {
+                    module.parentElement?.insertBefore(dragModule, module);
+                } else {
+                    module.parentElement?.insertBefore(dragModule, module.nextSibling);
+                }
+                
+                // 更新模块顺序
+                this.updateModuleOrder();
+            }
+        });
+    }
+
+    private updateModuleOrder() {
+        const modules = Array.from(this.container.querySelectorAll('.module-container'));
+        modules.forEach((module, index) => {
+            const moduleId = module.getAttribute('data-module-id');
+            const moduleConfig = this.homeModules.find(m => m.id === moduleId);
+            if (moduleConfig) {
+                moduleConfig.order = index;
+            }
+        });
+    }
+
+    private showGridSnapIndicator(module: HTMLElement, width: number) {
+        let indicator = this.container.querySelector('.grid-snap-indicator');
+        if (!indicator) {
+            indicator = this.container.createDiv('grid-snap-indicator');
+        }
+        
+        const rect = module.getBoundingClientRect();
+        if (indicator instanceof HTMLElement) {
+            indicator.style.top = `${rect.top}px`;
+            indicator.style.left = `${rect.left}px`;
+            indicator.style.width = `${width}px`;
+            indicator.style.height = `${rect.height}px`;
+        }
+    }
+
+    private hideGridSnapIndicator() {
+        const indicator = this.container.querySelector('.grid-snap-indicator');
+        if (indicator) {
+            indicator.remove();
+        }
+    }
+
+    private cleanupModuleEditing(module: HTMLElement) {
+        // 移除所有调整大小的手柄
+        module.querySelectorAll('.resize-handle').forEach(handle => handle.remove());
+        
+        // 清除拖拽相关的样式
+        module.style.transform = '';
+        module.style.zIndex = '';
+        module.style.opacity = '';
     }
 }
 
