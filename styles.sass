@@ -58,29 +58,7 @@
 
     // 日历按钮	
     .calendar-toggle-button 
-      display: flex
-      align-items: center
-      gap: 6px
-      background: transparent
-      border: 1px solid var(--background-modifier-border)
-      color: var(--text-muted)
-      padding: 6px 12px
-      cursor: pointer
-      border-radius: 4px
-      font-size: 14px
-      transition: all 0.2s ease
-      &.active 
-        background-color: var(--interactive-accent)
-        color: var(--text-on-accent)
-        border-color: var(--interactive-accent)
-      &:hover 
-        color: var(--text-normal)
-        background-color: var(--background-modifier-hover)
-        border-color: var(--interactive-accent)
-      svg
-        width: 16px
-        height: 16px
-
+      display: none
 
     // 视图切换器样式 	
     .view-switcher
@@ -120,6 +98,54 @@
 
         .view-switch-text 
           font-size: 0.9em
+
+    // 修改日历下拉菜单样式
+    .calendar-dropdown-container
+        position: relative
+        margin-right: 12px  // 添加右边距，与标签下拉列表保持间距
+        
+        .calendar-toggle-button
+            display: flex
+            align-items: center
+            gap: 6px
+            background: transparent
+            border: 1px solid var(--background-modifier-border)
+            color: var(--text-muted)
+            padding: 6px 12px
+            cursor: pointer
+            border-radius: 4px
+            font-size: 14px
+            transition: all 0.2s ease
+            
+            &:hover
+                color: var(--text-normal)
+                background-color: var(--background-modifier-hover)
+                border-color: var(--interactive-accent)
+            
+            svg
+                width: 16px
+                height: 16px
+        
+        .calendar-container
+            position: absolute
+            top: 100%
+            left: 0
+            margin-top: 4px
+            background: var(--background-primary)
+            border: 1px solid var(--background-modifier-border)
+            border-radius: 8px
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1)
+            z-index: 1000
+            width: 280px
+            padding: 16px
+            
+            // 日历内容样式保持不变
+            .calendar-header
+                display: flex
+                justify-content: space-between
+                align-items: center
+                margin-bottom: 16px
+                // ... 其他日历样式保持不变 ...
 
 
   // 搜索容器
@@ -437,6 +463,7 @@
 
 // 日历容器样式   
 .calendar-container 
+  position: absolute
   width: 280px
   background-color: var(--background-primary)
   border-right: 1px solid var(--background-modifier-border)
@@ -2034,7 +2061,7 @@
                 display: grid  // 显示网格布局
                 border-top-left-radius: 0
                 border-top-right-radius: 0
-                margin-top: -1px  // 与下拉框对齐
+                margin-top: -1px  // 与下框对齐
 
 // 周视图样式优化
 .week-view
@@ -2578,6 +2605,32 @@
                 .calendar-title
                     font-weight: 500
                     color: var(--text-normal)
+                    cursor: ns-resize  // 添加滚动指示光标
+                    padding: 4px 8px   // 添加内边距使区域更大
+                    border-radius: 4px
+                    transition: all 0.2s ease
+                    
+                    &:hover
+                        background: var(--background-modifier-hover)
+                    
+                    &.scrollable
+                        position: relative
+                        
+                        &::after
+                            content: ''
+                            position: absolute
+                            bottom: 2px
+                            left: 50%
+                            transform: translateX(-50%)
+                            width: 10px
+                            height: 2px
+                            background: var(--text-muted)
+                            border-radius: 1px
+                            opacity: 0
+                            transition: opacity 0.2s ease
+                        
+                        &:hover::after
+                            opacity: 0.5
             
             .calendar-weekdays
                 display: grid

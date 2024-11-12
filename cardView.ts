@@ -450,7 +450,7 @@ export class CardView extends ItemView {
 
     /**
      * 获取视图显示文本
-     * @returns 显示在标签页上的文本
+     * @returns 示在标签页上的文本
      */
     getDisplayText(): string {
         return '卡片视图';
@@ -477,7 +477,7 @@ export class CardView extends ItemView {
         // 左侧工具组
         const leftTools = toolbar.createDiv('toolbar-left');
         
-        // 新建笔记按
+        // 新建笔记按钮
         const newNoteBtn = leftTools.createEl('button', {
             cls: 'new-note-button',
         });
@@ -486,9 +486,6 @@ export class CardView extends ItemView {
             <span>新建笔记</span>
         `;
         newNoteBtn.addEventListener('click', () => this.createNewNote());
-
-        // 添加日历按钮
-        this.createCalendarButton(leftTools);
 
         // 视图切换按钮组
         const viewSwitcher = leftTools.createDiv('view-switcher');
@@ -712,17 +709,6 @@ export class CardView extends ItemView {
         this.currentLoadingView = 'card';
         await this.loadNotes();
 
-        // 初始化日历容器
-        this.calendarContainer = createDiv();
-        this.calendarContainer.addClass('calendar-container');
-        this.calendarContainer.style.display = 'none';
-        
-        // 将日容器添加到主布局中
-        const mainLayoutElement = containerEl.querySelector('.main-layout');  // 修改变量名
-        if (mainLayoutElement) {
-            mainLayout.insertBefore(this.calendarContainer, mainLayout.firstChild);
-        }
-
         // 在卡片容器的事件处理中添加
         const cardContainer = containerEl.querySelector('.card-container');
         if (cardContainer) {
@@ -773,7 +759,7 @@ export class CardView extends ItemView {
                 const tagsContent = tagTexts.map(tag => `#${tag}`).join(' ');
                 const finalContent = tagsContent ? `${tagsContent}\n\n${content}` : content;
                 
-                // 使用标题作为文件名，如果没有则使用日期
+                // 使用标题作为文件名，如果没有使用日期
                 const fileName = title || new Date().toLocaleDateString('zh-CN', {
                     year: 'numeric',
                     month: '2-digit',
@@ -827,7 +813,38 @@ export class CardView extends ItemView {
         // 创建左侧区域
         const leftArea = this.tagContainer.createDiv('filter-toolbar-left');
 
-        // 创建下拉列表容器
+        // 创建日历下拉容器
+        const calendarDropdown = leftArea.createDiv('calendar-dropdown-container');
+        
+        // 创建日历按钮
+        const calendarBtn = calendarDropdown.createEl('button', {
+            cls: 'calendar-toggle-button',
+        });
+        calendarBtn.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+            <span>日历</span>
+        `;
+
+        // 创建日历容器（如果不存在）
+
+        this.calendarContainer = calendarDropdown.createDiv('calendar-container');
+        this.calendarContainer.style.display = 'none';
+
+
+        // 添加悬停事件
+        let hoverTimeout: NodeJS.Timeout;
+        calendarDropdown.addEventListener('mouseenter', () => {
+            clearTimeout(hoverTimeout);
+            this.showCalendar();
+        });
+
+        calendarDropdown.addEventListener('mouseleave', () => {
+            hoverTimeout = setTimeout(() => {
+                this.hideCalendar();
+            }, 200);
+        });
+
+        // 创建标签下拉列表容器
         const dropdownContainer = leftArea.createDiv('tag-dropdown-container');
         
         // 创建下拉列表
@@ -1213,7 +1230,7 @@ export class CardView extends ItemView {
                 matchesTags = cache?.tags?.some(t => this.selectedTags.has(t.tag)) ?? false;
             }
 
-            // 日期过滤
+            // 日期滤
             let matchesDate = true;
             if (this.currentFilter.type === 'date') {
                 const fileDate = new Date(file.stat.mtime);
@@ -2020,7 +2037,7 @@ export class CardView extends ItemView {
         menu.showAtMouseEvent(event); //显示右键菜单
     }
     
-    // 卡片-调整大小
+    // 卡片-调整大
     public adjustCardSize(delta: number): void {
         const adjustment = delta > 0 ? -10 : 10;
         const newSize = Math.max(
@@ -2036,7 +2053,7 @@ export class CardView extends ItemView {
         }
     }
 
-    // 卡片-调整高度
+    // 卡-调整高度
     public adjustCardHeight(delta: number): void {
         const adjustment = delta > 0 ? -10 : 10;
         const newHeight = Math.max(
@@ -2128,152 +2145,117 @@ export class CardView extends ItemView {
 
     // 日历-显示
     private showCalendar() {
-        // 添加调试日志
-        console.log('开始显示日历');
+        if (!this.calendarContainer) return;
         
-        // 确保 calendarContainer 存在
-        if (!this.calendarContainer) {
-            console.log('创建日历容器');
-            const mainLayout = this.containerEl.querySelector('.main-layout');
-            if (!mainLayout) {
-                console.error('未找到 main-layout 元素');
-                return;
-            }
-            
-            // 创建日历容器
-            this.calendarContainer = createDiv();
-            this.calendarContainer.addClass('calendar-container');
-            
-            // 将日历容器入到 main-layout 的开头
-            mainLayout.insertBefore(this.calendarContainer, mainLayout.firstChild);
-            
-            console.log('历容器已创建:', this.calendarContainer);
-        }
-        
-        // 清空并显示日历容器
         this.calendarContainer.empty();
         this.calendarContainer.style.display = 'block';
         
-        // 添加日历内容
-        this.renderCalendar();
-        
-        // 添加 with-calendar 类到 main-layout
-        const mainLayout = this.containerEl.querySelector('.main-layout');
-        if (mainLayout) {
-            mainLayout.addClass('with-calendar');
-            console.log('已添加 with-calendar 类 main-layout');
-        }
-        
-        // 确日历容器可
-        this.calendarContainer.style.opacity = '1';
-        this.calendarContainer.style.visibility = 'visible';
-    }
-
-    // 日历-隐藏
-    private hideCalendar() {
-        console.log('隐藏日历');
-        
-        if (this.calendarContainer) {
-            this.calendarContainer.style.display = 'none';
-            this.calendarContainer.empty();
-            
-            // 移除 with-calendar 类
-            const mainLayout = this.containerEl.querySelector('.main-layout');
-            if (mainLayout) {
-                mainLayout.removeClass('with-calendar');
-                console.log('已移除 with-calendar ');
-            }
-        }
-    }
-
-    // 日历-渲染
-    private renderCalendar() {
-        if (!this.calendarContainer) {
-            return;
-        }
-        
-        this.calendarContainer.empty();
-        
-        const year = this.currentDate.getFullYear();
-        const month = this.currentDate.getMonth();
-        
-        // 建日历头部
+        // 创建日历头部
         const header = this.calendarContainer.createDiv('calendar-header');
         
         // 上个月按钮
         const prevBtn = header.createEl('button', { cls: 'calendar-nav-btn' });
         prevBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>';
-        prevBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            this.currentDate = new Date(year, month - 1, 1);
-            this.renderCalendar();
-            // 显示新月份的笔记
-            this.filterNotesByMonth(this.currentDate);
-        });
         
-        // 示年月
-        header.createDiv('calendar-title').setText(
-            `${year}${month + 1}月`
-        );
+        // 显示年月
+        const titleEl = header.createDiv('calendar-title scrollable');
+        titleEl.setText(`${this.currentDate.getFullYear()}年${this.currentDate.getMonth() + 1}月`);
         
         // 下个月按钮
         const nextBtn = header.createEl('button', { cls: 'calendar-nav-btn' });
         nextBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>';
-        nextBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            this.currentDate = new Date(year, month + 1, 1);
-            this.renderCalendar();
-            // 显示新月份的笔记
-            this.filterNotesByMonth(this.currentDate);
+
+        // 添加滚轮事件到标题元素
+        titleEl.addEventListener('wheel', (e) => {
+            e.preventDefault(); // 防止页面滚动
+            
+            // 向上滚动切换到下个月，向下滚动切换到上个月
+            if (e.deltaY < 0) {
+                this.currentDate.setMonth(this.currentDate.getMonth() + 1);
+            } else {
+                this.currentDate.setMonth(this.currentDate.getMonth() - 1);
+            }
+            
+            // 更新标题
+            titleEl.setText(`${this.currentDate.getFullYear()}年${this.currentDate.getMonth() + 1}月`);
+            
+            // 清空并重新渲染日历内容区域
+            const existingContent = this.calendarContainer.querySelector('.calendar-weekdays, .calendar-grid');
+            if (existingContent) {
+                existingContent.remove();
+            }
+            
+            // 创建星期头部
+            const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
+            const weekHeader = this.calendarContainer.createDiv('calendar-weekdays');
+            weekdays.forEach(day => {
+                weekHeader.createDiv('weekday').setText(day);
+            });
+
+            // 创建日历网格
+            const grid = this.calendarContainer.createDiv('calendar-grid');
+            
+            // 获取当月的笔记
+            const notesByDate = this.getNotesByDate(
+                this.currentDate.getFullYear(),
+                this.currentDate.getMonth()
+            );
+            
+            // 创建笔记列表容器
+            const notesSection = this.calendarContainer.createDiv('notes-section');
+            
+            // 填充日期格子
+            this.renderCalendarDays(grid, notesByDate, notesSection);
         });
 
-        // 创建星头部
+        // 添加鼠标悬停提示
+        titleEl.setAttribute('title', '滚动鼠标滚轮切换月份');
+
+        // 添加导航事件
+        prevBtn.addEventListener('click', () => {
+            this.currentDate.setMonth(this.currentDate.getMonth() - 1);
+            titleEl.setText(`${this.currentDate.getFullYear()}年${this.currentDate.getMonth() + 1}月`);
+            this.renderCalendarContent(this.calendarContainer);
+        });
+        
+        nextBtn.addEventListener('click', () => {
+            this.currentDate.setMonth(this.currentDate.getMonth() + 1);
+            titleEl.setText(`${this.currentDate.getFullYear()}年${this.currentDate.getMonth() + 1}月`);
+            this.renderCalendarContent(this.calendarContainer);
+        });
+
+        // 渲染初始日历内容
+        this.renderCalendarContent(this.calendarContainer);
+    }
+
+    private hideCalendar() {
+        if (!this.calendarContainer) return;
+        this.calendarContainer.style.display = 'none';
+    }
+
+    // 添加渲染日历内容的方法
+    private renderCalendarContent(container: HTMLElement) {
+        // 创建星期头部
         const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
-        const weekHeader = this.calendarContainer.createDiv('calendar-weekdays');
+        const weekHeader = container.createDiv('calendar-weekdays');
         weekdays.forEach(day => {
             weekHeader.createDiv('weekday').setText(day);
         });
 
-        // 创建日网格
-        const grid = this.calendarContainer.createDiv('calendar-grid');
+        // 创建日历网格
+        const grid = container.createDiv('calendar-grid');
         
-        // 获取月第一天是星期几
-        const firstDay = new Date(year, month, 1).getDay();
+        // 获取当月的笔记
+        const notesByDate = this.getNotesByDate(
+            this.currentDate.getFullYear(),
+            this.currentDate.getMonth()
+        );
+
+        // 创建笔记列表容器
+        const notesSection = container.createDiv('notes-section');
         
-        // 获取当月天数
-        const daysInMonth = new Date(year, month + 1, 0).getDate();
-        
-        // 取天的笔记数量
-        const notesCount = this.getNotesCountByDate(year, month);
-
-        // 填充日期格子
-        for (let i = 0; i < firstDay; i++) {
-            grid.createDiv('calendar-day empty');
-        }
-
-        for (let day = 1; day <= daysInMonth; day++) {
-            const dayEl = grid.createDiv('calendar-day');
-            const dateStr = `${year}-${(month + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
-            
-            dayEl.setText(day.toString());
-            dayEl.setAttribute('data-date', dateStr);
-            
-            // 如果是当前过滤的日期添加选中样式
-            if (this.currentFilter.type === 'date' && this.currentFilter.value === dateStr) {
-                dayEl.addClass('selected');
-            }
-            
-            // 添加笔记数量标记
-            const count = notesCount[dateStr] || 0;
-            if (count > 0) {
-                dayEl.createDiv('note-count').setText(count.toString());
-            }
-
-            // 添加点击事件
-            dayEl.addEventListener('click', () => {
-                this.filterNotesByDate(dateStr);
-            });
-        }
+        // 填充日期格子，传入 notesSection 参数
+        this.renderCalendarDays(grid, notesByDate, notesSection);
     }
 
     // 日历-获取每日笔记数量
@@ -2933,7 +2915,7 @@ export class CardView extends ItemView {
             previewContainer.scrollTop += e.deltaY;
         });
 
-        // 预览容���添加滚动事件监听
+        // 预览容添加滚动事件监听
         previewContainer.addEventListener('wheel', (e: WheelEvent) => {
             // 添加滚动时的鼠标样式
             previewContainer.style.cursor = 'ns-resize';
@@ -2987,7 +2969,7 @@ export class CardView extends ItemView {
             if (tagInput) tagInput.value = '';
         });
 
-        // 修改添加标签的方法
+        // 修改添加标���的方法
         const addTag = (tagText: string) => {
             if (!tagText || tags.has(tagText)) return;
             
@@ -4330,7 +4312,7 @@ export class CardView extends ItemView {
             dateCountMap.set(dateStr, 0);
         }
         
-        // 统计每天的笔记数量
+        // 统计天的笔记数量
         const files = this.app.vault.getMarkdownFiles();
         files.forEach(file => {
             const date = new Date(file.stat.mtime);
@@ -4494,13 +4476,31 @@ export class CardView extends ItemView {
         prevBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>';
         
         // 显示年月
-        header.createDiv('calendar-title').setText(
-            `${this.currentDate.getFullYear()}年${this.currentDate.getMonth() + 1}月`
-        );
+        const titleEl = header.createDiv('calendar-title');
+        titleEl.setText(`${this.currentDate.getFullYear()}年${this.currentDate.getMonth() + 1}月`);
         
         // 下个月按钮
         const nextBtn = header.createEl('button', { cls: 'calendar-nav-btn' });
         nextBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>';
+
+        // 添加滚轮事件到标题元素
+        titleEl.addEventListener('wheel', (e) => {
+            e.preventDefault(); // 防止页面滚动
+            
+            // 向上滚动切换到下个月，向下滚动切换到上个月
+            if (e.deltaY < 0) {
+                this.currentDate.setMonth(this.currentDate.getMonth() + 1);
+            } else {
+                this.currentDate.setMonth(this.currentDate.getMonth() - 1);
+            }
+            
+            // 重新渲染日历
+            this.renderCalendarModule(container);
+        });
+
+        // 添加鼠标悬停样式提示
+        titleEl.setAttribute('title', '滚动鼠标滚轮切换月份');
+        titleEl.addClass('scrollable');
 
         // 创建星期头部
         const weekdays = ['日', '一', '二', '三', '四', '五', '六'];

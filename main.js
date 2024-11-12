@@ -318,7 +318,7 @@ var CardView = class extends import_obsidian.ItemView {
   }
   /**
    * 获取视图显示文本
-   * @returns 显示在标签页上的文本
+   * @returns 示在标签页上的文本
    */
   getDisplayText() {
     return "\u5361\u7247\u89C6\u56FE";
@@ -343,7 +343,6 @@ var CardView = class extends import_obsidian.ItemView {
             <span>\u65B0\u5EFA\u7B14\u8BB0</span>
         `;
     newNoteBtn.addEventListener("click", () => this.createNewNote());
-    this.createCalendarButton(leftTools);
     const viewSwitcher = leftTools.createDiv("view-switcher");
     this.createViewSwitcher(viewSwitcher);
     const searchContainer = toolbar.createDiv("search-container");
@@ -484,13 +483,6 @@ var CardView = class extends import_obsidian.ItemView {
     contentSection.appendChild(this.statusBar);
     this.currentLoadingView = "card";
     await this.loadNotes();
-    this.calendarContainer = createDiv();
-    this.calendarContainer.addClass("calendar-container");
-    this.calendarContainer.style.display = "none";
-    const mainLayoutElement = containerEl.querySelector(".main-layout");
-    if (mainLayoutElement) {
-      mainLayout.insertBefore(this.calendarContainer, mainLayout.firstChild);
-    }
     const cardContainer = containerEl.querySelector(".card-container");
     if (cardContainer) {
       cardContainer.addEventListener("click", (e) => {
@@ -567,6 +559,26 @@ ${content}` : content;
     const tagCounts = this.getTagsWithCount();
     this.tagContainer.empty();
     const leftArea = this.tagContainer.createDiv("filter-toolbar-left");
+    const calendarDropdown = leftArea.createDiv("calendar-dropdown-container");
+    const calendarBtn = calendarDropdown.createEl("button", {
+      cls: "calendar-toggle-button"
+    });
+    calendarBtn.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+            <span>\u65E5\u5386</span>
+        `;
+    this.calendarContainer = calendarDropdown.createDiv("calendar-container");
+    this.calendarContainer.style.display = "none";
+    let hoverTimeout;
+    calendarDropdown.addEventListener("mouseenter", () => {
+      clearTimeout(hoverTimeout);
+      this.showCalendar();
+    });
+    calendarDropdown.addEventListener("mouseleave", () => {
+      hoverTimeout = setTimeout(() => {
+        this.hideCalendar();
+      }, 200);
+    });
     const dropdownContainer = leftArea.createDiv("tag-dropdown-container");
     const dropdown = dropdownContainer.createEl("select", {
       cls: "tag-dropdown"
@@ -1447,7 +1459,7 @@ ${content}` : content;
     }
     menu.showAtMouseEvent(event);
   }
-  // 卡片-调整大小
+  // 卡片-调整大
   adjustCardSize(delta) {
     const adjustment = delta > 0 ? -10 : 10;
     const newSize = Math.max(
@@ -1460,7 +1472,7 @@ ${content}` : content;
       this.plugin.saveCardWidth(newSize);
     }
   }
-  // 卡片-调整高度
+  // 卡-调整高度
   adjustCardHeight(delta) {
     var _a, _b;
     const adjustment = delta > 0 ? -10 : 10;
@@ -1535,99 +1547,72 @@ ${content}` : content;
   }
   // 日历-显示
   showCalendar() {
-    console.log("\u5F00\u59CB\u663E\u793A\u65E5\u5386");
-    if (!this.calendarContainer) {
-      console.log("\u521B\u5EFA\u65E5\u5386\u5BB9\u5668");
-      const mainLayout2 = this.containerEl.querySelector(".main-layout");
-      if (!mainLayout2) {
-        console.error("\u672A\u627E\u5230 main-layout \u5143\u7D20");
-        return;
-      }
-      this.calendarContainer = createDiv();
-      this.calendarContainer.addClass("calendar-container");
-      mainLayout2.insertBefore(this.calendarContainer, mainLayout2.firstChild);
-      console.log("\u5386\u5BB9\u5668\u5DF2\u521B\u5EFA:", this.calendarContainer);
-    }
+    if (!this.calendarContainer) return;
     this.calendarContainer.empty();
     this.calendarContainer.style.display = "block";
-    this.renderCalendar();
-    const mainLayout = this.containerEl.querySelector(".main-layout");
-    if (mainLayout) {
-      mainLayout.addClass("with-calendar");
-      console.log("\u5DF2\u6DFB\u52A0 with-calendar \u7C7B main-layout");
-    }
-    this.calendarContainer.style.opacity = "1";
-    this.calendarContainer.style.visibility = "visible";
-  }
-  // 日历-隐藏
-  hideCalendar() {
-    console.log("\u9690\u85CF\u65E5\u5386");
-    if (this.calendarContainer) {
-      this.calendarContainer.style.display = "none";
-      this.calendarContainer.empty();
-      const mainLayout = this.containerEl.querySelector(".main-layout");
-      if (mainLayout) {
-        mainLayout.removeClass("with-calendar");
-        console.log("\u5DF2\u79FB\u9664 with-calendar ");
-      }
-    }
-  }
-  // 日历-渲染
-  renderCalendar() {
-    if (!this.calendarContainer) {
-      return;
-    }
-    this.calendarContainer.empty();
-    const year = this.currentDate.getFullYear();
-    const month = this.currentDate.getMonth();
     const header = this.calendarContainer.createDiv("calendar-header");
     const prevBtn = header.createEl("button", { cls: "calendar-nav-btn" });
     prevBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>';
-    prevBtn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      this.currentDate = new Date(year, month - 1, 1);
-      this.renderCalendar();
-      this.filterNotesByMonth(this.currentDate);
-    });
-    header.createDiv("calendar-title").setText(
-      `${year}${month + 1}\u6708`
-    );
+    const titleEl = header.createDiv("calendar-title scrollable");
+    titleEl.setText(`${this.currentDate.getFullYear()}\u5E74${this.currentDate.getMonth() + 1}\u6708`);
     const nextBtn = header.createEl("button", { cls: "calendar-nav-btn" });
     nextBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>';
-    nextBtn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      this.currentDate = new Date(year, month + 1, 1);
-      this.renderCalendar();
-      this.filterNotesByMonth(this.currentDate);
+    titleEl.addEventListener("wheel", (e) => {
+      e.preventDefault();
+      if (e.deltaY < 0) {
+        this.currentDate.setMonth(this.currentDate.getMonth() + 1);
+      } else {
+        this.currentDate.setMonth(this.currentDate.getMonth() - 1);
+      }
+      titleEl.setText(`${this.currentDate.getFullYear()}\u5E74${this.currentDate.getMonth() + 1}\u6708`);
+      const existingContent = this.calendarContainer.querySelector(".calendar-weekdays, .calendar-grid");
+      if (existingContent) {
+        existingContent.remove();
+      }
+      const weekdays = ["\u65E5", "\u4E00", "\u4E8C", "\u4E09", "\u56DB", "\u4E94", "\u516D"];
+      const weekHeader = this.calendarContainer.createDiv("calendar-weekdays");
+      weekdays.forEach((day) => {
+        weekHeader.createDiv("weekday").setText(day);
+      });
+      const grid = this.calendarContainer.createDiv("calendar-grid");
+      const notesByDate = this.getNotesByDate(
+        this.currentDate.getFullYear(),
+        this.currentDate.getMonth()
+      );
+      const notesSection = this.calendarContainer.createDiv("notes-section");
+      this.renderCalendarDays(grid, notesByDate, notesSection);
     });
+    titleEl.setAttribute("title", "\u6EDA\u52A8\u9F20\u6807\u6EDA\u8F6E\u5207\u6362\u6708\u4EFD");
+    prevBtn.addEventListener("click", () => {
+      this.currentDate.setMonth(this.currentDate.getMonth() - 1);
+      titleEl.setText(`${this.currentDate.getFullYear()}\u5E74${this.currentDate.getMonth() + 1}\u6708`);
+      this.renderCalendarContent(this.calendarContainer);
+    });
+    nextBtn.addEventListener("click", () => {
+      this.currentDate.setMonth(this.currentDate.getMonth() + 1);
+      titleEl.setText(`${this.currentDate.getFullYear()}\u5E74${this.currentDate.getMonth() + 1}\u6708`);
+      this.renderCalendarContent(this.calendarContainer);
+    });
+    this.renderCalendarContent(this.calendarContainer);
+  }
+  hideCalendar() {
+    if (!this.calendarContainer) return;
+    this.calendarContainer.style.display = "none";
+  }
+  // 添加渲染日历内容的方法
+  renderCalendarContent(container) {
     const weekdays = ["\u65E5", "\u4E00", "\u4E8C", "\u4E09", "\u56DB", "\u4E94", "\u516D"];
-    const weekHeader = this.calendarContainer.createDiv("calendar-weekdays");
+    const weekHeader = container.createDiv("calendar-weekdays");
     weekdays.forEach((day) => {
       weekHeader.createDiv("weekday").setText(day);
     });
-    const grid = this.calendarContainer.createDiv("calendar-grid");
-    const firstDay = new Date(year, month, 1).getDay();
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const notesCount = this.getNotesCountByDate(year, month);
-    for (let i = 0; i < firstDay; i++) {
-      grid.createDiv("calendar-day empty");
-    }
-    for (let day = 1; day <= daysInMonth; day++) {
-      const dayEl = grid.createDiv("calendar-day");
-      const dateStr = `${year}-${(month + 1).toString().padStart(2, "0")}-${day.toString().padStart(2, "0")}`;
-      dayEl.setText(day.toString());
-      dayEl.setAttribute("data-date", dateStr);
-      if (this.currentFilter.type === "date" && this.currentFilter.value === dateStr) {
-        dayEl.addClass("selected");
-      }
-      const count = notesCount[dateStr] || 0;
-      if (count > 0) {
-        dayEl.createDiv("note-count").setText(count.toString());
-      }
-      dayEl.addEventListener("click", () => {
-        this.filterNotesByDate(dateStr);
-      });
-    }
+    const grid = container.createDiv("calendar-grid");
+    const notesByDate = this.getNotesByDate(
+      this.currentDate.getFullYear(),
+      this.currentDate.getMonth()
+    );
+    const notesSection = container.createDiv("notes-section");
+    this.renderCalendarDays(grid, notesByDate, notesSection);
   }
   // 日历-获取每日笔记数量
   getNotesCountByDate(year, month) {
@@ -3202,11 +3187,21 @@ ${content}` : content;
     const header = calendarContainer.createDiv("calendar-header");
     const prevBtn = header.createEl("button", { cls: "calendar-nav-btn" });
     prevBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>';
-    header.createDiv("calendar-title").setText(
-      `${this.currentDate.getFullYear()}\u5E74${this.currentDate.getMonth() + 1}\u6708`
-    );
+    const titleEl = header.createDiv("calendar-title");
+    titleEl.setText(`${this.currentDate.getFullYear()}\u5E74${this.currentDate.getMonth() + 1}\u6708`);
     const nextBtn = header.createEl("button", { cls: "calendar-nav-btn" });
     nextBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>';
+    titleEl.addEventListener("wheel", (e) => {
+      e.preventDefault();
+      if (e.deltaY < 0) {
+        this.currentDate.setMonth(this.currentDate.getMonth() + 1);
+      } else {
+        this.currentDate.setMonth(this.currentDate.getMonth() - 1);
+      }
+      this.renderCalendarModule(container);
+    });
+    titleEl.setAttribute("title", "\u6EDA\u52A8\u9F20\u6807\u6EDA\u8F6E\u5207\u6362\u6708\u4EFD");
+    titleEl.addClass("scrollable");
     const weekdays = ["\u65E5", "\u4E00", "\u4E8C", "\u4E09", "\u56DB", "\u4E94", "\u516D"];
     const weekHeader = calendarContainer.createDiv("calendar-weekdays");
     weekdays.forEach((day) => {
