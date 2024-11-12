@@ -1,5 +1,5 @@
-import { App, PluginManifest,Plugin, PluginSettingTab, Setting, TFile, WorkspaceLeaf } from 'obsidian';
-import { CardView, VIEW_TYPE_CARD } from './cardView';
+import { App, PluginManifest, Plugin, PluginSettingTab, Setting, TFile, WorkspaceLeaf } from 'obsidian';
+import { CardView, VIEW_TYPE_CARD, HomeModule, DEFAULT_HOME_MODULES } from './cardView';
 
 interface CardViewPluginSettings {
     defaultView: 'home' | 'card' | 'list' | 'timeline' | 'month' | 'week';
@@ -10,6 +10,7 @@ interface CardViewPluginSettings {
     cardHeight: number;
     minCardHeight: number;
     maxCardHeight: number;
+    homeModules: HomeModule[];
 }
 
 const DEFAULT_SETTINGS: CardViewPluginSettings = {
@@ -20,7 +21,8 @@ const DEFAULT_SETTINGS: CardViewPluginSettings = {
     showTagCount: false,
     cardHeight: 280,
     minCardHeight: 200,
-    maxCardHeight: 800
+    maxCardHeight: 800,
+    homeModules: []
 }
 
 class CardViewSettingTab extends PluginSettingTab {
@@ -201,6 +203,10 @@ export default class CardViewPlugin extends Plugin {
 
     async loadSettings() {
         this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+        if (!this.settings.homeModules || this.settings.homeModules.length === 0) {
+            this.settings.homeModules = DEFAULT_HOME_MODULES;
+            await this.saveSettings();
+        }
     }
 
     async saveSettings() {
@@ -251,6 +257,11 @@ export default class CardViewPlugin extends Plugin {
 
     public async saveCardHeight(height: number) {
         this.settings.cardHeight = height;
+        await this.saveSettings();
+    }
+
+    async saveHomeModules(modules: HomeModule[]) {
+        this.settings.homeModules = modules;
         await this.saveSettings();
     }
 }

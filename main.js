@@ -307,6 +307,7 @@ var CardView = class extends import_obsidian.ItemView {
     this.currentYear = today.getFullYear();
     this.currentWeek = this.getWeekNumber(today);
     console.log("\u521D\u59CB\u5316\u5468\u89C6\u56FE - \u5E74\u4EFD:", this.currentYear, "\u5468\u6570:", this.currentWeek);
+    this.homeModules = plugin.settings.homeModules.length > 0 ? plugin.settings.homeModules : DEFAULT_HOME_MODULES;
   }
   /**
    * 获取视图类型
@@ -2600,7 +2601,7 @@ ${content}` : content;
     });
     const layoutSettings = settingsPanel.createDiv("settings-section");
     layoutSettings.createEl("h3", { text: "\u5E03\u5C40\u8BBE\u7F6E" });
-    this.createSliderOption(layoutSettings, "\u5361\u7247\u9AD8\u5EA6", currentSettings.cardHeight, 200, 500, 10, (value) => {
+    this.createSliderOption(layoutSettings, "\u5361\u7247\u9AD8", currentSettings.cardHeight, 200, 500, 10, (value) => {
       currentSettings.cardHeight = value;
       this.container.querySelectorAll(".note-card").forEach((card) => {
         if (card instanceof HTMLElement) {
@@ -3064,6 +3065,7 @@ ${content}` : content;
   // 创建单个模块
   async createModule(container, module2) {
     const moduleEl = container.createDiv(`module-container ${module2.type}-module`);
+    moduleEl.setAttribute("data-module-id", module2.id);
     moduleEl.style.gridColumn = `span ${module2.columns || 4}`;
     const header = moduleEl.createDiv("module-header");
     header.createEl("h3", { text: module2.name });
@@ -3077,7 +3079,7 @@ ${content}` : content;
   }
   // 显示模块管理器
   showModuleManager() {
-    const modal = new ModuleManagerModal(this.app, this.homeModules, (modules) => {
+    const modal = new ModuleManagerModal(this.app, this.homeModules, async (modules) => {
       this.homeModules = modules;
       this.createHomeView();
     });
@@ -3294,9 +3296,7 @@ ${content}` : content;
   }
   // 添加保存模块设置的方法
   async saveModuleSettings() {
-    await this.plugin.saveData({
-      modules: this.homeModules
-    });
+    await this.plugin.saveHomeModules(this.homeModules);
   }
   // 添加渲染模块内容的方法
   async renderModuleContent(container, module2) {
@@ -3537,6 +3537,48 @@ var ModuleManagerModal = class extends import_obsidian.Modal {
     });
   }
 };
+var DEFAULT_HOME_MODULES = [
+  {
+    id: "heatmap",
+    name: "\u6D3B\u52A8\u70ED\u529B\u56FE",
+    type: "heatmap",
+    visible: true,
+    order: 0,
+    columns: 6
+  },
+  {
+    id: "weekly",
+    name: "\u672C\u5468\u7B14\u8BB0",
+    type: "weekly",
+    visible: true,
+    order: 1,
+    columns: 3
+  },
+  {
+    id: "recent",
+    name: "\u6700\u8FD1\u7F16\u8F91",
+    type: "recent",
+    visible: true,
+    order: 2,
+    columns: 3
+  },
+  {
+    id: "stats",
+    name: "\u7B14\u8BB0\u7EDF\u8BA1",
+    type: "stats",
+    visible: true,
+    order: 3,
+    columns: 4
+  },
+  {
+    id: "calendar",
+    name: "\u65E5\u5386",
+    type: "calendar",
+    visible: true,
+    order: 4,
+    columns: 8
+  }
+];
 
 // main.ts
 var DEFAULT_SETTINGS = {
@@ -3547,7 +3589,8 @@ var DEFAULT_SETTINGS = {
   showTagCount: false,
   cardHeight: 280,
   minCardHeight: 200,
-  maxCardHeight: 800
+  maxCardHeight: 800,
+  homeModules: []
 };
 var CardViewSettingTab = class extends import_obsidian2.PluginSettingTab {
   constructor(app, plugin) {
@@ -3646,6 +3689,10 @@ var CardViewPlugin = class extends import_obsidian2.Plugin {
   }
   async loadSettings() {
     this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+    if (!this.settings.homeModules || this.settings.homeModules.length === 0) {
+      this.settings.homeModules = DEFAULT_HOME_MODULES;
+      await this.saveSettings();
+    }
   }
   async saveSettings() {
     await this.saveData(this.settings);
@@ -3687,6 +3734,10 @@ var CardViewPlugin = class extends import_obsidian2.Plugin {
   }
   async saveCardHeight(height) {
     this.settings.cardHeight = height;
+    await this.saveSettings();
+  }
+  async saveHomeModules(modules) {
+    this.settings.homeModules = modules;
     await this.saveSettings();
   }
 };

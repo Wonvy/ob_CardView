@@ -15,7 +15,7 @@ export const VIEW_TYPE_CARD = 'card-view';
 export const VIEW_TYPE_HOME = 'home-view';
 
 // 添加模块类型定义
-interface HomeModule {
+export interface HomeModule {
   id: string;
   name: string;
   type: 'heatmap' | 'recent' | 'weekly' | 'stats' | 'calendar';
@@ -433,6 +433,11 @@ export class CardView extends ItemView {
         this.currentYear = today.getFullYear();
         this.currentWeek = this.getWeekNumber(today);
         console.log('初始化周视图 - 年份:', this.currentYear, '周数:', this.currentWeek);
+
+        // 使用插件保存的设置初始化主页模块
+        this.homeModules = plugin.settings.homeModules.length > 0 
+            ? plugin.settings.homeModules 
+            : DEFAULT_HOME_MODULES;
     }
 
     /**
@@ -1570,7 +1575,7 @@ export class CardView extends ItemView {
                 }
                 this.adjustContentWidth();
                 
-                // 如果正在调整大小，确保预��栏是展开的
+                // 如果正在调整大小，确保预栏是展开的
                 if (this.isPreviewCollapsed) {
                     this.isPreviewCollapsed = false;
                     this.previewContainer.removeClass('collapsed');
@@ -1785,7 +1790,7 @@ export class CardView extends ItemView {
                 });
             }
 
-            // 一次���加所有内到容器
+            // 一次加所有内到容器
             container.appendChild(fragment);
             
             this.timelineCurrentPage++;
@@ -2095,7 +2100,7 @@ export class CardView extends ItemView {
         
         if (this.isCalendarVisible) {
             this.showCalendar();
-            // 显示当前月份的所有��记
+            // 显示当前月份的所有记
             this.filterNotesByMonth(this.currentDate);
         } else {
             this.hideCalendar();
@@ -2928,7 +2933,7 @@ export class CardView extends ItemView {
             previewContainer.scrollTop += e.deltaY;
         });
 
-        // 预览容器添加滚动事件监听
+        // 预览容���添加滚动事件监听
         previewContainer.addEventListener('wheel', (e: WheelEvent) => {
             // 添加滚动时的鼠标样式
             previewContainer.style.cursor = 'ns-resize';
@@ -3636,7 +3641,7 @@ export class CardView extends ItemView {
         layoutSettings.createEl('h3', { text: '布局设置' });
 
         // 卡片高度设置
-        this.createSliderOption(layoutSettings, '卡片高度', currentSettings.cardHeight, 200, 500, 10, (value) => {
+        this.createSliderOption(layoutSettings, '卡片高', currentSettings.cardHeight, 200, 500, 10, (value) => {
             currentSettings.cardHeight = value;
             // 统一处理所有卡片高度调整
             this.container.querySelectorAll('.note-card').forEach((card: Element) => {
@@ -4131,7 +4136,7 @@ export class CardView extends ItemView {
     private navigateWeek(delta: number) {
         console.log('导航前 - 年份:', this.currentYear, '周数:', this.currentWeek, '增量:', delta);
         
-        // 保存当前的和年份
+        // 保存当的和年份
         let newWeek = this.currentWeek;
         let newYear = this.currentYear;
         
@@ -4273,7 +4278,8 @@ export class CardView extends ItemView {
     // 创建单个模块
     private async createModule(container: HTMLElement, module: HomeModule) {
         const moduleEl = container.createDiv(`module-container ${module.type}-module`);
-        moduleEl.style.gridColumn = `span ${module.columns || 4}`; // 设置列数
+        moduleEl.setAttribute('data-module-id', module.id); // 添加模块ID
+        moduleEl.style.gridColumn = `span ${module.columns || 4}`;
         
         // 创建模块头部
         const header = moduleEl.createDiv('module-header');
@@ -4297,7 +4303,7 @@ export class CardView extends ItemView {
 
     // 显示模块管理器
     private showModuleManager() {
-        const modal = new ModuleManagerModal(this.app, this.homeModules, (modules) => {
+        const modal = new ModuleManagerModal(this.app, this.homeModules, async (modules) => {
             this.homeModules = modules;
             // 由于CardView类上不存在saveModuleSettings方法，我们将其注释掉
             // this.saveModuleSettings();
@@ -4625,9 +4631,8 @@ export class CardView extends ItemView {
 
     // 添加保存模块设置的方法
     private async saveModuleSettings() {
-        await this.plugin.saveData({
-            modules: this.homeModules
-        });
+        // 保存到插件设置中
+        await this.plugin.saveHomeModules(this.homeModules);
     }
 
     // 添加渲染模块内容的方法
@@ -4709,7 +4714,7 @@ export class CardView extends ItemView {
             // 根据拖拽方向调整大小
             if (position.includes('right')) {
                 const newColumns = Math.round((startWidth + dx) / gridUnit);
-                if (newColumns >= 1 && newColumns <= 12) {
+                if (newColumns >=1 && newColumns <= 12) {
                     module.style.gridColumn = `span ${newColumns}`;
                     this.showGridSnapIndicator(module, newColumns * gridUnit);
                 }
@@ -4938,3 +4943,47 @@ class ModuleManagerModal extends Modal {
             });
     }
 }
+
+// 添加默认主页模块配置
+export const DEFAULT_HOME_MODULES: HomeModule[] = [
+    {
+        id: 'heatmap',
+        name: '活动热力图',
+        type: 'heatmap',
+        visible: true,
+        order: 0,
+        columns: 6
+    },
+    {
+        id: 'weekly',
+        name: '本周笔记',
+        type: 'weekly',
+        visible: true, 
+        order: 1,
+        columns: 3
+    },
+    {
+        id: 'recent',
+        name: '最近编辑',
+        type: 'recent',
+        visible: true,
+        order: 2,
+        columns: 3
+    },
+    {
+        id: 'stats',
+        name: '笔记统计',
+        type: 'stats',
+        visible: true,
+        order: 3,
+        columns: 4
+    },
+    {
+        id: 'calendar',
+        name: '日历',
+        type: 'calendar',
+        visible: true,
+        order: 4,
+        columns: 8
+    }
+];
