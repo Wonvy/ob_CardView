@@ -2253,7 +2253,7 @@ ${content}` : content;
       });
     }
   }
-  // 速笔记-清理输入
+  // 速笔记-清理��入
   clearQuickNoteInputs(titleInput, contentInput, tags, tagsContainer, tagInput) {
     var _a;
     if (titleInput) {
@@ -2353,7 +2353,7 @@ ${content}` : content;
   saveRecentTags(tags) {
     localStorage.setItem("recent-tags", JSON.stringify(tags));
   }
-  // 加载最近标签
+  // 加载最近��签
   loadRecentTags() {
     const saved = localStorage.getItem("recent-tags");
     return saved ? JSON.parse(saved) : [];
@@ -3075,6 +3075,57 @@ ${content}` : content;
   // 渲染热力图
   async renderHeatmap(container) {
     const heatmapContainer = container.createDiv("heatmap-container");
+    const endDate = /* @__PURE__ */ new Date();
+    const startDate = /* @__PURE__ */ new Date();
+    startDate.setFullYear(endDate.getFullYear() - 1);
+    const dateCountMap = /* @__PURE__ */ new Map();
+    for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+      const dateStr = d.toISOString().split("T")[0];
+      dateCountMap.set(dateStr, 0);
+    }
+    const files = this.app.vault.getMarkdownFiles();
+    files.forEach((file) => {
+      const date = new Date(file.stat.mtime);
+      if (date >= startDate && date <= endDate) {
+        const dateStr = date.toISOString().split("T")[0];
+        dateCountMap.set(dateStr, (dateCountMap.get(dateStr) || 0) + 1);
+      }
+    });
+    const heatmapGrid = heatmapContainer.createDiv("heatmap-grid");
+    const weekLabels = heatmapGrid.createDiv("week-labels");
+    ["", "Mon", "Wed", "Fri"].forEach((label) => {
+      weekLabels.createDiv("week-label").setText(label);
+    });
+    const monthLabels = heatmapGrid.createDiv("month-labels");
+    const daysContainer = heatmapGrid.createDiv("days-container");
+    let currentDate = new Date(startDate);
+    let currentMonth = currentDate.getMonth();
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    let monthDiv = monthLabels.createDiv("month-label");
+    monthDiv.setText(months[currentMonth]);
+    while (currentDate <= endDate) {
+      const dateStr = currentDate.toISOString().split("T")[0];
+      const count = dateCountMap.get(dateStr) || 0;
+      const dayCell = daysContainer.createDiv("day-cell");
+      dayCell.setAttribute("data-date", dateStr);
+      dayCell.setAttribute("data-count", count.toString());
+      let colorClass = "level-0";
+      if (count > 0) {
+        if (count >= 5) colorClass = "level-4";
+        else if (count >= 3) colorClass = "level-3";
+        else if (count >= 2) colorClass = "level-2";
+        else colorClass = "level-1";
+      }
+      dayCell.addClass(colorClass);
+      dayCell.setAttribute("title", `${dateStr}: ${count} contributions`);
+      const newMonth = currentDate.getMonth();
+      if (newMonth !== currentMonth) {
+        currentMonth = newMonth;
+        monthDiv = monthLabels.createDiv("month-label");
+        monthDiv.setText(months[currentMonth]);
+      }
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
   }
   // 渲染本周笔记
   async renderWeeklyNotes(container) {

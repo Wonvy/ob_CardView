@@ -899,7 +899,7 @@ export class CardView extends ItemView {
         // 监听鼠标离开面板
         dropdownPanel.addEventListener('mouseleave', () => {
             isMouseOverPanel = false;
-            // 如��鼠标不在下拉框上，则延迟隐藏
+            // 如鼠标不在下拉框上，则延迟隐藏
             if (!isMouseOverDropdown) {
                 hideTimeout = setTimeout(() => {
                     if (!isMouseOverDropdown && !isMouseOverPanel) {
@@ -1019,7 +1019,7 @@ export class CardView extends ItemView {
             return;
         }
 
-        // 如果有其他视图正在加载，中断它
+        // 如果有其他视图正在加载，中���它
         if (this.currentLoadingView) {
             console.log(`中断 ${this.currentLoadingView} 视图的加载`);
             this.isLoading = false;
@@ -3150,7 +3150,7 @@ export class CardView extends ItemView {
         }
     }
 
-    // 速笔记-清理输入
+    // 速笔记-清理��入
     private clearQuickNoteInputs(
         titleInput: HTMLInputElement | null,
         contentInput: HTMLTextAreaElement,
@@ -3227,7 +3227,7 @@ export class CardView extends ItemView {
             const moveX = Math.abs(e.clientX - startX);
             const moveY = Math.abs(e.clientY - startY);
             
-            // 如果移动超过阈值，则不是点击
+            // 如果移动超过阈值���则不是点击
             if (moveX > 5 || moveY > 5) {
                 isClick = false;
             }
@@ -3299,7 +3299,7 @@ export class CardView extends ItemView {
         localStorage.setItem('recent-tags', JSON.stringify(tags));
     }
 
-    // 加载最近标签
+    // 加载最近��签
     private loadRecentTags(): string[] {
         const saved = localStorage.getItem('recent-tags');
         return saved ? JSON.parse(saved) : [];
@@ -4295,10 +4295,89 @@ export class CardView extends ItemView {
     // 渲染热力图
     private async renderHeatmap(container: HTMLElement) {
         const heatmapContainer = container.createDiv('heatmap-container');
-        // 获取过去一年的笔记创建/修数据
-        // const data = this.getHeatmapData();
-        // 使用 D3.js 或其他库渲染热力图
-        // ... 热力图渲染代码
+        
+        // 获取过去一年的数据
+        const endDate = new Date();
+        const startDate = new Date();
+        startDate.setFullYear(endDate.getFullYear() - 1);
+        
+        // 创建日期到计数的映射
+        const dateCountMap = new Map<string, number>();
+        
+        // 初始化所有日期的计数为0
+        for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+            const dateStr = d.toISOString().split('T')[0];
+            dateCountMap.set(dateStr, 0);
+        }
+        
+        // 统计每天的笔记数量
+        const files = this.app.vault.getMarkdownFiles();
+        files.forEach(file => {
+            const date = new Date(file.stat.mtime);
+            if (date >= startDate && date <= endDate) {
+                const dateStr = date.toISOString().split('T')[0];
+                dateCountMap.set(dateStr, (dateCountMap.get(dateStr) || 0) + 1);
+            }
+        });
+        
+        // 创建热力图表格
+        const heatmapGrid = heatmapContainer.createDiv('heatmap-grid');
+        
+        // 添加星期标签
+        const weekLabels = heatmapGrid.createDiv('week-labels');
+        ['', 'Mon', 'Wed', 'Fri'].forEach(label => {
+            weekLabels.createDiv('week-label').setText(label);
+        });
+        
+        // 创建月份标签容器
+        const monthLabels = heatmapGrid.createDiv('month-labels');
+        
+        // 创建日期格子容器
+        const daysContainer = heatmapGrid.createDiv('days-container');
+        
+        // 获取开始日期是星期几（0是周日，1是周一）
+        let currentDate = new Date(startDate);
+        let currentMonth = currentDate.getMonth();
+        
+        // 创建月份标签
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        let monthDiv = monthLabels.createDiv('month-label');
+        monthDiv.setText(months[currentMonth]);
+        
+        // 创建日期格子
+        while (currentDate <= endDate) {
+            const dateStr = currentDate.toISOString().split('T')[0];
+            const count = dateCountMap.get(dateStr) || 0;
+            
+            // 创建日期格子
+            const dayCell = daysContainer.createDiv('day-cell');
+            dayCell.setAttribute('data-date', dateStr);
+            dayCell.setAttribute('data-count', count.toString());
+            
+            // 根据计数设置颜色深浅
+            let colorClass = 'level-0';
+            if (count > 0) {
+                if (count >= 5) colorClass = 'level-4';
+                else if (count >= 3) colorClass = 'level-3';
+                else if (count >= 2) colorClass = 'level-2';
+                else colorClass = 'level-1';
+            }
+            dayCell.addClass(colorClass);
+            
+            // 添加悬停提示
+            dayCell.setAttribute('title', `${dateStr}: ${count} contributions`);
+            
+            // 检查是否需要添加新的月份标签
+            const newMonth = currentDate.getMonth();
+            if (newMonth !== currentMonth) {
+                currentMonth = newMonth;
+                monthDiv = monthLabels.createDiv('month-label');
+                monthDiv.setText(months[currentMonth]);
+            }
+            
+            // 移到下一天
+            currentDate.setDate(currentDate.getDate() + 1);
+        }
     }
 
     // 渲染本周笔记
@@ -4518,7 +4597,7 @@ class ModuleManagerModal extends Modal {
             this.modules[newIndex] = temp;
             // 更新顺序
             this.modules.forEach((m, i) => m.order = i);
-            // 重新渲染列表
+            // 重新渲染列���
             this.onOpen();
         }
     }
