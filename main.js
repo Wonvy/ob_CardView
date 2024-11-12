@@ -267,7 +267,7 @@ var CardView = class extends import_obsidian.ItemView {
     this.loadingStatus.innerHTML = `
             <div class="loading-indicator">
                 <div class="loading-spinner"></div>
-                <span>\u51C6\u5907\u52A0\u8F7D...</span>
+                <span>\u51C6\uFFFD\uFFFD\uFFFD\u52A0\u8F7D...</span>
             </div>
         `;
     this.statusLeft.appendChild(this.loadingStatus);
@@ -706,7 +706,7 @@ ${content}` : content;
     card.style.width = `${this.cardSize}px`;
     card.style.height = `${this.cardHeight}px`;
     const header = card.createDiv("note-card-header");
-    if (this.cardSettings.list.showDate) {
+    if (this.cardSettings[this.currentView].showDate) {
       const lastModified = header.createDiv("note-date show");
       lastModified.setText(new Date(file.stat.mtime).toLocaleDateString());
     }
@@ -2410,7 +2410,7 @@ ${content}` : content;
     });
     settingsBtn.innerHTML = `
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-            <span>${this.currentView}\u89C6\u56FE\u8BBE\u7F6E</span>
+            <span>\u89C6\u56FE\u8BBE\u7F6E</span>
         `;
     const settingsPanel = settingsContainer.createDiv("card-settings-panel");
     settingsPanel.style.display = "none";

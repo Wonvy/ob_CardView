@@ -408,7 +408,7 @@ export class CardView extends ItemView {
         this.loadingStatus.innerHTML = `
             <div class="loading-indicator">
                 <div class="loading-spinner"></div>
-                <span>准备加载...</span>
+                <span>准���加载...</span>
             </div>
         `;
         this.statusLeft.appendChild(this.loadingStatus);
@@ -604,7 +604,7 @@ export class CardView extends ItemView {
         // 创建右侧已选标签容器
         const selectedTagsContainer = leftArea.createDiv('selected-tags-container');
 
-        // 修改下拉列表的显示/隐藏逻辑
+        // 修改���拉列表的显示/隐藏逻辑
         let isMouseOverDropdown = false;
         let isMouseOverPanel = false;
         let hideTimeout: NodeJS.Timeout;
@@ -1000,7 +1000,7 @@ export class CardView extends ItemView {
         // 创建卡片头部
         const header = card.createDiv('note-card-header');
         // 添加修改日期
-        if (this.cardSettings.list.showDate) {
+        if (this.cardSettings[this.currentView].showDate) { // 确保使用当前视图的设置
             const lastModified = header.createDiv('note-date show'); // 添加 show 类
             lastModified.setText(new Date(file.stat.mtime).toLocaleDateString());
         }
@@ -3367,7 +3367,7 @@ export class CardView extends ItemView {
         });
         settingsBtn.innerHTML = `
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-            <span>${this.currentView}视图设置</span>
+            <span>视图设置</span>
         `;
 
         // 创建设置面板
