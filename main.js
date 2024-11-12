@@ -34,13 +34,11 @@ var import_obsidian2 = require("obsidian");
 var import_obsidian = require("obsidian");
 var VIEW_TYPE_CARD = "card-view";
 var CardView = class extends import_obsidian.ItemView {
-  /**
-   * 构造函数
-   * @param leaf - 工作区叶子节点
-   * @param plugin - 插件实例
-   */
   constructor(leaf, plugin) {
     super(leaf);
+    this.scrollTimeout = null;
+    this.plugin = plugin;
+    this.currentView = "card";
     this.container = createDiv();
     this.tagContainer = createDiv();
     this.previewContainer = createDiv();
@@ -53,9 +51,7 @@ var CardView = class extends import_obsidian.ItemView {
     this.lastSelectedNote = null;
     this.recentFolders = [];
     this.cardSize = 280;
-    // 默认卡片宽度
     this.cardHeight = 280;
-    // 默认卡片高度
     this.calendarContainer = createDiv();
     this.isCalendarVisible = false;
     this.currentDate = /* @__PURE__ */ new Date();
@@ -68,52 +64,25 @@ var CardView = class extends import_obsidian.ItemView {
     this.isLoading = false;
     this.hasMoreNotes = true;
     this.loadingIndicator = createDiv("loading-indicator");
-    // 添加时间轴相关的属性
     this.timelineCurrentPage = 1;
     this.timelinePageSize = 10;
     this.timelineIsLoading = false;
     this.timelineHasMore = true;
     this.timelineLoadingIndicator = createDiv("timeline-loading-indicator");
-    // 在 CardView 类中添加新的属性
     this.statusBar = createDiv("status-bar");
     this.statusLeft = createDiv("status-left");
     this.statusRight = createDiv("status-right");
     this.loadingStatus = createDiv("status-item");
-    // 在 CardView 类中添加新属性
     this.currentLoadingView = null;
-    // 在 CardView 类的属性部分添加新的配置项
     this.cardSettings = {
       showDate: true,
-      showContent: true
+      showContent: true,
+      cardWidth: 280,
+      cardHeight: 280,
+      cardGap: 16,
+      cardsPerRow: 0
     };
-    this.plugin = plugin;
-    this.currentView = plugin.settings.defaultView;
-    this.loadingIndicator = createDiv("loading-indicator");
-    this.loadingIndicator.innerHTML = `
-            <div class="loading-spinner"></div>
-            <div class="loading-text">\u52A0\u8F7D\u4E2D...</div>
-        `;
-    this.loadingIndicator.style.display = "none";
-    this.intersectionObserver = new IntersectionObserver(
-      (entries) => {
-        entries.forEach(async (entry) => {
-          if (entry.isIntersecting) {
-            const noteContent = entry.target;
-            const filePath = noteContent.getAttribute("data-path");
-            if (filePath && !this.loadedNotes.has(filePath)) {
-              const file = this.app.vault.getAbstractFileByPath(filePath);
-              if (file instanceof import_obsidian.TFile) {
-                await this.loadNoteContent(noteContent, file);
-              }
-            }
-          }
-        });
-      },
-      {
-        rootMargin: "100px",
-        threshold: 0.1
-      }
-    );
+    this.setupIntersectionObserver();
   }
   /**
    * 获取视图类型
@@ -246,7 +215,7 @@ var CardView = class extends import_obsidian.ItemView {
     const contentArea = contentSection.createDiv("card-view-content");
     this.container = contentArea.createDiv("card-container");
     this.cardSize = this.plugin.settings.cardWidth;
-    this.container.style.gridTemplateColumns = `repeat(auto-fill, ${this.cardSize}px)`;
+    this.container.style.gridTemplateColumns = `repeat(auto-fill, ${this.cardSize}px`;
     this.container.addEventListener("wheel", (e) => {
       if (e.ctrlKey || e.shiftKey) {
         e.preventDefault();
@@ -354,7 +323,6 @@ ${content}` : content;
       }
     });
     const quickNoteBackdrop = mainLayout.createDiv("quick-note-backdrop");
-    this.createCardSettings(leftTools);
   }
   /**
    * 获取所有笔记中的标签
@@ -389,7 +357,8 @@ ${content}` : content;
   async loadTags() {
     const tagCounts = this.getTagsWithCount();
     this.tagContainer.empty();
-    const dropdownContainer = this.tagContainer.createDiv("tag-dropdown-container");
+    const leftArea = this.tagContainer.createDiv("filter-toolbar-left");
+    const dropdownContainer = leftArea.createDiv("tag-dropdown-container");
     const dropdown = dropdownContainer.createEl("select", {
       cls: "tag-dropdown"
     });
@@ -414,7 +383,7 @@ ${content}` : content;
         dropdown.value = "";
       });
     });
-    const selectedTagsContainer = this.tagContainer.createDiv("selected-tags-container");
+    const selectedTagsContainer = leftArea.createDiv("selected-tags-container");
     let isMouseOverDropdown = false;
     let isMouseOverPanel = false;
     let hideTimeout;
@@ -455,6 +424,8 @@ ${content}` : content;
     this.selectedTags.forEach((tag) => {
       this.addSelectedTag(tag, selectedTagsContainer);
     });
+    const rightArea = this.tagContainer.createDiv("filter-toolbar-right");
+    this.createCardSettings(rightArea);
   }
   // 添加新方法：创建已选标签
   addSelectedTag(tag, container) {
@@ -533,7 +504,7 @@ ${content}` : content;
         this.createListView();
         break;
       case "timeline":
-        statusMessage = "\u5207\u6362\u5230\u65F6\u95F4\u8F74\u89C6\u56FE - \u6309\u65E5\u671F\u5206\u7EC4";
+        statusMessage = "\u5207\u6362\u65F6\u95F4\u8F74\u89C6\u56FE - \u6309\u65E5\u671F\u5206\u7EC4";
         this.createTimelineView();
         break;
       case "month":
@@ -662,7 +633,6 @@ ${content}` : content;
         (entries) => {
           entries.forEach((entry) => {
             if (entry.isIntersecting && !this.isLoading && this.hasMoreNotes && this.currentView === "card") {
-              console.log("Intersection Observer \u89E6\u53D1\u52A0\u8F7D\u66F4\u591A");
               this.loadNextPage();
             }
           });
@@ -674,8 +644,6 @@ ${content}` : content;
         }
       );
       observer.observe(this.loadingIndicator);
-      console.log("\u5DF2\u6DFB\u52A0 Intersection Observer");
-      let scrollTimeout;
       this.container.addEventListener("scroll", () => {
         const { scrollTop, scrollHeight, clientHeight } = this.container;
         const scrollPercentage = Math.round(scrollTop / (scrollHeight - clientHeight) * 100);
@@ -689,27 +657,16 @@ ${content}` : content;
             this.statusRight.appendChild(scrollStatus);
           }
         }
-        clearTimeout(scrollTimeout);
-        scrollTimeout = setTimeout(() => {
+        if (this.scrollTimeout) {
+          clearTimeout(this.scrollTimeout);
+        }
+        this.scrollTimeout = setTimeout(() => {
           const triggerThreshold = 300;
           if (scrollHeight - scrollTop - clientHeight < triggerThreshold && !this.isLoading && this.hasMoreNotes && this.currentView === "card") {
-            console.log("\u6EDA\u52A8\u89E6\u53D1\u52A0\u8F7D\u66F4\u591A", {
-              scrollTop,
-              scrollHeight,
-              clientHeight,
-              remaining: scrollHeight - scrollTop - clientHeight
-            });
             this.loadNextPage();
           }
         }, 100);
       });
-      setTimeout(() => {
-        const { scrollHeight, clientHeight } = this.container;
-        if (scrollHeight <= clientHeight && !this.isLoading && this.hasMoreNotes && this.currentView === "card") {
-          console.log("\u521D\u59CB\u5185\u5BB9\u4E0D\u8DB3\uFF0C\u89E6\u53D1\u52A0\u8F7D\u66F4\u591A");
-          this.loadNextPage();
-        }
-      }, 100);
     } catch (error) {
       console.error("setupInfiniteScroll \u9519\u8BEF:", error);
     }
@@ -1086,7 +1043,7 @@ ${content}` : content;
   // 添时间轴滚动听方法
   setupTimelineScroll(container) {
     try {
-      console.log("\u8BBE\u7F6E\u65F6\u95F4\u8F74\u6EDA\u52A8\u76D1\u542C...");
+      console.log("\u8BBE\u7F6E\u65F6\u95F4\u8F74\u6EDA\u76D1\u542C...");
       const observer = new IntersectionObserver(
         (entries) => {
           entries.forEach((entry) => {
@@ -1597,7 +1554,7 @@ ${content}` : content;
   async deleteEmptyNotes() {
     const selectedFiles = this.getSelectedFiles();
     if (selectedFiles.length === 0) {
-      new import_obsidian.Notice("\u8BF7\u5148\u9009\u62E9\u8981\u68C0\u67E5\u7684\u7B14\u8BB0");
+      new import_obsidian.Notice("\u8BF7\u5148\u9009\u62E9\u68C0\u67E5\u7684\u7B14\u8BB0");
       return;
     }
     const emptyNotes = [];
@@ -1785,7 +1742,7 @@ ${emptyNotes.map((file) => file.basename).join("\n")}`
   formatMonthTitle(date) {
     return `${date.getFullYear()}${date.getMonth() + 1}\u6708`;
   }
-  // 年份导航
+  // 年份航
   navigateYear(delta) {
     this.currentDate = new Date(this.currentDate.getFullYear() + delta, this.currentDate.getMonth());
     this.updateMonthView();
@@ -1802,7 +1759,7 @@ ${emptyNotes.map((file) => file.basename).join("\n")}`
       files.forEach((file) => {
         var _a;
         const pathParts = file.path.split("/");
-        const rootFolder = pathParts.length > 1 ? pathParts[0] : "\u6839\u76EE\u5F55";
+        const rootFolder = pathParts.length > 1 ? pathParts[0] : "\u6839\u5F55";
         const subFolder = pathParts.length > 2 ? pathParts[1] : "";
         if (!folderStructure.has(rootFolder)) {
           folderStructure.set(rootFolder, /* @__PURE__ */ new Map());
@@ -2248,7 +2205,7 @@ ${content}` : content;
     const backdrop = this.containerEl.querySelector(".quick-note-backdrop");
     backdrop == null ? void 0 : backdrop.removeClass("active");
   }
-  // 恢复快速笔记
+  // 恢快速笔记
   restoreQuickNote(element) {
     if (!element.hasClass("minimized")) return;
     const workspaceLeafContent = this.containerEl.closest(".workspace-leaf-content");
@@ -2434,27 +2391,65 @@ ${content}` : content;
         `;
     const settingsPanel = settingsContainer.createDiv("card-settings-panel");
     settingsPanel.style.display = "none";
-    const showDateOption = settingsPanel.createDiv("settings-option");
-    const showDateCheckbox = showDateOption.createEl("input", {
-      type: "checkbox",
-      cls: "settings-checkbox"
-    });
-    showDateCheckbox.checked = this.cardSettings.showDate;
-    showDateOption.createSpan({ text: "\u663E\u793A\u65E5\u671F" });
-    const showContentOption = settingsPanel.createDiv("settings-option");
-    const showContentCheckbox = showContentOption.createEl("input", {
-      type: "checkbox",
-      cls: "settings-checkbox"
-    });
-    showContentCheckbox.checked = this.cardSettings.showContent;
-    showContentOption.createSpan({ text: "\u663E\u793A\u7B14\u8BB0\u5185\u5BB9" });
-    showDateCheckbox.addEventListener("change", () => {
-      this.cardSettings.showDate = showDateCheckbox.checked;
+    const basicSettings = settingsPanel.createDiv("settings-section");
+    basicSettings.createEl("h3", { text: "\u57FA\u672C\u8BBE\u7F6E" });
+    const showDateOption = this.createCheckboxOption(basicSettings, "\u663E\u793A\u65E5\u671F", this.cardSettings.showDate);
+    showDateOption.addEventListener("change", (e) => {
+      this.cardSettings.showDate = e.target.checked;
       this.refreshView();
     });
-    showContentCheckbox.addEventListener("change", () => {
-      this.cardSettings.showContent = showContentCheckbox.checked;
+    const showContentOption = this.createCheckboxOption(basicSettings, "\u663E\u793A\u7B14\u8BB0\u5185\u5BB9", this.cardSettings.showContent);
+    showContentOption.addEventListener("change", (e) => {
+      this.cardSettings.showContent = e.target.checked;
       this.refreshView();
+    });
+    const layoutSettings = settingsPanel.createDiv("settings-section");
+    layoutSettings.createEl("h3", { text: "\u5E03\u5C40\u8BBE\u7F6E" });
+    this.createSliderOption(layoutSettings, "\u5361\u7247\u5BBD\u5EA6", this.cardSettings.cardWidth, 200, 500, 10, (value) => {
+      this.cardSettings.cardWidth = value;
+      this.updateCardLayout();
+    });
+    this.createSliderOption(layoutSettings, "\u5361\u7247\u9AD8\u5EA6", this.cardSettings.cardHeight, 200, 500, 10, (value) => {
+      this.cardSettings.cardHeight = value;
+      this.updateCardLayout();
+    });
+    this.createSliderOption(layoutSettings, "\u5361\u7247\u95F4\u8DDD", this.cardSettings.cardGap, 8, 40, 4, (value) => {
+      this.cardSettings.cardGap = value;
+      this.updateCardLayout();
+    });
+    const cardsPerRowContainer = layoutSettings.createDiv("setting-item");
+    cardsPerRowContainer.createEl("label", { text: "\u6BCF\u884C\u5361\u7247\u6570\u91CF" });
+    const controlGroup = cardsPerRowContainer.createDiv("setting-control-group");
+    const decreaseBtn = controlGroup.createEl("button", {
+      cls: "cards-per-row-btn decrease",
+      text: "-"
+    });
+    const cardsPerRowInput = controlGroup.createEl("input", {
+      type: "number",
+      value: this.cardSettings.cardsPerRow.toString(),
+      placeholder: "\u81EA\u52A8"
+    });
+    const increaseBtn = controlGroup.createEl("button", {
+      cls: "cards-per-row-btn increase",
+      text: "+"
+    });
+    const updateCardsPerRow = (value) => {
+      value = Math.max(0, Math.min(10, value));
+      cardsPerRowInput.value = value.toString();
+      this.cardSettings.cardsPerRow = value;
+      this.updateCardLayout();
+    };
+    decreaseBtn.addEventListener("click", () => {
+      const currentValue = parseInt(cardsPerRowInput.value) || 0;
+      updateCardsPerRow(currentValue - 1);
+    });
+    increaseBtn.addEventListener("click", () => {
+      const currentValue = parseInt(cardsPerRowInput.value) || 0;
+      updateCardsPerRow(currentValue + 1);
+    });
+    cardsPerRowInput.addEventListener("change", (e) => {
+      const value = parseInt(e.target.value);
+      updateCardsPerRow(isNaN(value) ? 0 : value);
     });
     settingsBtn.addEventListener("click", (e) => {
       e.stopPropagation();
@@ -2466,6 +2461,91 @@ ${content}` : content;
         settingsPanel.style.display = "none";
       }
     });
+  }
+  // 创建滑块选项的辅助方法
+  createSliderOption(container, label, defaultValue, min, max, step, onChange) {
+    const settingItem = container.createDiv("setting-item");
+    settingItem.createEl("label", { text: label });
+    const controlGroup = settingItem.createDiv("setting-control-group");
+    const slider = document.createElement("input");
+    slider.type = "range";
+    slider.value = defaultValue.toString();
+    slider.min = min.toString();
+    slider.max = max.toString();
+    slider.step = step.toString();
+    controlGroup.appendChild(slider);
+    const numberInput = document.createElement("input");
+    numberInput.type = "number";
+    numberInput.value = defaultValue.toString();
+    numberInput.min = min.toString();
+    numberInput.max = max.toString();
+    numberInput.step = step.toString();
+    controlGroup.appendChild(numberInput);
+    slider.addEventListener("input", (e) => {
+      const value = parseInt(e.target.value);
+      numberInput.value = value.toString();
+      onChange(value);
+    });
+    numberInput.addEventListener("change", (e) => {
+      const value = parseInt(e.target.value);
+      slider.value = value.toString();
+      onChange(value);
+    });
+  }
+  // 创建复选框选项的辅助方法
+  createCheckboxOption(container, label, defaultChecked) {
+    const settingItem = container.createDiv("setting-item");
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.checked = defaultChecked;
+    settingItem.appendChild(checkbox);
+    const labelEl = document.createElement("label");
+    labelEl.textContent = label;
+    settingItem.appendChild(labelEl);
+    return checkbox;
+  }
+  // 更新卡片布局的方法
+  updateCardLayout() {
+    const container = this.container;
+    if (!container) return;
+    container.style.gap = `${this.cardSettings.cardGap}px`;
+    if (this.cardSettings.cardsPerRow > 0) {
+      const totalWidth = container.offsetWidth;
+      const totalGap = this.cardSettings.cardGap * (this.cardSettings.cardsPerRow - 1);
+      const cardWidth = (totalWidth - totalGap) / this.cardSettings.cardsPerRow;
+      container.style.gridTemplateColumns = `repeat(${this.cardSettings.cardsPerRow}, ${cardWidth}px)`;
+    } else {
+      container.style.gridTemplateColumns = `repeat(auto-fill, minmax(${this.cardSettings.cardWidth}px, 1fr))`;
+    }
+    container.querySelectorAll(".note-card").forEach((card) => {
+      if (card instanceof HTMLElement) {
+        card.style.width = "100%";
+        card.style.height = `${this.cardSettings.cardHeight}px`;
+      }
+    });
+  }
+  // 添加 setupIntersectionObserver 方法
+  setupIntersectionObserver() {
+    this.intersectionObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach(async (entry) => {
+          if (entry.isIntersecting) {
+            const noteContent = entry.target;
+            const filePath = noteContent.getAttribute("data-path");
+            if (filePath && !this.loadedNotes.has(filePath)) {
+              const file = this.app.vault.getAbstractFileByPath(filePath);
+              if (file instanceof import_obsidian.TFile) {
+                await this.loadNoteContent(noteContent, file);
+              }
+            }
+          }
+        });
+      },
+      {
+        rootMargin: "100px",
+        threshold: 0.1
+      }
+    );
   }
 };
 var ConfirmModal = class extends import_obsidian.Modal {

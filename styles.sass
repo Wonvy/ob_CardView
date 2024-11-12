@@ -190,108 +190,60 @@
     padding: 12px 16px
     border-bottom: 1px solid var(--background-modifier-border)
     background-color: var(--background-primary)
-    gap: 12px
+    justify-content: space-between
     align-items: center
 
-    // 下拉列表容器样式优化
-    .tag-dropdown-container
-      position: relative
+    // 添加左侧区域样式
+    .filter-toolbar-left
+        display: flex
+        gap: 12px
+        align-items: center
+        flex: 1  // 让左侧区域占据剩余空间
 
-
-      .tag-dropdown
-        width: 100%
-        padding: 6px 18px
-        border: 1px solid var(--background-modifier-border)
-        border-radius: 4px
-        z-index:1001
-        color: var(--text-muted)
-        font-size: 13px
-        cursor: pointer
-        transition: all 0.2s ease
+    // 添加右侧区域样式
+    .filter-toolbar-right
         display: flex
         align-items: center
-        gap: 6px
-        
-        &::before
-          content: ''
-          display: inline-block
-          width: 16px
-          height: 16px
-          background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>')
-          background-repeat: no-repeat
-          background-position: center
-          opacity: 0.5
+        gap: 12px
+        margin-left: 16px  // 与左侧保持一定距离
 
-        // 修改选项列表样式
-        & > option
-          display: none  // 隐藏原生选项
+    // 修改卡片设置容器样式
+    .card-settings-container
+        position: relative
         
-        // 自定义下拉面板
-        &:focus + .dropdown-panel
-          display: grid
-          
-      // 添加自定义下拉面板
-      .dropdown-panel
-        display: none
-        position: absolute
-        top: calc(100% - 1px)
-        left: 0
-        // margin-top: 4px
-        background: var(--background-primary)
-        border: 1px solid var(--background-modifier-border)
-        border-radius: 4px
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1)
-        z-index: 1000
-        width: 480px
-        padding: 8px
-        
-        // 网格布局
-        grid-template-columns: repeat(3, 1fr)
-        gap: 4px
-        max-height: 300px
-        overflow-y: auto
-        
-        // 确保面板显示在其他元素之上
-        &[style*="display: grid"]
-            z-index: 1001
-        
-        // 选项样式
-        .dropdown-option
-          padding: 6px 8px
-          cursor: pointer
-          color: var(--text-muted)
-          font-size: 13px
-          border-radius: 4px
-          display: flex
-          align-items: center
-          justify-content: space-between
-          transition: all 0.2s ease
-          
-          &::before
-            content: ''
-            display: inline-block
-            width: 16px
-            height: 16px
-            margin-right: 6px
-            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>')
-            background-repeat: no-repeat
-            background-position: center
-            opacity: 0.5
-            transition: opacity 0.2s ease
-
-          &:hover
-            background-color: var(--background-modifier-hover)
-            color: var(--text-normal)
+        .card-settings-button
+            display: flex
+            align-items: center
+            gap: 6px
+            padding: 6px 12px
+            background: transparent
+            border: 1px solid var(--background-modifier-border)
+            border-radius: 4px
+            color: var(--text-muted)
+            cursor: pointer
+            font-size: 13px
+            transition: all 0.2s ease
             
-            &::before
-              opacity: 1
+            &:hover
+                background: var(--background-modifier-hover)
+                color: var(--text-normal)
+                border-color: var(--interactive-accent)
+            
+            svg
+                width: 14px
+                height: 14px
+                opacity: 0.8
+            
+            span
+                font-size: 13px
 
-      &:hover
-        .tag-dropdown
-          border-bottom: 1px solid var(--background-primary)
-          background: var(--background-primary)
-          color: var(--text-normal)
-          border-radius:4px 4px 0 0  
+        // 设置面板样式调整
+        .card-settings-panel
+            top: calc(100% + 8px)  // 调整面板位置
+            right: 0
+            // ... 其他面板样式保持不变 ...
+
+    // ... 其他现有样式保持不变 ...
 
 .selected-tag
   display: inline-flex
@@ -614,7 +566,7 @@
 
 
 
-// 添加预容器相关样式   
+// 添预容器相关样式   
 .preview-wrapper 
   position: relative
   display: flex
@@ -766,7 +718,7 @@
             color: var(--text-muted)  
         
         .timeline-notes-list 
-          margin-left: 20px  // 减小左边距
+          margin-left: 20px  //
           margin-top: 2rem
           display: grid  // 改为网格布局
           grid-template-columns: repeat(auto-fill, minmax(280px, 1fr))  // 自适应列宽
@@ -987,7 +939,7 @@
                 min-width: 80px
                 text-align: center
 
-        // 月份选择器
+        // 月份择器
         .month-selector
             display: flex
             gap: 4px
@@ -1849,3 +1801,240 @@
     to
         opacity: 1
 
+// 添加卡片设置面板样式
+.card-settings-panel
+    position: absolute
+    top: 100%
+    right: 0
+    background: var(--background-primary)
+    border: 1px solid var(--background-modifier-border)
+    border-radius: 8px
+    padding: 16px
+    min-width: 300px
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1)
+    z-index: 1000
+
+    .settings-section
+        margin-bottom: 16px
+
+        h3
+            font-size: 14px
+            font-weight: 600
+            margin-bottom: 12px
+            color: var(--text-normal)
+
+    .setting-item
+        display: flex
+        align-items: center
+        gap: 12px
+        margin-bottom: 12px
+
+        label
+            flex: 1
+            font-size: 13px
+            color: var(--text-muted)
+
+        .setting-control-group
+            display: flex
+            align-items: center
+            gap: 8px
+
+            input[type="range"]
+                width: 120px
+                height: 4px
+                -webkit-appearance: none
+                background: var(--background-modifier-border)
+                border-radius: 2px
+                outline: none
+
+                &::-webkit-slider-thumb
+                    -webkit-appearance: none
+                    width: 12px
+                    height: 12px
+                    background: var(--interactive-accent)
+                    border-radius: 50%
+                    cursor: pointer
+                    transition: all 0.2s ease
+
+                    &:hover
+                        transform: scale(1.2)
+
+            input[type="number"]
+                width: 60px
+                padding: 4px 8px
+                border: 1px solid var(--background-modifier-border)
+                border-radius: 4px
+                font-size: 12px
+                color: var(--text-normal)
+                background: var(--background-primary)
+
+                &:focus
+                    border-color: var(--interactive-accent)
+                    outline: none
+
+        input[type="checkbox"]
+            width: 16px
+            height: 16px
+            border: 1px solid var(--background-modifier-border)
+            border-radius: 4px
+            cursor: pointer
+
+            &:checked
+                background-color: var(--interactive-accent)
+                border-color: var(--interactive-accent)
+
+        // 添加每行卡片数量控制按钮样式
+        .cards-per-row-btn
+            width: 24px
+            height: 24px
+            padding: 0
+            display: flex
+            align-items: center
+            justify-content: center
+            background: var(--background-primary)
+            border: 1px solid var(--background-modifier-border)
+            border-radius: 4px
+            color: var(--text-muted)
+            cursor: pointer
+            font-size: 16px
+            font-weight: bold
+            transition: all 0.2s ease
+            
+            &:hover
+                background: var(--background-modifier-hover)
+                color: var(--text-normal)
+                border-color: var(--interactive-accent)
+            
+            &:active
+                transform: scale(0.95)
+            
+            &.decrease
+                padding-bottom: 2px
+            
+            &.increase
+                padding-bottom: 2px
+
+        // 调整数字输入框样式
+        input[type="number"]
+            text-align: center
+            width: 50px
+            margin: 0 4px
+            
+            // 隐藏上下箭头
+            &::-webkit-inner-spin-button,
+            &::-webkit-outer-spin-button
+                -webkit-appearance: none
+                margin: 0
+
+.card-settings-container
+  position: relative
+
+// 修改下拉面板样式
+.filter-toolbar
+    // ... 其他样式保持不变 ...
+
+    // 下拉列表容器样式优化
+    .tag-dropdown-container
+        position: relative
+        min-width: 120px  // 设置最小宽度
+
+        .tag-dropdown
+            width: 100%
+            padding: 6px 18px
+            border: 1px solid var(--background-modifier-border)
+            border-radius: 4px
+            z-index: 1001
+            color: var(--text-muted)
+            font-size: 13px
+            cursor: pointer
+            transition: all 0.2s ease
+            display: flex
+            align-items: center
+            gap: 6px
+            
+            &::before
+                content: ''
+                display: inline-block
+                width: 16px
+                height: 16px
+                background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>')
+                background-repeat: no-repeat
+                background-position: center
+                opacity: 0.5
+
+        // 修改下拉面板样式
+        .dropdown-panel
+            position: absolute
+            top: calc(100% + 4px)
+            left: 0
+            background: var(--background-primary)
+            border: 1px solid var(--background-modifier-border)
+            border-radius: 4px
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1)
+            z-index: 1000
+            width: 480px  // 固定宽度
+            padding: 8px
+            display: none  // 默认隐藏
+            
+            // 使用网格布局，固定为3列
+            display: grid
+            grid-template-columns: repeat(3, 1fr)  // 三列等宽
+            gap: 4px  // 设置间距
+            max-height: 300px
+            overflow-y: auto
+            
+            // 选项样式
+            .dropdown-option
+                padding: 6px 8px
+                cursor: pointer
+                color: var(--text-muted)
+                font-size: 13px
+                border-radius: 4px
+                display: flex
+                align-items: center
+                justify-content: space-between
+                transition: all 0.2s ease
+                
+                &::before
+                    content: ''
+                    display: inline-block
+                    width: 16px
+                    height: 16px
+                    margin-right: 6px
+                    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>')
+                    background-repeat: no-repeat
+                    background-position: center
+                    opacity: 0.5
+                    transition: opacity 0.2s ease
+
+                &:hover
+                    background-color: var(--background-modifier-hover)
+                    color: var(--text-normal)
+                    
+                    &::before
+                        opacity: 1
+
+                // 标签计数样式
+                .tag-count
+                    background: var(--background-modifier-border)
+                    color: var(--text-muted)
+                    padding: 2px 6px
+                    border-radius: 10px
+                    font-size: 12px
+                    min-width: 24px
+                    text-align: center
+
+        // 悬停时显示面板
+        &:hover
+            .tag-dropdown
+                border-bottom-left-radius: 0
+                border-bottom-right-radius: 0
+                border-bottom-color: transparent
+                background: var(--background-primary)
+                color: var(--text-normal)
+
+            .dropdown-panel
+                display: grid  // 显示网格布局
+                border-top-left-radius: 0
+                border-top-right-radius: 0
+                margin-top: -1px  // 与下拉框对齐

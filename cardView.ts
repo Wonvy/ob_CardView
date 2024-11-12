@@ -16,97 +16,102 @@ export const VIEW_TYPE_CARD = 'card-view';
 export class CardView extends ItemView {
     private plugin: CardViewPlugin;
     private currentView: 'card' | 'list' | 'timeline' | 'month';
-    private container: HTMLElement = createDiv();  
-    private tagContainer: HTMLElement = createDiv();    
-    private previewContainer: HTMLElement = createDiv();  
-    private previewResizer: HTMLElement = createDiv();  
-    private isPreviewCollapsed: boolean = false;
-    private searchInput: HTMLInputElement = createEl('input');  
-    private currentSearchTerm: string = '';
-    private selectedTags: Set<string> = new Set();
-    private selectedNotes: Set<string> = new Set();
-    private lastSelectedNote: string | null = null;
-    private recentFolders: string[] = [];
-    private cardSize: number = 280;  // 默认卡片宽度
-    private cardHeight: number = 280; // 默认卡片高度
-    private calendarContainer: HTMLElement = createDiv();
-    private isCalendarVisible: boolean = false;
-    private currentDate: Date = new Date();
-    private currentFilter: { type: 'date' | 'none', value?: string } = { type: 'none' };
-    private monthViewContainer: HTMLElement = createDiv();
-    private isMonthViewVisible: boolean = false;
-
-    // 在 CardView 类中添加新的属性
-    private intersectionObserver: IntersectionObserver | undefined;
-    private loadedNotes: Set<string> = new Set();
-    private currentPage: number = 1;
-    private pageSize: number = 20;
-    private isLoading: boolean = false;
-    private hasMoreNotes: boolean = true;
-    private loadingIndicator: HTMLElement = createDiv('loading-indicator');
-
-    // 添加时间轴相关的属性
-    private timelineCurrentPage: number = 1;
-    private timelinePageSize: number = 10;
-    private timelineIsLoading: boolean = false;
-    private timelineHasMore: boolean = true;
-    private timelineLoadingIndicator: HTMLElement = createDiv('timeline-loading-indicator');
-
-    // 在 CardView 类中添加新的属性
-    private statusBar: HTMLElement = createDiv('status-bar');
-    private statusLeft: HTMLElement = createDiv('status-left');
-    private statusRight: HTMLElement = createDiv('status-right');
-    private loadingStatus: HTMLElement = createDiv('status-item');
-
-    // 在 CardView 类中添加新属性
-    private currentLoadingView: 'card' | 'list' | 'timeline' | 'month' | null = null;
-
-    // 在 CardView 类的属性部分添加新的配置项
-    private cardSettings = {
-        showDate: true,
-        showContent: true
+    private container: HTMLElement;
+    private tagContainer: HTMLElement;
+    private previewContainer: HTMLElement;
+    private previewResizer: HTMLElement;
+    private isPreviewCollapsed: boolean;
+    private searchInput: HTMLInputElement;
+    private currentSearchTerm: string;
+    private selectedTags: Set<string>;
+    private selectedNotes: Set<string>;
+    private lastSelectedNote: string | null;
+    private recentFolders: string[];
+    private cardSize: number;
+    private cardHeight: number;
+    private calendarContainer: HTMLElement;
+    private isCalendarVisible: boolean;
+    private currentDate: Date;
+    private currentFilter: { type: 'date' | 'none', value?: string };
+    private monthViewContainer: HTMLElement;
+    private isMonthViewVisible: boolean;
+    private loadedNotes: Set<string>;
+    private currentPage: number;
+    private pageSize: number;
+    private isLoading: boolean;
+    private hasMoreNotes: boolean;
+    private loadingIndicator: HTMLElement;
+    private timelineCurrentPage: number;
+    private timelinePageSize: number;
+    private timelineIsLoading: boolean;
+    private timelineHasMore: boolean;
+    private timelineLoadingIndicator: HTMLElement;
+    private statusBar: HTMLElement;
+    private statusLeft: HTMLElement;
+    private statusRight: HTMLElement;
+    private loadingStatus: HTMLElement;
+    private currentLoadingView: 'card' | 'list' | 'timeline' | 'month' | null;
+    private cardSettings: {
+        showDate: boolean;
+        showContent: boolean;
+        cardWidth: number;
+        cardHeight: number;
+        cardGap: number;
+        cardsPerRow: number;
     };
+    private scrollTimeout: NodeJS.Timeout | null = null;
+    private intersectionObserver!: IntersectionObserver;
 
-    /**
-     * 构造函数
-     * @param leaf - 工作区叶子节点
-     * @param plugin - 插件实例
-     */
     constructor(leaf: WorkspaceLeaf, plugin: CardViewPlugin) {
         super(leaf);
         this.plugin = plugin;
-        this.currentView = plugin.settings.defaultView;
-        
-        // 初始化 loadingIndicator
+        this.currentView = 'card';
+        this.container = createDiv();
+        this.tagContainer = createDiv();
+        this.previewContainer = createDiv();
+        this.previewResizer = createDiv();
+        this.isPreviewCollapsed = false;
+        this.searchInput = createEl('input');
+        this.currentSearchTerm = '';
+        this.selectedTags = new Set();
+        this.selectedNotes = new Set();
+        this.lastSelectedNote = null;
+        this.recentFolders = [];
+        this.cardSize = 280;
+        this.cardHeight = 280;
+        this.calendarContainer = createDiv();
+        this.isCalendarVisible = false;
+        this.currentDate = new Date();
+        this.currentFilter = { type: 'none' };
+        this.monthViewContainer = createDiv();
+        this.isMonthViewVisible = false;
+        this.loadedNotes = new Set();
+        this.currentPage = 1;
+        this.pageSize = 20;
+        this.isLoading = false;
+        this.hasMoreNotes = true;
         this.loadingIndicator = createDiv('loading-indicator');
-        this.loadingIndicator.innerHTML = `
-            <div class="loading-spinner"></div>
-            <div class="loading-text">加载中...</div>
-        `;
-        this.loadingIndicator.style.display = 'none';
-        
-        // 在构造函数中初始化 intersectionObserver
-        this.intersectionObserver = new IntersectionObserver(
-            (entries) => {
-                entries.forEach(async (entry) => {
-                    if (entry.isIntersecting) {
-                        const noteContent = entry.target as HTMLElement;
-                        const filePath = noteContent.getAttribute('data-path');
-                        
-                        if (filePath && !this.loadedNotes.has(filePath)) {
-                            const file = this.app.vault.getAbstractFileByPath(filePath);
-                            if (file instanceof TFile) {
-                                await this.loadNoteContent(noteContent, file);
-                            }
-                        }
-                    }
-                });
-            },
-            {
-                rootMargin: '100px',
-                threshold: 0.1
-            }
-        );
+        this.timelineCurrentPage = 1;
+        this.timelinePageSize = 10;
+        this.timelineIsLoading = false;
+        this.timelineHasMore = true;
+        this.timelineLoadingIndicator = createDiv('timeline-loading-indicator');
+        this.statusBar = createDiv('status-bar');
+        this.statusLeft = createDiv('status-left');
+        this.statusRight = createDiv('status-right');
+        this.loadingStatus = createDiv('status-item');
+        this.currentLoadingView = null;
+        this.cardSettings = {
+            showDate: true,
+            showContent: true,
+            cardWidth: 280,
+            cardHeight: 280,
+            cardGap: 16,
+            cardsPerRow: 0
+        };
+
+        // 初始化 Intersection Observer
+        this.setupIntersectionObserver();
     }
 
     /**
@@ -309,7 +314,7 @@ export class CardView extends ItemView {
         // 使用保存的宽度和高度初始化卡片容器
         this.cardSize = this.plugin.settings.cardWidth;
         // 删除读取高度的代码，因为cardHeight属性不存
-        this.container.style.gridTemplateColumns = `repeat(auto-fill, ${this.cardSize}px)`;
+        this.container.style.gridTemplateColumns = `repeat(auto-fill, ${this.cardSize}px`;
         
         // 添加滚轮事件监听
         this.container.addEventListener('wheel', (e: WheelEvent) => {
@@ -365,7 +370,7 @@ export class CardView extends ItemView {
         `;
         this.statusLeft.appendChild(this.loadingStatus);
         
-        // 添加其他状态信息
+        // 添其他状态信息
         const totalNotesStatus = createDiv('status-item');
         totalNotesStatus.innerHTML = `
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
@@ -438,7 +443,7 @@ export class CardView extends ItemView {
                 const tagItems = tagsContainer?.querySelectorAll('.tag-item') ?? [];
                 const tagTexts = Array.from(tagItems).map(item => item.textContent?.replace('×', '').trim() ?? '');
                 
-                // 构建笔记内容，包含标签
+                // 构建笔记内容包含标签
                 const tagsContent = tagTexts.map(tag => `#${tag}`).join(' ');
                 const finalContent = tagsContent ? `${tagsContent}\n\n${content}` : content;
                 
@@ -470,8 +475,6 @@ export class CardView extends ItemView {
         // 在 onOpen 方法中，创建 quick-note-bar 后添加背景遮罩
         const quickNoteBackdrop = mainLayout.createDiv('quick-note-backdrop');
 
-        // 在工具栏左侧添加设置按钮
-        this.createCardSettings(leftTools);  // 添加这一行
     }
 
     /**
@@ -512,8 +515,11 @@ export class CardView extends ItemView {
         const tagCounts = this.getTagsWithCount();
         this.tagContainer.empty();
 
-        // 创建左侧下拉列表容器
-        const dropdownContainer = this.tagContainer.createDiv('tag-dropdown-container');
+        // 创建左侧区域
+        const leftArea = this.tagContainer.createDiv('filter-toolbar-left');
+
+        // 创建下拉列表容器
+        const dropdownContainer = leftArea.createDiv('tag-dropdown-container');
         
         // 创建下拉列表
         const dropdown = dropdownContainer.createEl('select', {
@@ -553,7 +559,7 @@ export class CardView extends ItemView {
             });
 
         // 创建右侧已选标签容器
-        const selectedTagsContainer = this.tagContainer.createDiv('selected-tags-container');
+        const selectedTagsContainer = leftArea.createDiv('selected-tags-container');
 
         // 修改下拉列表的显示/隐藏逻辑
         let isMouseOverDropdown = false;
@@ -570,7 +576,7 @@ export class CardView extends ItemView {
         // 鼠标离开下拉框时
         dropdown.addEventListener('mouseleave', () => {
             isMouseOverDropdown = false;
-            // 如果鼠标不在面板上，则延迟隐藏
+            // 如果鼠标不在面板上，延迟隐藏
             if (!isMouseOverPanel) {
                 hideTimeout = setTimeout(() => {
                     if (!isMouseOverDropdown && !isMouseOverPanel) {
@@ -610,6 +616,12 @@ export class CardView extends ItemView {
         this.selectedTags.forEach(tag => {
             this.addSelectedTag(tag, selectedTagsContainer);
         });
+
+        // 创建右侧区域
+        const rightArea = this.tagContainer.createDiv('filter-toolbar-right');
+        
+        // 只在右侧区域创建卡片设置
+        this.createCardSettings(rightArea);
     }
 
     // 添加新方法：创建已选标签
@@ -709,7 +721,7 @@ export class CardView extends ItemView {
                 this.createListView();
                 break;
             case 'timeline':
-                statusMessage = '切换到时间轴视图 - 按日期分组';
+                statusMessage = '切换时间轴视图 - 按日期分组';
                 this.createTimelineView();
                 break;
             case 'month':
@@ -873,7 +885,6 @@ export class CardView extends ItemView {
         try {
             console.log('设置无限滚动...');
             
-            // 使用 Intersection Observer 监听加载指示器
             const observer = new IntersectionObserver(
                 (entries) => {
                     entries.forEach(entry => {
@@ -881,7 +892,6 @@ export class CardView extends ItemView {
                             !this.isLoading && 
                             this.hasMoreNotes && 
                             this.currentView === 'card') {
-                            console.log('Intersection Observer 触发加载更多');
                             this.loadNextPage();
                         }
                     });
@@ -894,15 +904,11 @@ export class CardView extends ItemView {
             );
             
             observer.observe(this.loadingIndicator);
-            console.log('已添加 Intersection Observer');
             
-            // 添加滚动事件处理
-            let scrollTimeout: NodeJS.Timeout;
             this.container.addEventListener('scroll', () => {
                 const { scrollTop, scrollHeight, clientHeight } = this.container;
-                
-                // 添加滚动进度信息到状态栏右侧
                 const scrollPercentage = Math.round((scrollTop / (scrollHeight - clientHeight)) * 100);
+                
                 if (!isNaN(scrollPercentage)) {
                     const scrollStatus = this.statusRight.querySelector('.scroll-status') || createDiv('status-item scroll-status');
                     scrollStatus.innerHTML = `
@@ -914,37 +920,20 @@ export class CardView extends ItemView {
                     }
                 }
                 
-                // 使用防抖处理滚动加载
-                clearTimeout(scrollTimeout);
-                scrollTimeout = setTimeout(() => {
-                    // 增加触发阈值，提前加载
+                if (this.scrollTimeout) {
+                    clearTimeout(this.scrollTimeout);
+                }
+                
+                this.scrollTimeout = setTimeout(() => {
                     const triggerThreshold = 300;
                     if (scrollHeight - scrollTop - clientHeight < triggerThreshold && 
                         !this.isLoading && 
                         this.hasMoreNotes && 
                         this.currentView === 'card') {
-                        console.log('滚动触发加载更多', {
-                            scrollTop,
-                            scrollHeight,
-                            clientHeight,
-                            remaining: scrollHeight - scrollTop - clientHeight
-                        });
                         this.loadNextPage();
                     }
                 }, 100);
             });
-            
-            // 初始检查是否需要加载更多
-            setTimeout(() => {
-                const { scrollHeight, clientHeight } = this.container;
-                if (scrollHeight <= clientHeight && 
-                    !this.isLoading && 
-                    this.hasMoreNotes && 
-                    this.currentView === 'card') {
-                    console.log('初始内容不足，触发加载更多');
-                    this.loadNextPage();
-                }
-            }, 100);
             
         } catch (error) {
             console.error('setupInfiniteScroll 错误:', error);
@@ -1031,7 +1020,7 @@ export class CardView extends ItemView {
         openButton.setAttribute('title', '在新标签页中打开');
         openButton.style.opacity = '0';  // 默认隐藏
 
-        // 创建卡片内容容器
+        // 创建卡内容容器
         const cardContent = card.createDiv('note-card-content');
 
         // 处理标题
@@ -1096,7 +1085,7 @@ export class CardView extends ItemView {
                 }
             });
 
-            // 鼠标离开事件
+            // 鼠标离开件
             card.addEventListener('mouseleave', () => {
                 openButton.style.opacity = '0';
                 
@@ -1208,7 +1197,7 @@ export class CardView extends ItemView {
 
         // 更新折叠按图标方向
         const toggleButton = this.containerEl.querySelector('.preview-toggle svg');
-        if (toggleButton instanceof SVGElement) {  // 修改类型检
+        if (toggleButton instanceof SVGElement) {  // 修改型检
             toggleButton.style.transform = this.isPreviewCollapsed ? '' : 'rotate(180deg)';
         }
     }
@@ -1363,7 +1352,7 @@ export class CardView extends ItemView {
             this.timelineIsLoading = true;
             this.updateLoadingStatus('加载时间轴...');
             
-            // 获取所有文件
+            // 取所有文件
             const files = this.app.vault.getMarkdownFiles();
             const filteredFiles = await this.filterFiles(files);
             
@@ -1422,7 +1411,7 @@ export class CardView extends ItemView {
                                 const placeholder = document.createElement('div');
                                 placeholder.className = 'note-card-placeholder';
                                 placeholder.style.width = '100%';
-                                placeholder.style.height = '200px'; // 设置一个固定高度
+                                placeholder.style.height = '200px'; // 设置一固定高度
                                 placeholder.style.backgroundColor = 'var(--background-secondary)';
                                 placeholder.style.borderRadius = '8px';
                                 placeholder.style.marginBottom = '1rem';
@@ -1439,7 +1428,7 @@ export class CardView extends ItemView {
                                 }
                             });
 
-                            // 添加日期组到档片段
+                            // 添加日组到档片段
                             fragment.appendChild(dateGroup);
                             
                             // 异步处理卡片创建
@@ -1471,7 +1460,7 @@ export class CardView extends ItemView {
     // 添时间轴滚动听方法
     private setupTimelineScroll(container: HTMLElement) {
         try {
-            console.log('设置时间轴滚动监听...');
+            console.log('设置时间轴滚监听...');
             
             // 使用 Intersection Observer 监听加载指示器
             const observer = new IntersectionObserver(
@@ -2170,7 +2159,7 @@ export class CardView extends ItemView {
         const selectedFiles = this.getSelectedFiles();
         if (selectedFiles.length === 0) {
             // 如果没有选中的笔记，提用户
-            new Notice('请先选择要检查的笔记');
+            new Notice('请先选择检查的笔记');
             return;
         }
 
@@ -2434,7 +2423,7 @@ export class CardView extends ItemView {
         return `${date.getFullYear()}${date.getMonth() + 1}月`;
     }
 
-    // 年份导航
+    // 年份航
     private navigateYear(delta: number) {
         this.currentDate = new Date(this.currentDate.getFullYear() + delta, this.currentDate.getMonth());
         this.updateMonthView();
@@ -2454,7 +2443,7 @@ export class CardView extends ItemView {
             // 构建文件夹结构和分组笔记
             files.forEach(file => {
                 const pathParts = file.path.split('/');
-                const rootFolder = pathParts.length > 1 ? pathParts[0] : '根目录';
+                const rootFolder = pathParts.length > 1 ? pathParts[0] : '根录';
                 const subFolder = pathParts.length > 2 ? pathParts[1] : '';
                 
                 // 初始化根文件夹结构
@@ -2462,7 +2451,7 @@ export class CardView extends ItemView {
                     folderStructure.set(rootFolder, new Map());
                 }
                 
-                // 将笔记添加到对应的文件夹中
+                // 将笔记添加到对的文件夹中
                 const subFolders = folderStructure.get(rootFolder);
                 if (subFolders) {
                     if (!subFolders.has(subFolder)) {
@@ -2649,7 +2638,7 @@ export class CardView extends ItemView {
         const tagsContainer = input.parentElement?.querySelector('.tags-container') as HTMLElement;
         const tagInput = tagsContainer?.querySelector('.tag-input') as HTMLInputElement;
 
-        // 将标题输入框移到最前面
+        // 将标题输入框移到最前
         if (titleInput && input.parentElement) {
             input.parentElement.insertBefore(titleInput, input.parentElement.firstChild);
         }
@@ -3064,7 +3053,7 @@ export class CardView extends ItemView {
         const relativeLeft = elementRect.left - leafRect.left;
         const relativeTop = elementRect.top - leafRect.top;
         
-        // 设置最小化尺寸
+        // 设最小化尺寸
         const minimizedSize = 40;
         element.style.width = `${minimizedSize}px`;
         element.style.height = `${minimizedSize}px`;
@@ -3101,7 +3090,7 @@ export class CardView extends ItemView {
         backdrop?.removeClass('active');
     }
 
-    // 恢复快速笔记
+    // 恢快速笔记
     private restoreQuickNote(element: HTMLElement) {
         if (!element.hasClass('minimized')) return;
         
@@ -3347,32 +3336,96 @@ export class CardView extends ItemView {
         const settingsPanel = settingsContainer.createDiv('card-settings-panel');
         settingsPanel.style.display = 'none';
 
-        // 添加设置选项
-        const showDateOption = settingsPanel.createDiv('settings-option');
-        const showDateCheckbox = showDateOption.createEl('input', {
-            type: 'checkbox',
-            cls: 'settings-checkbox'
-        });
-        showDateCheckbox.checked = this.cardSettings.showDate;
-        showDateOption.createSpan({ text: '显示日期' });
+        // 添加基本设置选项
+        const basicSettings = settingsPanel.createDiv('settings-section');
+        basicSettings.createEl('h3', { text: '基本设置' });
 
-        const showContentOption = settingsPanel.createDiv('settings-option');
-        const showContentCheckbox = showContentOption.createEl('input', {
-            type: 'checkbox',
-            cls: 'settings-checkbox'
-        });
-        showContentCheckbox.checked = this.cardSettings.showContent;
-        showContentOption.createSpan({ text: '显示笔记内容' });
-
-        // 添加事件监听
-        showDateCheckbox.addEventListener('change', () => {
-            this.cardSettings.showDate = showDateCheckbox.checked;
+        // 显示日期选项
+        const showDateOption = this.createCheckboxOption(basicSettings, '显示日期', this.cardSettings.showDate);
+        showDateOption.addEventListener('change', (e) => {
+            this.cardSettings.showDate = (e.target as HTMLInputElement).checked;
             this.refreshView();
         });
 
-        showContentCheckbox.addEventListener('change', () => {
-            this.cardSettings.showContent = showContentCheckbox.checked;
+        // 显示内容选项
+        const showContentOption = this.createCheckboxOption(basicSettings, '显示笔记内容', this.cardSettings.showContent);
+        showContentOption.addEventListener('change', (e) => {
+            this.cardSettings.showContent = (e.target as HTMLInputElement).checked;
             this.refreshView();
+        });
+
+        // 添加布局设置
+        const layoutSettings = settingsPanel.createDiv('settings-section');
+        layoutSettings.createEl('h3', { text: '布局设置' });
+
+        // 卡片宽度设置
+        this.createSliderOption(layoutSettings, '卡片宽度', this.cardSettings.cardWidth, 200, 500, 10, (value) => {
+            this.cardSettings.cardWidth = value;
+            this.updateCardLayout();
+        });
+
+        // 卡片高度设置
+        this.createSliderOption(layoutSettings, '卡片高度', this.cardSettings.cardHeight, 200, 500, 10, (value) => {
+            this.cardSettings.cardHeight = value;
+            this.updateCardLayout();
+        });
+
+        // 卡片间距设置
+        this.createSliderOption(layoutSettings, '卡片间距', this.cardSettings.cardGap, 8, 40, 4, (value) => {
+            this.cardSettings.cardGap = value;
+            this.updateCardLayout();
+        });
+
+        // 每行卡片数量设置
+        const cardsPerRowContainer = layoutSettings.createDiv('setting-item');
+        cardsPerRowContainer.createEl('label', { text: '每行卡片数量' });
+        
+        // 创建控制组
+        const controlGroup = cardsPerRowContainer.createDiv('setting-control-group');
+        
+        // 减少按钮
+        const decreaseBtn = controlGroup.createEl('button', {
+            cls: 'cards-per-row-btn decrease',
+            text: '-'
+        });
+        
+        // 数字输入框
+        const cardsPerRowInput = controlGroup.createEl('input', {
+            type: 'number',
+            value: this.cardSettings.cardsPerRow.toString(),
+            placeholder: '自动'
+        });
+        
+        // 增加按钮
+        const increaseBtn = controlGroup.createEl('button', {
+            cls: 'cards-per-row-btn increase',
+            text: '+'
+        });
+
+        // 更新卡片布局的函数
+        const updateCardsPerRow = (value: number) => {
+            // 确保值在合理范围内（0表示自动，最大10列）
+            value = Math.max(0, Math.min(10, value));
+            cardsPerRowInput.value = value.toString();
+            this.cardSettings.cardsPerRow = value;
+            this.updateCardLayout();
+        };
+
+        // 添加按钮事件
+        decreaseBtn.addEventListener('click', () => {
+            const currentValue = parseInt(cardsPerRowInput.value) || 0;
+            updateCardsPerRow(currentValue - 1);
+        });
+
+        increaseBtn.addEventListener('click', () => {
+            const currentValue = parseInt(cardsPerRowInput.value) || 0;
+            updateCardsPerRow(currentValue + 1);
+        });
+
+        // 输入框事件
+        cardsPerRowInput.addEventListener('change', (e) => {
+            const value = parseInt((e.target as HTMLInputElement).value);
+            updateCardsPerRow(isNaN(value) ? 0 : value);
         });
 
         // 切换面板显示
@@ -3388,6 +3441,117 @@ export class CardView extends ItemView {
                 settingsPanel.style.display = 'none';
             }
         });
+    }
+
+    // 创建滑块选项的辅助方法
+    private createSliderOption(container: HTMLElement, label: string, defaultValue: number, min: number, max: number, step: number, onChange: (value: number) => void) {
+        const settingItem = container.createDiv('setting-item');
+        settingItem.createEl('label', { text: label });
+        
+        const controlGroup = settingItem.createDiv('setting-control-group');
+        
+        // 创建滑块
+        const slider = document.createElement('input');
+        slider.type = 'range';
+        slider.value = defaultValue.toString();
+        slider.min = min.toString();
+        slider.max = max.toString();
+        slider.step = step.toString();
+        controlGroup.appendChild(slider);
+        
+        // 创建数字输入框
+        const numberInput = document.createElement('input');
+        numberInput.type = 'number';
+        numberInput.value = defaultValue.toString();
+        numberInput.min = min.toString();
+        numberInput.max = max.toString();
+        numberInput.step = step.toString();
+        controlGroup.appendChild(numberInput);
+
+        // 同步滑块和输入框的值
+        slider.addEventListener('input', (e) => {
+            const value = parseInt((e.target as HTMLInputElement).value);
+            numberInput.value = value.toString();
+            onChange(value);
+        });
+
+        numberInput.addEventListener('change', (e) => {
+            const value = parseInt((e.target as HTMLInputElement).value);
+            slider.value = value.toString();
+            onChange(value);
+        });
+    }
+
+    // 创建复选框选项的辅助方法
+    private createCheckboxOption(container: HTMLElement, label: string, defaultChecked: boolean): HTMLInputElement {
+        const settingItem = container.createDiv('setting-item');
+        
+        // 创建复选框
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.checked = defaultChecked;
+        settingItem.appendChild(checkbox);
+        
+        // 创建标签
+        const labelEl = document.createElement('label');
+        labelEl.textContent = label;
+        settingItem.appendChild(labelEl);
+        
+        return checkbox;
+    }
+
+    // 更新卡片布局的方法
+    private updateCardLayout() {
+        const container = this.container;
+        if (!container) return;
+
+        // 更新容器样式
+        container.style.gap = `${this.cardSettings.cardGap}px`;
+
+        // 计算每行卡片数量
+        if (this.cardSettings.cardsPerRow > 0) {
+            // 固定每行卡片数量
+            const totalWidth = container.offsetWidth;
+            const totalGap = this.cardSettings.cardGap * (this.cardSettings.cardsPerRow - 1);
+            const cardWidth = (totalWidth - totalGap) / this.cardSettings.cardsPerRow;
+            container.style.gridTemplateColumns = `repeat(${this.cardSettings.cardsPerRow}, ${cardWidth}px)`;
+        } else {
+            // 自动计算每行卡片数量
+            container.style.gridTemplateColumns = `repeat(auto-fill, minmax(${this.cardSettings.cardWidth}px, 1fr))`;
+        }
+
+        // 更新所有卡片的尺寸
+        container.querySelectorAll('.note-card').forEach((card: Element) => {
+            if (card instanceof HTMLElement) {
+                card.style.width = '100%';
+                card.style.height = `${this.cardSettings.cardHeight}px`;
+            }
+        });
+    }
+
+    // 添加 setupIntersectionObserver 方法
+    private setupIntersectionObserver(): void {
+        this.intersectionObserver = new IntersectionObserver(
+            (entries) => {
+                entries.forEach(async (entry) => {
+                    if (entry.isIntersecting) {
+                        const noteContent = entry.target as HTMLElement;
+                        const filePath = noteContent.getAttribute('data-path');
+                        
+                        if (filePath && !this.loadedNotes.has(filePath)) {
+                            const file = this.app.vault.getAbstractFileByPath(filePath);
+                            if (file instanceof TFile) {
+                                await this.loadNoteContent(noteContent, file);
+                            }
+                        }
+                    }
+                });
+            },
+            {
+                rootMargin: '100px',
+                threshold: 0.1
+            }
+        );
     }
 }
 
