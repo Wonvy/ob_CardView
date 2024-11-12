@@ -1066,13 +1066,18 @@ export class CardView extends ItemView {
             // 鼠标悬停事件
             card.addEventListener('mouseenter', async () => {
                 openButton.style.opacity = '1';
-                title.style.opacity = '0';
-                title.style.display = 'none';
-                noteContent.style.opacity = '1';
                 
-                // 确保内容已加载
-                if (!this.loadedNotes.has(file.path)) {
-                    await this.loadNoteContent(noteContent, file);
+                // 根据设置决定是否显示/隐藏内容
+                if (!this.cardSettings.showContent) {
+                    const noteContent = cardContent.querySelector('.note-content');
+                    if (noteContent) {
+                        noteContent.addClass('hover-show');
+                        
+                        // 确保内容已加载
+                        if (!this.loadedNotes.has(file.path)) {
+                            await this.loadNoteContent(noteContent as HTMLElement, file);
+                        }
+                    }
                 }
                 
                 // 在预览栏中显示完整内容
@@ -1093,11 +1098,15 @@ export class CardView extends ItemView {
 
             // 鼠标离开事件
             card.addEventListener('mouseleave', () => {
-                openButton.style.opacity = '0';  // 隐藏打开按钮
-                title.style.opacity = '1';
-                title.style.display = 'block'; 
-                noteContent.style.opacity = '0.3';
-                // noteContent.style.display = 'none';
+                openButton.style.opacity = '0';
+                
+                // 根据设置决定是否隐藏内容
+                if (!this.cardSettings.showContent) {
+                    const noteContent = cardContent.querySelector('.note-content');
+                    if (noteContent) {
+                        noteContent.removeClass('hover-show');
+                    }
+                }
             });
 
             // 修改事件监听
@@ -2180,7 +2189,7 @@ export class CardView extends ItemView {
             return;
         }
 
-        // ��示确认对话框
+        // 示确认对话框
         const confirmModal = new ConfirmModal(
             this.app,
             "确认删除空白笔记",

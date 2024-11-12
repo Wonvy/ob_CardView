@@ -1730,74 +1730,24 @@
     transform: rotate(360deg);
   }
 }
-.card-settings-container {
-  position: relative;
-  margin-right: 8px;
+.note-card-content .note-content {
+  display: none;
 }
-.card-settings-container .card-settings-button {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  background: transparent;
-  border: 1px solid var(--background-modifier-border);
-  color: var(--text-muted);
-  padding: 6px 12px;
-  cursor: pointer;
-  border-radius: 4px;
-  font-size: 14px;
-  transition: all 0.2s ease;
+.note-card-content .note-content.show {
+  display: block;
 }
-.card-settings-container .card-settings-button:hover {
-  color: var(--text-normal);
-  background-color: var(--background-modifier-hover);
-  border-color: var(--interactive-accent);
-}
-.card-settings-container .card-settings-button svg {
-  width: 16px;
-  height: 16px;
-}
-.card-settings-container .card-settings-panel {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  margin-top: 4px;
-  background: var(--background-primary);
-  border: 1px solid var(--background-modifier-border);
-  border-radius: 4px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  z-index: 1000;
-  min-width: 200px;
-}
-.card-settings-container .card-settings-panel .settings-option {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-.card-settings-container .card-settings-panel .settings-option:hover {
-  background-color: var(--background-modifier-hover);
-}
-.card-settings-container .card-settings-panel .settings-option .settings-checkbox {
-  margin: 0;
-}
-.card-settings-container .card-settings-panel .settings-option span {
-  font-size: 14px;
-  color: var(--text-normal);
+.note-card-content .note-content.hover-show {
+  display: block;
+  animation: fadeIn 0.2s ease;
 }
 
-.note-card .note-date {
-  display: none;
-}
-.note-card .note-date.show {
-  display: block;
-}
-.note-card .note-content {
-  display: none;
-}
-.note-card .note-content.show {
-  display: block;
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 /*# sourceMappingURL=styles.css.map */

@@ -1826,72 +1826,26 @@
   to
     transform: rotate(360deg)
 
-// 添加卡片设置相关样式
-.card-settings-container 
-    position: relative
-    margin-right: 8px
-    
-    .card-settings-button 
-        display: flex
-        align-items: center
-        gap: 6px
-        background: transparent
-        border: 1px solid var(--background-modifier-border)
-        color: var(--text-muted)
-        padding: 6px 12px
-        cursor: pointer
-        border-radius: 4px
-        font-size: 14px
-        transition: all 0.2s ease
-        
-        &:hover 
-            color: var(--text-normal)
-            background-color: var(--background-modifier-hover)
-            border-color: var(--interactive-accent)
-        
-        svg
-            width: 16px
-            height: 16px
-    
-    .card-settings-panel 
-        position: absolute
-        top: 100%
-        left: 0
-        margin-top: 4px
-        background: var(--background-primary)
-        border: 1px solid var(--background-modifier-border)
-        border-radius: 4px
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1)
-        z-index: 1000
-        min-width: 200px
-        
-        .settings-option 
-            display: flex
-            align-items: center
-            gap: 8px
-            padding: 8px 12px
-            cursor: pointer
-            transition: background-color 0.2s ease
-            
-            &:hover 
-                background-color: var(--background-modifier-hover)
-            
-            .settings-checkbox 
-                margin: 0
-            
-            span 
-                font-size: 14px
-                color: var(--text-normal)
 
-// 修改卡片内容样式，添加可选显示
-.note-card 
-    .note-date 
+// 修改笔记内容样式
+.note-card-content 
+    .note-content
+        // 默认隐藏
         display: none
-        &.show 
+        
+        // 当设置为显示内容时，始终显示
+        &.show
             display: block
-    
-    .note-content 
-        display: none
-        &.show 
+            
+        // 当鼠标悬停时显示
+        &.hover-show
             display: block
+            animation: fadeIn 0.2s ease
+
+// 添加淡入动画
+@keyframes fadeIn
+    from
+        opacity: 0
+    to
+        opacity: 1
 

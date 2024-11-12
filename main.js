@@ -789,11 +789,14 @@ ${content}` : content;
       this.observeNoteContent(noteContent, file);
       card.addEventListener("mouseenter", async () => {
         openButton.style.opacity = "1";
-        title.style.opacity = "0";
-        title.style.display = "none";
-        noteContent.style.opacity = "1";
-        if (!this.loadedNotes.has(file.path)) {
-          await this.loadNoteContent(noteContent, file);
+        if (!this.cardSettings.showContent) {
+          const noteContent2 = cardContent.querySelector(".note-content");
+          if (noteContent2) {
+            noteContent2.addClass("hover-show");
+            if (!this.loadedNotes.has(file.path)) {
+              await this.loadNoteContent(noteContent2, file);
+            }
+          }
         }
         try {
           this.previewContainer.empty();
@@ -811,9 +814,12 @@ ${content}` : content;
       });
       card.addEventListener("mouseleave", () => {
         openButton.style.opacity = "0";
-        title.style.opacity = "1";
-        title.style.display = "block";
-        noteContent.style.opacity = "0.3";
+        if (!this.cardSettings.showContent) {
+          const noteContent2 = cardContent.querySelector(".note-content");
+          if (noteContent2) {
+            noteContent2.removeClass("hover-show");
+          }
+        }
       });
       openButton.addEventListener("click", async (e) => {
         e.stopPropagation();
