@@ -61,6 +61,12 @@ export class CardView extends ItemView {
     // 在 CardView 类中添加新属性
     private currentLoadingView: 'card' | 'list' | 'timeline' | 'month' | null = null;
 
+    // 在 CardView 类的属性部分添加新的配置项
+    private cardSettings = {
+        showDate: true,
+        showContent: true
+    };
+
     /**
      * 构造函数
      * @param leaf - 工作区叶子节点
@@ -293,7 +299,7 @@ export class CardView extends ItemView {
         this.setupSearch();
 
         // 标签栏
-        this.tagContainer = contentSection.createDiv('tag-filter');
+        this.tagContainer = contentSection.createDiv('filter-toolbar');
         await this.loadTags();
 
         // 创建主内容区域
@@ -463,6 +469,9 @@ export class CardView extends ItemView {
 
         // 在 onOpen 方法中，创建 quick-note-bar 后添加背景遮罩
         const quickNoteBackdrop = mainLayout.createDiv('quick-note-backdrop');
+
+        // 在工具栏左侧添加设置按钮
+        this.createCardSettings(leftTools);  // 添加这一行
     }
 
     /**
@@ -952,22 +961,22 @@ export class CardView extends ItemView {
         card.addClass('note-card');
         card.setAttribute('data-path', file.path);
         
-        // 设置卡片宽度���高度
+        // 设置卡片宽度和高度
         card.style.width = `${this.cardSize}px`;
         card.style.height = `${this.cardHeight}px`;
         
         // 创建卡片头部
         const header = card.createDiv('note-card-header');
         
-        // 添加修改
-        const lastModified = header.createDiv('note-date');
-        lastModified.setText(new Date(file.stat.mtime).toLocaleDateString());
+        // 添加修改日期
+        if (this.cardSettings.showDate) {
+            const lastModified = header.createDiv('note-date show'); // 添加 show 类
+            lastModified.setText(new Date(file.stat.mtime).toLocaleDateString());
+        }
 
-        // 改文件夹路径的创建和样式
+        // 创建文件夹路径
         const folderPath = header.createDiv('note-folder');
         const folder = file.parent ? file.parent.path : '根目录';
-
-        // 拆分文夹路径并处根目录的特殊情况
         const pathParts = folder === '根目录' ? ['根目录'] : folder.split('/');
 
         pathParts.forEach((part, index) => {
@@ -1025,63 +1034,28 @@ export class CardView extends ItemView {
         // 创建卡片内容容器
         const cardContent = card.createDiv('note-card-content');
 
-        // 处理标题（移到内容区域顶部）
+        // 处理标题
         const title = cardContent.createDiv('note-title');
         let displayTitle = file.basename;
-        // 处理日期开头的标题
         const timePattern = /^\d{4}[-./]\d{2}[-./]\d{2}/;
         if (timePattern.test(displayTitle)) {
             displayTitle = displayTitle.replace(timePattern, '').trim();
         }
         
-        // 高亮标题中的搜索词
         if (this.currentSearchTerm) {
             title.innerHTML = this.highlightText(displayTitle, this.currentSearchTerm);
         } else {
             title.setText(displayTitle);
         }
 
-        
         try {
-            // 读取笔记内容
-            const content = await this.app.vault.read(file);
-            
             // 创建笔记内容容器
             const noteContent = cardContent.createDiv('note-content');
-            
-            // 如果有搜索词，先处内容中的搜索词高亮
-            if (this.currentSearchTerm) {
-                // 将 Markdown 转换为 HTML
-                await MarkdownRenderer.render(
-                    this.app,
-                    content,
-                    noteContent,
-                    file.path,
-                    this
-                );
-                
-                // 高亮搜索词
-                const contentElements = noteContent.querySelectorAll('p, li, h1, h2, h3, h4, h5, h6');
-                contentElements.forEach(element => {
-                    const originalText = element.textContent || '';
-                    if (originalText.toLowerCase().includes(this.currentSearchTerm.toLowerCase())) {
-                        element.innerHTML = this.highlightText(originalText, this.currentSearchTerm);
-                    }
-                });
-            } else {
-                // 没有搜索词时正常渲染
-                await MarkdownRenderer.render(
-                    this.app,
-                    content,
-                    noteContent,
-                    file.path,
-                    this
-                );
+            if (this.cardSettings.showContent) {
+                noteContent.addClass('show'); // 添加 show 类
             }
-
-            // 修改笔记内容容器的创建方式
             noteContent.setAttribute('data-path', file.path);
-            
+
             // 添加加载占位符
             const loadingPlaceholder = noteContent.createDiv('content-placeholder');
             loadingPlaceholder.setText('Loading...');
@@ -1144,7 +1118,7 @@ export class CardView extends ItemView {
                 this.handleCardSelection(file.path, e);
             });
 
-            // 双击打���
+            // 双击打
             card.addEventListener('dblclick', async () => {
                 await this.openInAppropriateLeaf(file);
             });
@@ -1183,6 +1157,13 @@ export class CardView extends ItemView {
             openButton.style.opacity = '0';  // 隐藏打开按钮
             // ... 其他离事件代码 ...
         });
+
+        // 修改内容显示逻辑
+        if (this.cardSettings.showContent) {
+            // 创建笔记内容
+            const noteContent = cardContent.createDiv('note-content');
+            // ... 内容加载逻辑 ...
+        }
 
         return card;
     }
@@ -1300,7 +1281,7 @@ export class CardView extends ItemView {
             while (this.app.vault.getAbstractFileByPath(`${fileName}.md`)) {
             const file = this.app.vault.getAbstractFileByPath(`${fileName}.md`);
             if (file instanceof TFile && file.stat.size === 0) {
-                // 如果��记内容为空，则打开这个笔记
+                // 如果记内容为空，则打开这个笔记
                 await this.openInAppropriateLeaf(file);
                 return;
             } else {
@@ -2199,7 +2180,7 @@ export class CardView extends ItemView {
             return;
         }
 
-        // 显示确认对话框
+        // ��示确认对话框
         const confirmModal = new ConfirmModal(
             this.app,
             "确认删除空白笔记",
@@ -2789,7 +2770,7 @@ export class CardView extends ItemView {
                         item.addClass('inactive');
                     });
                     
-                    // 刷���视图
+                    // 刷视图
                     await this.refreshView();
                     
                     new Notice('笔记创建成功');
@@ -3339,6 +3320,66 @@ export class CardView extends ItemView {
             this.updateLoadingStatus('创建时间轴视图失败');
         }
     }
+
+    // 在 createViewSwitcher 方法后添加新的方法
+    private createCardSettings(toolbar: HTMLElement) {
+        const settingsContainer = toolbar.createDiv('card-settings-container');
+        
+        // 创建设置按钮
+        const settingsBtn = settingsContainer.createEl('button', {
+            cls: 'card-settings-button',
+        });
+        settingsBtn.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+            <span>卡片设置</span>
+        `;
+
+        // 创建设置面板
+        const settingsPanel = settingsContainer.createDiv('card-settings-panel');
+        settingsPanel.style.display = 'none';
+
+        // 添加设置选项
+        const showDateOption = settingsPanel.createDiv('settings-option');
+        const showDateCheckbox = showDateOption.createEl('input', {
+            type: 'checkbox',
+            cls: 'settings-checkbox'
+        });
+        showDateCheckbox.checked = this.cardSettings.showDate;
+        showDateOption.createSpan({ text: '显示日期' });
+
+        const showContentOption = settingsPanel.createDiv('settings-option');
+        const showContentCheckbox = showContentOption.createEl('input', {
+            type: 'checkbox',
+            cls: 'settings-checkbox'
+        });
+        showContentCheckbox.checked = this.cardSettings.showContent;
+        showContentOption.createSpan({ text: '显示笔记内容' });
+
+        // 添加事件监听
+        showDateCheckbox.addEventListener('change', () => {
+            this.cardSettings.showDate = showDateCheckbox.checked;
+            this.refreshView();
+        });
+
+        showContentCheckbox.addEventListener('change', () => {
+            this.cardSettings.showContent = showContentCheckbox.checked;
+            this.refreshView();
+        });
+
+        // 切换面板显示
+        settingsBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const isVisible = settingsPanel.style.display === 'block';
+            settingsPanel.style.display = isVisible ? 'none' : 'block';
+        });
+
+        // 点击其他地方关闭面板
+        document.addEventListener('click', (e) => {
+            if (!settingsContainer.contains(e.target as Node)) {
+                settingsPanel.style.display = 'none';
+            }
+        });
+    }
 }
 
 // 添加确认对话框
@@ -3437,7 +3478,7 @@ class EnhancedFileSelectionModal extends Modal {
         const folders = this.getFoldersWithHierarchy();
         this.createFolderTree(folderList, folders);
 
-        // 添加��作按钮
+        // 添加按钮
         const buttonContainer = contentEl.createDiv('modal-button-container');
         
         const confirmButton = buttonContainer.createEl('button', {

@@ -6,7 +6,7 @@
   overflow: hidden;
 }
 .card-view-container.blur-background .card-view-toolbar,
-.card-view-container.blur-background .tag-filter,
+.card-view-container.blur-background .filter-toolbar,
 .card-view-container.blur-background .card-view-content,
 .card-view-container.blur-background .preview-wrapper {
   filter: blur(2px);
@@ -181,7 +181,7 @@
   flex: 1;
 }
 
-.tag-filter {
+.filter-toolbar {
   display: flex;
   padding: 12px 16px;
   border-bottom: 1px solid var(--background-modifier-border);
@@ -189,28 +189,40 @@
   gap: 12px;
   align-items: center;
 }
-.tag-filter .tag-dropdown-container {
+.filter-toolbar .tag-dropdown-container {
   position: relative;
 }
-.tag-filter .tag-dropdown-container .tag-dropdown {
+.filter-toolbar .tag-dropdown-container .tag-dropdown {
   width: 100%;
   padding: 6px 18px;
   border: 1px solid var(--background-modifier-border);
   border-radius: 4px;
   z-index: 1001;
-  /* background-color: var(--background-primary); */
   color: var(--text-muted);
   font-size: 13px;
   cursor: pointer;
   transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
-.tag-filter .tag-dropdown-container .tag-dropdown > option {
+.filter-toolbar .tag-dropdown-container .tag-dropdown::before {
+  content: "";
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>');
+  background-repeat: no-repeat;
+  background-position: center;
+  opacity: 0.5;
+}
+.filter-toolbar .tag-dropdown-container .tag-dropdown > option {
   display: none;
 }
-.tag-filter .tag-dropdown-container .tag-dropdown:focus + .dropdown-panel {
+.filter-toolbar .tag-dropdown-container .tag-dropdown:focus + .dropdown-panel {
   display: grid;
 }
-.tag-filter .tag-dropdown-container .dropdown-panel {
+.filter-toolbar .tag-dropdown-container .dropdown-panel {
   display: none;
   position: absolute;
   top: calc(100% - 1px);
@@ -227,10 +239,10 @@
   max-height: 300px;
   overflow-y: auto;
 }
-.tag-filter .tag-dropdown-container .dropdown-panel[style*="display: grid"] {
+.filter-toolbar .tag-dropdown-container .dropdown-panel[style*="display: grid"] {
   z-index: 1001;
 }
-.tag-filter .tag-dropdown-container .dropdown-panel .dropdown-option {
+.filter-toolbar .tag-dropdown-container .dropdown-panel .dropdown-option {
   padding: 6px 8px;
   cursor: pointer;
   color: var(--text-muted);
@@ -241,22 +253,26 @@
   justify-content: space-between;
   transition: all 0.2s ease;
 }
-.tag-filter .tag-dropdown-container .dropdown-panel .dropdown-option:hover {
+.filter-toolbar .tag-dropdown-container .dropdown-panel .dropdown-option::before {
+  content: "";
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  margin-right: 6px;
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>');
+  background-repeat: no-repeat;
+  background-position: center;
+  opacity: 0.5;
+  transition: opacity 0.2s ease;
+}
+.filter-toolbar .tag-dropdown-container .dropdown-panel .dropdown-option:hover {
   background-color: var(--background-modifier-hover);
   color: var(--text-normal);
 }
-.tag-filter .tag-dropdown-container .dropdown-panel .dropdown-option .tag-count {
-  font-size: 11px;
-  color: var(--text-muted);
-  background: var(--background-modifier-hover);
-  padding: 1px 6px;
-  border-radius: 8px;
+.filter-toolbar .tag-dropdown-container .dropdown-panel .dropdown-option:hover::before {
+  opacity: 1;
 }
-.tag-filter .tag-dropdown-container .dropdown-panel .dropdown-option:hover .tag-count {
-  background: var(--background-modifier-border);
-  color: var(--text-normal);
-}
-.tag-filter .tag-dropdown-container:hover .tag-dropdown {
+.filter-toolbar .tag-dropdown-container:hover .tag-dropdown {
   border-bottom: 1px solid var(--background-primary);
   background: var(--background-primary);
   color: var(--text-normal);
@@ -1713,6 +1729,75 @@
   to {
     transform: rotate(360deg);
   }
+}
+.card-settings-container {
+  position: relative;
+  margin-right: 8px;
+}
+.card-settings-container .card-settings-button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: 1px solid var(--background-modifier-border);
+  color: var(--text-muted);
+  padding: 6px 12px;
+  cursor: pointer;
+  border-radius: 4px;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+.card-settings-container .card-settings-button:hover {
+  color: var(--text-normal);
+  background-color: var(--background-modifier-hover);
+  border-color: var(--interactive-accent);
+}
+.card-settings-container .card-settings-button svg {
+  width: 16px;
+  height: 16px;
+}
+.card-settings-container .card-settings-panel {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 4px;
+  background: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  min-width: 200px;
+}
+.card-settings-container .card-settings-panel .settings-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+.card-settings-container .card-settings-panel .settings-option:hover {
+  background-color: var(--background-modifier-hover);
+}
+.card-settings-container .card-settings-panel .settings-option .settings-checkbox {
+  margin: 0;
+}
+.card-settings-container .card-settings-panel .settings-option span {
+  font-size: 14px;
+  color: var(--text-normal);
+}
+
+.note-card .note-date {
+  display: none;
+}
+.note-card .note-date.show {
+  display: block;
+}
+.note-card .note-content {
+  display: none;
+}
+.note-card .note-content.show {
+  display: block;
 }
 
 /*# sourceMappingURL=styles.css.map */

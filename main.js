@@ -81,6 +81,11 @@ var CardView = class extends import_obsidian.ItemView {
     this.loadingStatus = createDiv("status-item");
     // 在 CardView 类中添加新属性
     this.currentLoadingView = null;
+    // 在 CardView 类的属性部分添加新的配置项
+    this.cardSettings = {
+      showDate: true,
+      showContent: true
+    };
     this.plugin = plugin;
     this.currentView = plugin.settings.defaultView;
     this.loadingIndicator = createDiv("loading-indicator");
@@ -236,7 +241,7 @@ var CardView = class extends import_obsidian.ItemView {
     const tagSuggestions = inputContainer.createDiv("tag-suggestions");
     this.setupQuickNoteEvents(noteInput, quickNoteToolbar, tagSuggestions);
     this.setupSearch();
-    this.tagContainer = contentSection.createDiv("tag-filter");
+    this.tagContainer = contentSection.createDiv("filter-toolbar");
     await this.loadTags();
     const contentArea = contentSection.createDiv("card-view-content");
     this.container = contentArea.createDiv("card-container");
@@ -349,6 +354,7 @@ ${content}` : content;
       }
     });
     const quickNoteBackdrop = mainLayout.createDiv("quick-note-backdrop");
+    this.createCardSettings(leftTools);
   }
   /**
    * 获取所有笔记中的标签
@@ -720,8 +726,10 @@ ${content}` : content;
     card.style.width = `${this.cardSize}px`;
     card.style.height = `${this.cardHeight}px`;
     const header = card.createDiv("note-card-header");
-    const lastModified = header.createDiv("note-date");
-    lastModified.setText(new Date(file.stat.mtime).toLocaleDateString());
+    if (this.cardSettings.showDate) {
+      const lastModified = header.createDiv("note-date show");
+      lastModified.setText(new Date(file.stat.mtime).toLocaleDateString());
+    }
     const folderPath = header.createDiv("note-folder");
     const folder = file.parent ? file.parent.path : "\u6839\u76EE\u5F55";
     const pathParts = folder === "\u6839\u76EE\u5F55" ? ["\u6839\u76EE\u5F55"] : folder.split("/");
@@ -771,31 +779,9 @@ ${content}` : content;
       title.setText(displayTitle);
     }
     try {
-      const content = await this.app.vault.read(file);
       const noteContent = cardContent.createDiv("note-content");
-      if (this.currentSearchTerm) {
-        await import_obsidian.MarkdownRenderer.render(
-          this.app,
-          content,
-          noteContent,
-          file.path,
-          this
-        );
-        const contentElements = noteContent.querySelectorAll("p, li, h1, h2, h3, h4, h5, h6");
-        contentElements.forEach((element) => {
-          const originalText = element.textContent || "";
-          if (originalText.toLowerCase().includes(this.currentSearchTerm.toLowerCase())) {
-            element.innerHTML = this.highlightText(originalText, this.currentSearchTerm);
-          }
-        });
-      } else {
-        await import_obsidian.MarkdownRenderer.render(
-          this.app,
-          content,
-          noteContent,
-          file.path,
-          this
-        );
+      if (this.cardSettings.showContent) {
+        noteContent.addClass("show");
       }
       noteContent.setAttribute("data-path", file.path);
       const loadingPlaceholder = noteContent.createDiv("content-placeholder");
@@ -811,10 +797,10 @@ ${content}` : content;
         }
         try {
           this.previewContainer.empty();
-          const content2 = await this.app.vault.read(file);
+          const content = await this.app.vault.read(file);
           await import_obsidian.MarkdownRenderer.render(
             this.app,
-            content2,
+            content,
             this.previewContainer,
             file.path,
             this
@@ -867,6 +853,9 @@ ${content}` : content;
     card.addEventListener("mouseleave", () => {
       openButton.style.opacity = "0";
     });
+    if (this.cardSettings.showContent) {
+      const noteContent = cardContent.createDiv("note-content");
+    }
     return card;
   }
   // 切换预览栏的显示状态
@@ -2426,6 +2415,51 @@ ${content}` : content;
       new import_obsidian.Notice("\u521B\u5EFA\u65F6\u95F4\u8F74\u89C6\u56FE\u5931\u8D25");
       this.updateLoadingStatus("\u521B\u5EFA\u65F6\u95F4\u8F74\u89C6\u56FE\u5931\u8D25");
     }
+  }
+  // 在 createViewSwitcher 方法后添加新的方法
+  createCardSettings(toolbar) {
+    const settingsContainer = toolbar.createDiv("card-settings-container");
+    const settingsBtn = settingsContainer.createEl("button", {
+      cls: "card-settings-button"
+    });
+    settingsBtn.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+            <span>\u5361\u7247\u8BBE\u7F6E</span>
+        `;
+    const settingsPanel = settingsContainer.createDiv("card-settings-panel");
+    settingsPanel.style.display = "none";
+    const showDateOption = settingsPanel.createDiv("settings-option");
+    const showDateCheckbox = showDateOption.createEl("input", {
+      type: "checkbox",
+      cls: "settings-checkbox"
+    });
+    showDateCheckbox.checked = this.cardSettings.showDate;
+    showDateOption.createSpan({ text: "\u663E\u793A\u65E5\u671F" });
+    const showContentOption = settingsPanel.createDiv("settings-option");
+    const showContentCheckbox = showContentOption.createEl("input", {
+      type: "checkbox",
+      cls: "settings-checkbox"
+    });
+    showContentCheckbox.checked = this.cardSettings.showContent;
+    showContentOption.createSpan({ text: "\u663E\u793A\u7B14\u8BB0\u5185\u5BB9" });
+    showDateCheckbox.addEventListener("change", () => {
+      this.cardSettings.showDate = showDateCheckbox.checked;
+      this.refreshView();
+    });
+    showContentCheckbox.addEventListener("change", () => {
+      this.cardSettings.showContent = showContentCheckbox.checked;
+      this.refreshView();
+    });
+    settingsBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const isVisible = settingsPanel.style.display === "block";
+      settingsPanel.style.display = isVisible ? "none" : "block";
+    });
+    document.addEventListener("click", (e) => {
+      if (!settingsContainer.contains(e.target)) {
+        settingsPanel.style.display = "none";
+      }
+    });
   }
 };
 var ConfirmModal = class extends import_obsidian.Modal {
