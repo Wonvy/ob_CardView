@@ -39,6 +39,24 @@ export class CardView extends ItemView {
     // 在 CardView 类中添加新的属性
     private intersectionObserver: IntersectionObserver | undefined;
     private loadedNotes: Set<string> = new Set();
+    private currentPage: number = 1;
+    private pageSize: number = 20;
+    private isLoading: boolean = false;
+    private hasMoreNotes: boolean = true;
+    private loadingIndicator: HTMLElement = createDiv('loading-indicator');
+
+    // 添加时间轴相关的属性
+    private timelineCurrentPage: number = 1;
+    private timelinePageSize: number = 10;
+    private timelineIsLoading: boolean = false;
+    private timelineHasMore: boolean = true;
+    private timelineLoadingIndicator: HTMLElement = createDiv('timeline-loading-indicator');
+
+    // 在 CardView 类中添加新的属性
+    private statusBar: HTMLElement = createDiv('status-bar');
+    private statusLeft: HTMLElement = createDiv('status-left');
+    private statusRight: HTMLElement = createDiv('status-right');
+    private loadingStatus: HTMLElement = createDiv('status-item');
 
     /**
      * 构造函数
@@ -49,6 +67,14 @@ export class CardView extends ItemView {
         super(leaf);
         this.plugin = plugin;
         this.currentView = plugin.settings.defaultView;
+        
+        // 初始化 loadingIndicator
+        this.loadingIndicator = createDiv('loading-indicator');
+        this.loadingIndicator.innerHTML = `
+            <div class="loading-spinner"></div>
+            <div class="loading-text">加载中...</div>
+        `;
+        this.loadingIndicator.style.display = 'none';
         
         // 在构造函数中初始化 intersectionObserver
         this.intersectionObserver = new IntersectionObserver(
@@ -111,7 +137,7 @@ export class CardView extends ItemView {
         // 左侧工具组
         const leftTools = toolbar.createDiv('toolbar-left');
         
-        // 新建笔记按钮
+        // 新建笔记按
         const newNoteBtn = leftTools.createEl('button', {
             cls: 'new-note-button',
         });
@@ -187,7 +213,7 @@ export class CardView extends ItemView {
             }
         });
 
-        // 创建标签容器和标签集合
+        // 创建标签容器和标签集
         const tagsContainer = inputContainer.createDiv('tags-container');
         const tags = new Set<string>();
 
@@ -294,6 +320,32 @@ export class CardView extends ItemView {
         // 设置滚动同步
         this.setupScrollSync();
 
+        // 在 mainLayout 的末尾添加状态栏
+        this.statusBar.empty();
+        this.statusLeft.empty();
+        this.statusRight.empty();
+        
+        // 添加加载状态指示器
+        this.loadingStatus.innerHTML = `
+            <div class="loading-indicator">
+                <div class="loading-spinner"></div>
+                <span>准备加载...</span>
+            </div>
+        `;
+        this.statusLeft.appendChild(this.loadingStatus);
+        
+        // 添加其他状态信息
+        const totalNotesStatus = createDiv('status-item');
+        totalNotesStatus.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+            <span>总笔记数: ${this.app.vault.getMarkdownFiles().length}</span>
+        `;
+        this.statusRight.appendChild(totalNotesStatus);
+        
+        this.statusBar.appendChild(this.statusLeft);
+        this.statusBar.appendChild(this.statusRight);
+        contentSection.appendChild(this.statusBar); // 修改这里，将状态栏添加到 contentSection
+        
         await this.loadNotes();
 
         // 初始化日历容器
@@ -318,7 +370,7 @@ export class CardView extends ItemView {
                     cards.forEach(card => {
                         card.classList.remove('selected');
                     });
-                } // 这里添加了缺失的闭合括号
+                } // 里添加了缺失的闭合括号
             });
         }
 
@@ -474,7 +526,7 @@ export class CardView extends ItemView {
             { id: 'card', icon: 'grid', text: '卡片视图' },
             { id: 'list', icon: 'list', text: '列表视图' },
             { id: 'timeline', icon: 'clock', text: '时间轴视图' },
-            { id: 'month', icon: 'calendar', text: '月图' }
+            { id: 'month', icon: 'calendar', text: '月历视图' }
         ];
         
         views.forEach(view => {
@@ -505,26 +557,184 @@ export class CardView extends ItemView {
         });
     }
 
-    // 加载所有笔记并创建卡片
+    // 修改 loadNotes 方法
     private async loadNotes() {
-        const files = this.app.vault.getMarkdownFiles();
-        this.container.empty();
-
-        // 使用 Promise.all 等待所有卡片创建完成
-        const cards = await Promise.all(
-            files.map(file => this.createNoteCard(file))
-        );
-
-        // 添加所有卡片到容器，并设置正确的宽度
-        cards.forEach(card => {
-            if (card instanceof HTMLElement) {
-                card.style.width = `${this.cardSize}px`;
-                this.container.appendChild(card);
+        try {
+            console.log('开始加载笔记...');
+            // 重置分页状态
+            this.currentPage = 1;
+            this.hasMoreNotes = true;
+            this.container.empty();
+            
+            // 确保加载指示器被添加到容器中
+            if (!this.container.contains(this.loadingIndicator)) {
+                this.container.appendChild(this.loadingIndicator);
             }
-        });
+            
+            this.loadingIndicator.innerHTML = `
+                <div class="loading-spinner"></div>
+                <div class="loading-text">加载中...</div>
+            `;
+            this.loadingIndicator.style.display = 'flex';
+            
+            // 加载第一页
+            await this.loadNextPage();
+            
+            // 添加滚动监听
+            this.setupInfiniteScroll();
+            
+            console.log('笔记加载完成');
+        } catch (error) {
+            console.error('loadNotes 错误:', error);
+            new Notice('加载笔记失败，请检查控制台获取详细信息');
+        }
+    }
 
-        // 确保容器使用正确的网格列宽度
-        this.container.style.gridTemplateColumns = `repeat(auto-fill, ${this.cardSize}px)`;
+    // 修改 loadNextPage 方法
+    private async loadNextPage() {
+        if (this.isLoading || !this.hasMoreNotes) {
+            return;
+        }
+        
+        try {
+            this.isLoading = true;
+            this.updateLoadingStatus('加载中...');
+            
+            const files = this.app.vault.getMarkdownFiles();
+            const filteredFiles = await this.filterFiles(files);
+            
+            const start = (this.currentPage - 1) * this.pageSize;
+            const end = start + this.pageSize;
+            const pageFiles = filteredFiles.slice(start, end);
+            
+            this.hasMoreNotes = end < filteredFiles.length;
+            
+            // 更新状态栏信息
+            this.updateLoadingStatus(`正在加载第 ${this.currentPage} 页 (${start + 1}-${end} / ${filteredFiles.length})`);
+            
+            // 创建卡片
+            const cards = await Promise.all(
+                pageFiles.map(async (file) => {
+                    try {
+                        return await this.createNoteCard(file);
+                    } catch (error) {
+                        console.error('创建卡片失败:', file.path, error);
+                        return null;
+                    }
+                })
+            );
+            
+            // 添加卡片到容器
+            cards.forEach(card => {
+                if (card instanceof HTMLElement) {
+                    card.style.width = `${this.cardSize}px`;
+                    // 确保在加载指示器之前插入卡片
+                    if (this.loadingIndicator.parentNode === this.container) {
+                        this.container.insertBefore(card, this.loadingIndicator);
+                    } else {
+                        this.container.appendChild(card);
+                    }
+                }
+            });
+            
+            this.currentPage++;
+            
+        } catch (error) {
+            console.error('loadNextPage 错误:', error);
+            this.updateLoadingStatus('加载失败');
+            new Notice('加载笔记失败');
+        } finally {
+            this.isLoading = false;
+            if (!this.hasMoreNotes) {
+                this.updateLoadingStatus('加载完成');
+            }
+        }
+    }
+
+    // 添加文件过滤方法
+    private async filterFiles(files: TFile[]): Promise<TFile[]> {
+        const searchTerm = this.currentSearchTerm?.trim().toLowerCase();
+        
+        const filteredFiles = await Promise.all(files.map(async file => {
+            const matchesSearch = !searchTerm || 
+                file.basename.toLowerCase().includes(searchTerm) ||
+                await this.fileContentContainsSearch(file);
+
+            // 标签过滤
+            let matchesTags = true;
+            if (this.selectedTags.size > 0) {
+                const cache = this.app.metadataCache.getFileCache(file);
+                matchesTags = cache?.tags?.some(t => this.selectedTags.has(t.tag)) ?? false;
+            }
+
+            // 日期过滤
+            let matchesDate = true;
+            if (this.currentFilter.type === 'date') {
+                const fileDate = new Date(file.stat.mtime);
+                const fileDateStr = fileDate.toISOString().split('T')[0];
+                
+                if (this.currentFilter.value?.length === 7) {
+                    matchesDate = fileDateStr.startsWith(this.currentFilter.value);
+                } else {
+                    matchesDate = fileDateStr === this.currentFilter.value;
+                }
+            }
+
+            return matchesSearch && matchesTags && matchesDate ? file : null;
+        }));
+
+        return filteredFiles.filter((file): file is TFile => file !== null);
+    }
+
+    // 修改 setupInfiniteScroll 方法
+    private setupInfiniteScroll() {
+        try {
+            console.log('设置限滚动...');
+            // 使用 Intersection Observer 监听加载指示器
+            const observer = new IntersectionObserver(
+                (entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting && !this.isLoading && this.hasMoreNotes) {
+                            console.log('触发加载更多');
+                            this.loadNextPage();
+                        }
+                    });
+                },
+                {
+                    root: this.container,
+                    rootMargin: '100px',
+                    threshold: 0.1
+                }
+            );
+            
+            observer.observe(this.loadingIndicator);
+            console.log('已添加 Intersection Observer');
+            
+            // 添加滚动事件处理
+            this.container.addEventListener('scroll', () => {
+                const { scrollTop, scrollHeight, clientHeight } = this.container;
+                // 添加滚动进度信息到状态栏右侧
+                const scrollPercentage = Math.round((scrollTop / (scrollHeight - clientHeight)) * 100);
+                if (!isNaN(scrollPercentage)) {
+                    const scrollStatus = this.statusRight.querySelector('.scroll-status') || createDiv('status-item scroll-status');
+                    scrollStatus.innerHTML = `
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>
+                        <span>${scrollPercentage}%</span>
+                    `;
+                    if (!this.statusRight.contains(scrollStatus)) {
+                        this.statusRight.appendChild(scrollStatus);
+                    }
+                }
+                
+                if (scrollHeight - scrollTop - clientHeight < 100 && !this.isLoading && this.hasMoreNotes) {
+                    this.loadNextPage();
+                }
+            });
+            console.log('已添加滚动事件监听');
+            
+        } catch (error) {
+            console.error('setupInfiniteScroll 错误:', error);
+        }
     }
 
     /**
@@ -758,7 +968,7 @@ export class CardView extends ItemView {
             console.error('笔记加载失败:', error);
         }
 
-        // 添加卡片悬停事件
+        // 加卡片悬停事件
         card.addEventListener('mouseenter', async () => {
             openButton.style.opacity = '1';  // 示打开按钮
             // ... 其他悬停事码 ...
@@ -972,58 +1182,162 @@ export class CardView extends ItemView {
 
     // 修改 createTimelineView 方法
     private async createTimelineView() {
-        const timelineContainer = this.container.createDiv('timeline-container');
-        
-        // 获所有笔记并日期分组
-        const files = this.app.vault.getMarkdownFiles();
-        const notesByDate = new Map<string, TFile[]>();
-        
-        files.forEach(file => {
-            const date = new Date(file.stat.mtime).toLocaleDateString();
-            if (!notesByDate.has(date)) {
-                notesByDate.set(date, []);
-            }
-            const notes = notesByDate.get(date);
-            if (notes) {
-                notes.push(file);
-            }
-        });
-
-        // 按日期排序
-        const sortedDates = Array.from(notesByDate.keys()).sort((a, b) => 
-            new Date(b).getTime() - new Date(a).getTime()
-        );
-
-        // 创建时间轴
-        for (const date of sortedDates) {
-            const dateGroup = timelineContainer.createDiv('timeline-date-group');
+        try {
+            console.log('开始创建时间轴视图...');
+            const timelineContainer = this.container.createDiv('timeline-container');
             
-            // 创建日期节点
-            const dateNode = dateGroup.createDiv('timeline-date-node');
-            dateNode.createDiv('timeline-node-circle');
-            dateNode.createDiv('timeline-date-label').setText(date);
-
-            // 创建笔记列表容器
-            const notesList = dateGroup.createDiv('timeline-notes-list');
-            const notes = notesByDate.get(date);
+            // 初始化加载指示器
+            this.timelineLoadingIndicator.innerHTML = `
+                <div class="loading-spinner"></div>
+                <div class="loading-text">加载中...</div>
+            `;
+            this.timelineLoadingIndicator.style.display = 'none';
+            timelineContainer.appendChild(this.timelineLoadingIndicator);
             
-            // 为每个笔记创建卡片
-            if (notes) {
+            // 重置分页状态
+            this.timelineCurrentPage = 1;
+            this.timelineHasMore = true;
+            this.timelineIsLoading = false;
+            
+            // 加载第一页
+            await this.loadTimelinePage(timelineContainer);
+            
+            // 设置滚动监听
+            this.setupTimelineScroll(timelineContainer);
+            
+        } catch (error) {
+            console.error('创建时间轴视图失败:', error);
+            new Notice('创建时间轴视图失败');
+        }
+    }
+
+    // 添加加载时间轴页面的方法
+    private async loadTimelinePage(container: HTMLElement) {
+        if (this.timelineIsLoading || !this.timelineHasMore) {
+            console.log('跳过时间轴加载: isLoading=', this.timelineIsLoading, 'hasMore=', this.timelineHasMore);
+            return;
+        }
+        
+        try {
+            console.log('加载时间轴第', this.timelineCurrentPage, '页');
+            this.timelineIsLoading = true;
+            this.timelineLoadingIndicator.style.display = 'flex';
+            
+            // 获取所有文件并按日期分组
+            const files = this.app.vault.getMarkdownFiles();
+            const notesByDate = new Map<string, TFile[]>();
+            
+            // 应用过滤
+            const filteredFiles = await this.filterFiles(files);
+            console.log('过滤后文件数:', filteredFiles.length);
+            
+            // 按日期分组
+            filteredFiles.forEach(file => {
+                const date = new Date(file.stat.mtime).toLocaleDateString();
+                if (!notesByDate.has(date)) {
+                    notesByDate.set(date, []);
+                }
+                notesByDate.get(date)?.push(file);
+            });
+            
+            // 按日期排序
+            const sortedDates = Array.from(notesByDate.keys()).sort((a, b) => 
+                new Date(b).getTime() - new Date(a).getTime()
+            );
+            
+            // 计算分页
+            const start = (this.timelineCurrentPage - 1) * this.timelinePageSize;
+            const end = start + this.timelinePageSize;
+            const pageDates = sortedDates.slice(start, end);
+            
+            // 检查是否还有更多
+            this.timelineHasMore = end < sortedDates.length;
+            
+            // 创建时间轴项目
+            for (const date of pageDates) {
+                const dateGroup = container.createDiv('timeline-date-group');
+                
+                // 创建日期节点
+                const dateNode = dateGroup.createDiv('timeline-date-node');
+                dateNode.createDiv('timeline-node-circle');
+                dateNode.createDiv('timeline-date-label').setText(date);
+                
+                // 创建笔记列表
+                const notesList = dateGroup.createDiv('timeline-notes-list');
+                const notes = notesByDate.get(date) || [];
+                
+                // 创建笔记卡片
                 await Promise.all(notes.map(async (file) => {
-                    const card = await this.createNoteCard(file);
-                    if (card instanceof HTMLElement) {
-                        // 设卡片宽度
-                        card.style.width = '100%';
-                        notesList.appendChild(card);
+                    try {
+                        const card = await this.createNoteCard(file);
+                        if (card instanceof HTMLElement) {
+                            card.style.width = '100%';
+                            notesList.appendChild(card);
+                        }
+                    } catch (error) {
+                        console.error('创建笔记卡片失败:', file.path, error);
                     }
                 }));
             }
+            
+            this.timelineCurrentPage++;
+            console.log('时间轴页面加载完成，当前页数:', this.timelineCurrentPage);
+            
+        } catch (error) {
+            console.error('加载时间轴页面失败:', error);
+            new Notice('加载失败');
+        } finally {
+            this.timelineIsLoading = false;
+            this.timelineLoadingIndicator.style.display = 'none';
+        }
+    }
+
+    // 添加时间轴滚动监听方法
+    private setupTimelineScroll(container: HTMLElement) {
+        try {
+            console.log('设置时间轴滚动监听...');
+            
+            // 使用 Intersection Observer 监听加载指示器
+            const observer = new IntersectionObserver(
+                (entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting && !this.timelineIsLoading && this.timelineHasMore) {
+                            console.log('触发时间轴加载更多');
+                            this.loadTimelinePage(container);
+                        }
+                    });
+                },
+                {
+                    root: container,
+                    rootMargin: '100px',
+                    threshold: 0.1
+                }
+            );
+            
+            observer.observe(this.timelineLoadingIndicator);
+            console.log('已添加时间轴 Intersection Observer');
+            
+            // 添加滚动事件处理
+            container.addEventListener('scroll', () => {
+                const { scrollTop, scrollHeight, clientHeight } = container;
+                if (scrollHeight - scrollTop - clientHeight < 100 && !this.timelineIsLoading && this.timelineHasMore) {
+                    console.log('滚动触发时间轴加载更多');
+                    this.loadTimelinePage(container);
+                }
+            });
+            
+            console.log('已添加时间轴滚动事件监听');
+            
+        } catch (error) {
+            console.error('设置时间轴滚动监听失败:', error);
         }
     }
 
     // 刷新视图（用于搜索和过滤）
     private async refreshView() {
-        // 清理已加载的笔记记录
+        // 重置状态
+        this.currentPage = 1;
+        this.hasMoreNotes = true;
         this.loadedNotes.clear();
         
         // 断开之前的观察器
@@ -1031,55 +1345,22 @@ export class CardView extends ItemView {
             this.intersectionObserver.disconnect();
         }
         
-        const files = this.app.vault.getMarkdownFiles();
         this.container.empty();
-
-        // 先进行搜索过滤
-        const searchTerm = this.currentSearchTerm?.trim().toLowerCase();
-        const filteredFiles = await Promise.all(files.map(async file => {
-            const matchesSearch = !searchTerm || 
-                file.basename.toLowerCase().includes(searchTerm) ||
-                await this.fileContentContainsSearch(file);
-
-            // 标签过滤
-            let matchesTags = true;
-            if (this.selectedTags.size > 0) {
-                const cache = this.app.metadataCache.getFileCache(file);
-                matchesTags = cache?.tags?.some(t => this.selectedTags.has(t.tag)) ?? false;
-            }
-
-            // 日期过滤
-            let matchesDate = true;
-            if (this.currentFilter.type === 'date') {
-                const fileDate = new Date(file.stat.mtime);
-                const fileDateStr = fileDate.toISOString().split('T')[0];
-                
-                if (this.currentFilter.value?.length === 7) {
-                    matchesDate = fileDateStr.startsWith(this.currentFilter.value);
-                } else {
-                    matchesDate = fileDateStr === this.currentFilter.value;
-                }
-            }
-
-            return matchesSearch && matchesTags && matchesDate ? file : null;
-        }));
-
-        // 过滤掉不匹的文件
-        const matchedFiles = filteredFiles.filter((file): file is TFile => file !== null);
-
-        // 创建卡片
-        const cards = await Promise.all(
-            matchedFiles.map(file => this.createNoteCard(file))
-        );
-
-        cards.forEach(card => {
-            if (card instanceof HTMLElement) {
-                card.style.width = `${this.cardSize}px`;
-                this.container.appendChild(card);
-            }
-        });
-
-        this.container.style.gridTemplateColumns = `repeat(auto-fill, ${this.cardSize}px)`;
+        
+        // 重新创建加载指示器
+        this.loadingIndicator.innerHTML = `
+            <div class="loading-spinner"></div>
+            <div class="loading-text">加载中...</div>
+        `;
+        this.loadingIndicator.style.display = 'none';
+        
+        // 加载第一页
+        await this.loadNextPage();
+        
+        // 重新设置无限滚动
+        this.setupInfiniteScroll();
+        
+        this.updateLoadingStatus('刷新视图...');
     }
 
     // 添加标签切换方法
@@ -1467,7 +1748,7 @@ export class CardView extends ItemView {
             weekHeader.createDiv('weekday').setText(day);
         });
 
-        // 创建日期网格
+        // 创建日网格
         const grid = this.calendarContainer.createDiv('calendar-grid');
         
         // 获取当月第一天是星期几
@@ -1996,7 +2277,7 @@ export class CardView extends ItemView {
                 }
                 subFolders.get(subFolder)?.push(file);
             }
-        });
+        }); // 这里添加逗号
         
         // 创建文件夹视图
         for (const [rootFolder, subFolders] of folderStructure) {
@@ -2222,7 +2503,7 @@ export class CardView extends ItemView {
             if (tagInput) tagInput.value = '';
         };
 
-        // 修改最近标签的处理
+        // 修改最近签的处理
         recentTags.forEach(tag => {
             const tagItem = tagsContainer?.createDiv('tag-item');
             tagItem?.addClass('recent-tag');
@@ -2339,7 +2620,7 @@ export class CardView extends ItemView {
                     // 添加标签（默认为高亮状态）
                     if (tagText && !tags.has(tagText)) {
                         const tagItem = tagsContainer?.createDiv('tag-item');
-                        tagItem?.addClass('active'); // 默认为高亮状态
+                        tagItem?.addClass('active'); // 默认为亮状态
                         tagItem?.setText(tagText);
                         
                         // 添加删除按钮
@@ -2375,7 +2656,7 @@ export class CardView extends ItemView {
         tagsContainer: HTMLElement | null,
         tagInput: HTMLInputElement | null
     ) {
-        // 清除标题
+        // 清标题
         if (titleInput) {
             titleInput.value = '';
         }
@@ -2562,7 +2843,7 @@ export class CardView extends ItemView {
         }
     }
 
-    // 添加保存和加载最近标签的方法
+    // 添加保存和加载近标签的方法
     private saveRecentTags(tags: string[]) {
         localStorage.setItem('recent-tags', JSON.stringify(tags));
     }
@@ -2748,7 +3029,7 @@ export class CardView extends ItemView {
         if (this.loadedNotes.has(file.path)) return;
         
         try {
-            container.empty(); // 清除加载占位符
+            container.empty(); // 清除加载���位符
             
             const content = await this.app.vault.read(file);
             await MarkdownRenderer.render(
@@ -2785,6 +3066,35 @@ export class CardView extends ItemView {
         }
         this.loadedNotes.clear();
         // ... 其他清理代码 ...
+    }
+
+    // 添加更新状态栏的方法
+    private updateLoadingStatus(message: string) {
+        if (!this.loadingStatus) return;
+        
+        const loadingIndicator = this.loadingStatus.querySelector('.loading-indicator');
+        if (this.isLoading) {
+            // 加载中状态
+            loadingIndicator?.addClass('loading');
+            this.loadingStatus.innerHTML = `
+                <div class="loading-indicator loading">
+                    <div class="loading-spinner"></div>
+                    <span>${message}</span>
+                </div>
+            `;
+        } else {
+            // 加载完成状态 - 不显示加载动画
+            loadingIndicator?.removeClass('loading');
+            this.loadingStatus.innerHTML = `
+                <div class="loading-indicator">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                    </svg>
+                    <span>${message}</span>
+                </div>
+            `;
+        }
     }
 }
 

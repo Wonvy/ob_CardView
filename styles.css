@@ -208,7 +208,7 @@
 }
 
 .card-view-content {
-  height: calc(100% - 120px);
+  flex: 1;
   overflow-y: auto;
   padding: 1rem;
   position: relative;
@@ -563,6 +563,8 @@
   flex: 1;
   min-width: 0;
   transition: margin-left 0.2s ease;
+  display: flex;
+  flex-direction: column;
 }
 
 .main-layout.with-calendar .calendar-container {
@@ -1413,8 +1415,8 @@
   right: 0;
   bottom: 0;
   background: rgba(0, 0, 0, 0.2);
-  backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
   z-index: 999;
   opacity: 0;
   transition: opacity 0.3s ease;
@@ -1432,6 +1434,191 @@
   height: 100%;
   color: var(--text-muted);
   font-size: 0.9em;
+}
+
+.loading-indicator {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  width: 100%;
+  gap: 10px;
+}
+
+.loading-spinner {
+  width: 30px;
+  height: 30px;
+  border: 3px solid var(--background-modifier-border);
+  border-top-color: var(--text-accent);
+  border-radius: 50%;
+}
+
+.loading-text {
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.card-container {
+  overflow-y: auto;
+  max-height: 100%;
+  padding: 16px;
+  box-sizing: border-box;
+}
+.card-container::-webkit-scrollbar {
+  width: 8px;
+}
+.card-container::-webkit-scrollbar-track {
+  background: var(--scrollbar-bg);
+}
+.card-container::-webkit-scrollbar-thumb {
+  background-color: var(--scrollbar-thumb-bg);
+  border-radius: 4px;
+}
+
+.status-bar {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 16px;
+  background-color: var(--background-primary);
+  border-top: 1px solid var(--background-modifier-border);
+  color: var(--text-muted);
+  font-size: 12px;
+  height: 28px;
+  flex-shrink: 0;
+  margin-top: auto;
+  box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.05);
+}
+.status-bar .status-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.status-bar .status-left .status-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+.status-bar .status-left .status-item:hover {
+  background-color: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+.status-bar .status-left .status-item svg {
+  width: 14px;
+  height: 14px;
+  opacity: 0.8;
+  transition: all 0.2s ease;
+}
+.status-bar .status-left .status-item:hover svg {
+  opacity: 1;
+  transform: scale(1.1);
+}
+.status-bar .status-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.status-bar .status-right .status-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+.status-bar .status-right .status-item:hover {
+  background-color: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+.status-bar .status-right .status-item svg {
+  width: 14px;
+  height: 14px;
+  opacity: 0.8;
+  transition: all 0.2s ease;
+}
+.status-bar .status-right .status-item:hover svg {
+  opacity: 1;
+  transform: scale(1.1);
+}
+.status-bar .loading-indicator {
+  display: inline-flex;
+  padding: 0;
+  margin: 0;
+  align-items: center;
+  flex-direction: row;
+  gap: 8px;
+}
+.status-bar .loading-indicator .loading-spinner {
+  width: 12px;
+  height: 12px;
+  border-width: 2px;
+  border-color: var(--background-modifier-border);
+  border-top-color: var(--interactive-accent);
+  animation: spin 0.8s linear infinite;
+  display: none;
+}
+.status-bar .loading-indicator svg {
+  width: 14px;
+  height: 14px;
+  opacity: 0.8;
+  color: var(--interactive-accent);
+}
+.status-bar .loading-indicator span {
+  font-size: 12px;
+  color: var(--text-muted);
+  transition: color 0.2s ease;
+}
+.status-bar .loading-indicator.loading .loading-spinner {
+  display: block;
+}
+.status-bar .loading-indicator.loading svg {
+  display: none;
+}
+.status-bar .scroll-status {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+.status-bar .scroll-status svg {
+  transition: transform 0.2s ease;
+  opacity: 0.8;
+}
+.status-bar .scroll-status:hover {
+  background-color: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+.status-bar .scroll-status:hover svg {
+  opacity: 1;
+  transform: translateY(-1px);
+}
+.status-bar .scroll-status span {
+  font-size: 12px;
+}
+.status-bar .status-separator {
+  width: 1px;
+  height: 14px;
+  background-color: var(--background-modifier-border);
+  margin: 0 8px;
+  opacity: 0.6;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /*# sourceMappingURL=styles.css.map */

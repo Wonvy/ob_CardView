@@ -63,8 +63,30 @@ var CardView = class extends import_obsidian.ItemView {
     this.monthViewContainer = createDiv();
     this.isMonthViewVisible = false;
     this.loadedNotes = /* @__PURE__ */ new Set();
+    this.currentPage = 1;
+    this.pageSize = 20;
+    this.isLoading = false;
+    this.hasMoreNotes = true;
+    this.loadingIndicator = createDiv("loading-indicator");
+    // 添加时间轴相关的属性
+    this.timelineCurrentPage = 1;
+    this.timelinePageSize = 10;
+    this.timelineIsLoading = false;
+    this.timelineHasMore = true;
+    this.timelineLoadingIndicator = createDiv("timeline-loading-indicator");
+    // 在 CardView 类中添加新的属性
+    this.statusBar = createDiv("status-bar");
+    this.statusLeft = createDiv("status-left");
+    this.statusRight = createDiv("status-right");
+    this.loadingStatus = createDiv("status-item");
     this.plugin = plugin;
     this.currentView = plugin.settings.defaultView;
+    this.loadingIndicator = createDiv("loading-indicator");
+    this.loadingIndicator.innerHTML = `
+            <div class="loading-spinner"></div>
+            <div class="loading-text">\u52A0\u8F7D\u4E2D...</div>
+        `;
+    this.loadingIndicator.style.display = "none";
     this.intersectionObserver = new IntersectionObserver(
       (entries) => {
         entries.forEach(async (entry) => {
@@ -223,6 +245,25 @@ var CardView = class extends import_obsidian.ItemView {
     this.previewContainer = previewWrapper.createDiv("preview-container");
     this.setupResizer();
     this.setupScrollSync();
+    this.statusBar.empty();
+    this.statusLeft.empty();
+    this.statusRight.empty();
+    this.loadingStatus.innerHTML = `
+            <div class="loading-indicator">
+                <div class="loading-spinner"></div>
+                <span>\u51C6\u5907\u52A0\u8F7D...</span>
+            </div>
+        `;
+    this.statusLeft.appendChild(this.loadingStatus);
+    const totalNotesStatus = createDiv("status-item");
+    totalNotesStatus.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+            <span>\u603B\u7B14\u8BB0\u6570: ${this.app.vault.getMarkdownFiles().length}</span>
+        `;
+    this.statusRight.appendChild(totalNotesStatus);
+    this.statusBar.appendChild(this.statusLeft);
+    this.statusBar.appendChild(this.statusRight);
+    contentSection.appendChild(this.statusBar);
     await this.loadNotes();
     this.calendarContainer = createDiv();
     this.calendarContainer.addClass("calendar-container");
@@ -359,7 +400,7 @@ ${content}` : content;
       { id: "card", icon: "grid", text: "\u5361\u7247\u89C6\u56FE" },
       { id: "list", icon: "list", text: "\u5217\u8868\u89C6\u56FE" },
       { id: "timeline", icon: "clock", text: "\u65F6\u95F4\u8F74\u89C6\u56FE" },
-      { id: "month", icon: "calendar", text: "\u6708\u56FE" }
+      { id: "month", icon: "calendar", text: "\u6708\u5386\u89C6\u56FE" }
     ];
     views.forEach((view) => {
       const btn = container.createEl("button", {
@@ -381,20 +422,144 @@ ${content}` : content;
       });
     });
   }
-  // 加载所有笔记并创建卡片
+  // 修改 loadNotes 方法
   async loadNotes() {
-    const files = this.app.vault.getMarkdownFiles();
-    this.container.empty();
-    const cards = await Promise.all(
-      files.map((file) => this.createNoteCard(file))
-    );
-    cards.forEach((card) => {
-      if (card instanceof HTMLElement) {
-        card.style.width = `${this.cardSize}px`;
-        this.container.appendChild(card);
+    try {
+      console.log("\u5F00\u59CB\u52A0\u8F7D\u7B14\u8BB0...");
+      this.currentPage = 1;
+      this.hasMoreNotes = true;
+      this.container.empty();
+      if (!this.container.contains(this.loadingIndicator)) {
+        this.container.appendChild(this.loadingIndicator);
       }
-    });
-    this.container.style.gridTemplateColumns = `repeat(auto-fill, ${this.cardSize}px)`;
+      this.loadingIndicator.innerHTML = `
+                <div class="loading-spinner"></div>
+                <div class="loading-text">\u52A0\u8F7D\u4E2D...</div>
+            `;
+      this.loadingIndicator.style.display = "flex";
+      await this.loadNextPage();
+      this.setupInfiniteScroll();
+      console.log("\u7B14\u8BB0\u52A0\u8F7D\u5B8C\u6210");
+    } catch (error) {
+      console.error("loadNotes \u9519\u8BEF:", error);
+      new import_obsidian.Notice("\u52A0\u8F7D\u7B14\u8BB0\u5931\u8D25\uFF0C\u8BF7\u68C0\u67E5\u63A7\u5236\u53F0\u83B7\u53D6\u8BE6\u7EC6\u4FE1\u606F");
+    }
+  }
+  // 修改 loadNextPage 方法
+  async loadNextPage() {
+    if (this.isLoading || !this.hasMoreNotes) {
+      return;
+    }
+    try {
+      this.isLoading = true;
+      this.updateLoadingStatus("\u52A0\u8F7D\u4E2D...");
+      const files = this.app.vault.getMarkdownFiles();
+      const filteredFiles = await this.filterFiles(files);
+      const start = (this.currentPage - 1) * this.pageSize;
+      const end = start + this.pageSize;
+      const pageFiles = filteredFiles.slice(start, end);
+      this.hasMoreNotes = end < filteredFiles.length;
+      this.updateLoadingStatus(`\u6B63\u5728\u52A0\u8F7D\u7B2C ${this.currentPage} \u9875 (${start + 1}-${end} / ${filteredFiles.length})`);
+      const cards = await Promise.all(
+        pageFiles.map(async (file) => {
+          try {
+            return await this.createNoteCard(file);
+          } catch (error) {
+            console.error("\u521B\u5EFA\u5361\u7247\u5931\u8D25:", file.path, error);
+            return null;
+          }
+        })
+      );
+      cards.forEach((card) => {
+        if (card instanceof HTMLElement) {
+          card.style.width = `${this.cardSize}px`;
+          if (this.loadingIndicator.parentNode === this.container) {
+            this.container.insertBefore(card, this.loadingIndicator);
+          } else {
+            this.container.appendChild(card);
+          }
+        }
+      });
+      this.currentPage++;
+    } catch (error) {
+      console.error("loadNextPage \u9519\u8BEF:", error);
+      this.updateLoadingStatus("\u52A0\u8F7D\u5931\u8D25");
+      new import_obsidian.Notice("\u52A0\u8F7D\u7B14\u8BB0\u5931\u8D25");
+    } finally {
+      this.isLoading = false;
+      if (!this.hasMoreNotes) {
+        this.updateLoadingStatus("\u52A0\u8F7D\u5B8C\u6210");
+      }
+    }
+  }
+  // 添加文件过滤方法
+  async filterFiles(files) {
+    var _a;
+    const searchTerm = (_a = this.currentSearchTerm) == null ? void 0 : _a.trim().toLowerCase();
+    const filteredFiles = await Promise.all(files.map(async (file) => {
+      var _a2, _b, _c;
+      const matchesSearch = !searchTerm || file.basename.toLowerCase().includes(searchTerm) || await this.fileContentContainsSearch(file);
+      let matchesTags = true;
+      if (this.selectedTags.size > 0) {
+        const cache = this.app.metadataCache.getFileCache(file);
+        matchesTags = (_b = (_a2 = cache == null ? void 0 : cache.tags) == null ? void 0 : _a2.some((t) => this.selectedTags.has(t.tag))) != null ? _b : false;
+      }
+      let matchesDate = true;
+      if (this.currentFilter.type === "date") {
+        const fileDate = new Date(file.stat.mtime);
+        const fileDateStr = fileDate.toISOString().split("T")[0];
+        if (((_c = this.currentFilter.value) == null ? void 0 : _c.length) === 7) {
+          matchesDate = fileDateStr.startsWith(this.currentFilter.value);
+        } else {
+          matchesDate = fileDateStr === this.currentFilter.value;
+        }
+      }
+      return matchesSearch && matchesTags && matchesDate ? file : null;
+    }));
+    return filteredFiles.filter((file) => file !== null);
+  }
+  // 修改 setupInfiniteScroll 方法
+  setupInfiniteScroll() {
+    try {
+      console.log("\u8BBE\u7F6E\u9650\u6EDA\u52A8...");
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting && !this.isLoading && this.hasMoreNotes) {
+              console.log("\u89E6\u53D1\u52A0\u8F7D\u66F4\u591A");
+              this.loadNextPage();
+            }
+          });
+        },
+        {
+          root: this.container,
+          rootMargin: "100px",
+          threshold: 0.1
+        }
+      );
+      observer.observe(this.loadingIndicator);
+      console.log("\u5DF2\u6DFB\u52A0 Intersection Observer");
+      this.container.addEventListener("scroll", () => {
+        const { scrollTop, scrollHeight, clientHeight } = this.container;
+        const scrollPercentage = Math.round(scrollTop / (scrollHeight - clientHeight) * 100);
+        if (!isNaN(scrollPercentage)) {
+          const scrollStatus = this.statusRight.querySelector(".scroll-status") || createDiv("status-item scroll-status");
+          scrollStatus.innerHTML = `
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>
+                        <span>${scrollPercentage}%</span>
+                    `;
+          if (!this.statusRight.contains(scrollStatus)) {
+            this.statusRight.appendChild(scrollStatus);
+          }
+        }
+        if (scrollHeight - scrollTop - clientHeight < 100 && !this.isLoading && this.hasMoreNotes) {
+          this.loadNextPage();
+        }
+      });
+      console.log("\u5DF2\u6DFB\u52A0\u6EDA\u52A8\u4E8B\u4EF6\u76D1\u542C");
+    } catch (error) {
+      console.error("setupInfiniteScroll \u9519\u8BEF:", error);
+    }
   }
   /**
    * 创建单个笔记卡片
@@ -715,81 +880,133 @@ ${content}` : content;
   }
   // 修改 createTimelineView 方法
   async createTimelineView() {
-    const timelineContainer = this.container.createDiv("timeline-container");
-    const files = this.app.vault.getMarkdownFiles();
-    const notesByDate = /* @__PURE__ */ new Map();
-    files.forEach((file) => {
-      const date = new Date(file.stat.mtime).toLocaleDateString();
-      if (!notesByDate.has(date)) {
-        notesByDate.set(date, []);
-      }
-      const notes = notesByDate.get(date);
-      if (notes) {
-        notes.push(file);
-      }
-    });
-    const sortedDates = Array.from(notesByDate.keys()).sort(
-      (a, b) => new Date(b).getTime() - new Date(a).getTime()
-    );
-    for (const date of sortedDates) {
-      const dateGroup = timelineContainer.createDiv("timeline-date-group");
-      const dateNode = dateGroup.createDiv("timeline-date-node");
-      dateNode.createDiv("timeline-node-circle");
-      dateNode.createDiv("timeline-date-label").setText(date);
-      const notesList = dateGroup.createDiv("timeline-notes-list");
-      const notes = notesByDate.get(date);
-      if (notes) {
+    try {
+      console.log("\u5F00\u59CB\u521B\u5EFA\u65F6\u95F4\u8F74\u89C6\u56FE...");
+      const timelineContainer = this.container.createDiv("timeline-container");
+      this.timelineLoadingIndicator.innerHTML = `
+                <div class="loading-spinner"></div>
+                <div class="loading-text">\u52A0\u8F7D\u4E2D...</div>
+            `;
+      this.timelineLoadingIndicator.style.display = "none";
+      timelineContainer.appendChild(this.timelineLoadingIndicator);
+      this.timelineCurrentPage = 1;
+      this.timelineHasMore = true;
+      this.timelineIsLoading = false;
+      await this.loadTimelinePage(timelineContainer);
+      this.setupTimelineScroll(timelineContainer);
+    } catch (error) {
+      console.error("\u521B\u5EFA\u65F6\u95F4\u8F74\u89C6\u56FE\u5931\u8D25:", error);
+      new import_obsidian.Notice("\u521B\u5EFA\u65F6\u95F4\u8F74\u89C6\u56FE\u5931\u8D25");
+    }
+  }
+  // 添加加载时间轴页面的方法
+  async loadTimelinePage(container) {
+    if (this.timelineIsLoading || !this.timelineHasMore) {
+      console.log("\u8DF3\u8FC7\u65F6\u95F4\u8F74\u52A0\u8F7D: isLoading=", this.timelineIsLoading, "hasMore=", this.timelineHasMore);
+      return;
+    }
+    try {
+      console.log("\u52A0\u8F7D\u65F6\u95F4\u8F74\u7B2C", this.timelineCurrentPage, "\u9875");
+      this.timelineIsLoading = true;
+      this.timelineLoadingIndicator.style.display = "flex";
+      const files = this.app.vault.getMarkdownFiles();
+      const notesByDate = /* @__PURE__ */ new Map();
+      const filteredFiles = await this.filterFiles(files);
+      console.log("\u8FC7\u6EE4\u540E\u6587\u4EF6\u6570:", filteredFiles.length);
+      filteredFiles.forEach((file) => {
+        var _a;
+        const date = new Date(file.stat.mtime).toLocaleDateString();
+        if (!notesByDate.has(date)) {
+          notesByDate.set(date, []);
+        }
+        (_a = notesByDate.get(date)) == null ? void 0 : _a.push(file);
+      });
+      const sortedDates = Array.from(notesByDate.keys()).sort(
+        (a, b) => new Date(b).getTime() - new Date(a).getTime()
+      );
+      const start = (this.timelineCurrentPage - 1) * this.timelinePageSize;
+      const end = start + this.timelinePageSize;
+      const pageDates = sortedDates.slice(start, end);
+      this.timelineHasMore = end < sortedDates.length;
+      for (const date of pageDates) {
+        const dateGroup = container.createDiv("timeline-date-group");
+        const dateNode = dateGroup.createDiv("timeline-date-node");
+        dateNode.createDiv("timeline-node-circle");
+        dateNode.createDiv("timeline-date-label").setText(date);
+        const notesList = dateGroup.createDiv("timeline-notes-list");
+        const notes = notesByDate.get(date) || [];
         await Promise.all(notes.map(async (file) => {
-          const card = await this.createNoteCard(file);
-          if (card instanceof HTMLElement) {
-            card.style.width = "100%";
-            notesList.appendChild(card);
+          try {
+            const card = await this.createNoteCard(file);
+            if (card instanceof HTMLElement) {
+              card.style.width = "100%";
+              notesList.appendChild(card);
+            }
+          } catch (error) {
+            console.error("\u521B\u5EFA\u7B14\u8BB0\u5361\u7247\u5931\u8D25:", file.path, error);
           }
         }));
       }
+      this.timelineCurrentPage++;
+      console.log("\u65F6\u95F4\u8F74\u9875\u9762\u52A0\u8F7D\u5B8C\u6210\uFF0C\u5F53\u524D\u9875\u6570:", this.timelineCurrentPage);
+    } catch (error) {
+      console.error("\u52A0\u8F7D\u65F6\u95F4\u8F74\u9875\u9762\u5931\u8D25:", error);
+      new import_obsidian.Notice("\u52A0\u8F7D\u5931\u8D25");
+    } finally {
+      this.timelineIsLoading = false;
+      this.timelineLoadingIndicator.style.display = "none";
+    }
+  }
+  // 添加时间轴滚动监听方法
+  setupTimelineScroll(container) {
+    try {
+      console.log("\u8BBE\u7F6E\u65F6\u95F4\u8F74\u6EDA\u52A8\u76D1\u542C...");
+      const observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting && !this.timelineIsLoading && this.timelineHasMore) {
+              console.log("\u89E6\u53D1\u65F6\u95F4\u8F74\u52A0\u8F7D\u66F4\u591A");
+              this.loadTimelinePage(container);
+            }
+          });
+        },
+        {
+          root: container,
+          rootMargin: "100px",
+          threshold: 0.1
+        }
+      );
+      observer.observe(this.timelineLoadingIndicator);
+      console.log("\u5DF2\u6DFB\u52A0\u65F6\u95F4\u8F74 Intersection Observer");
+      container.addEventListener("scroll", () => {
+        const { scrollTop, scrollHeight, clientHeight } = container;
+        if (scrollHeight - scrollTop - clientHeight < 100 && !this.timelineIsLoading && this.timelineHasMore) {
+          console.log("\u6EDA\u52A8\u89E6\u53D1\u65F6\u95F4\u8F74\u52A0\u8F7D\u66F4\u591A");
+          this.loadTimelinePage(container);
+        }
+      });
+      console.log("\u5DF2\u6DFB\u52A0\u65F6\u95F4\u8F74\u6EDA\u52A8\u4E8B\u4EF6\u76D1\u542C");
+    } catch (error) {
+      console.error("\u8BBE\u7F6E\u65F6\u95F4\u8F74\u6EDA\u52A8\u76D1\u542C\u5931\u8D25:", error);
     }
   }
   // 刷新视图（用于搜索和过滤）
   async refreshView() {
-    var _a;
+    this.currentPage = 1;
+    this.hasMoreNotes = true;
     this.loadedNotes.clear();
     if (this.intersectionObserver) {
       this.intersectionObserver.disconnect();
     }
-    const files = this.app.vault.getMarkdownFiles();
     this.container.empty();
-    const searchTerm = (_a = this.currentSearchTerm) == null ? void 0 : _a.trim().toLowerCase();
-    const filteredFiles = await Promise.all(files.map(async (file) => {
-      var _a2, _b, _c;
-      const matchesSearch = !searchTerm || file.basename.toLowerCase().includes(searchTerm) || await this.fileContentContainsSearch(file);
-      let matchesTags = true;
-      if (this.selectedTags.size > 0) {
-        const cache = this.app.metadataCache.getFileCache(file);
-        matchesTags = (_b = (_a2 = cache == null ? void 0 : cache.tags) == null ? void 0 : _a2.some((t) => this.selectedTags.has(t.tag))) != null ? _b : false;
-      }
-      let matchesDate = true;
-      if (this.currentFilter.type === "date") {
-        const fileDate = new Date(file.stat.mtime);
-        const fileDateStr = fileDate.toISOString().split("T")[0];
-        if (((_c = this.currentFilter.value) == null ? void 0 : _c.length) === 7) {
-          matchesDate = fileDateStr.startsWith(this.currentFilter.value);
-        } else {
-          matchesDate = fileDateStr === this.currentFilter.value;
-        }
-      }
-      return matchesSearch && matchesTags && matchesDate ? file : null;
-    }));
-    const matchedFiles = filteredFiles.filter((file) => file !== null);
-    const cards = await Promise.all(
-      matchedFiles.map((file) => this.createNoteCard(file))
-    );
-    cards.forEach((card) => {
-      if (card instanceof HTMLElement) {
-        card.style.width = `${this.cardSize}px`;
-        this.container.appendChild(card);
-      }
-    });
-    this.container.style.gridTemplateColumns = `repeat(auto-fill, ${this.cardSize}px)`;
+    this.loadingIndicator.innerHTML = `
+            <div class="loading-spinner"></div>
+            <div class="loading-text">\u52A0\u8F7D\u4E2D...</div>
+        `;
+    this.loadingIndicator.style.display = "none";
+    await this.loadNextPage();
+    this.setupInfiniteScroll();
+    this.updateLoadingStatus("\u5237\u65B0\u89C6\u56FE...");
   }
   // 添加标签切换方法
   toggleTag(tag, tagBtn) {
@@ -1840,7 +2057,7 @@ ${content}` : content;
       element.addClass("minimized");
     }
   }
-  // 添加保存和加载最近标签的方法
+  // 添加保存和加载近标签的方法
   saveRecentTags(tags) {
     localStorage.setItem("recent-tags", JSON.stringify(tags));
   }
@@ -2010,6 +2227,31 @@ ${content}` : content;
       this.intersectionObserver.disconnect();
     }
     this.loadedNotes.clear();
+  }
+  // 添加更新状态栏的方法
+  updateLoadingStatus(message) {
+    if (!this.loadingStatus) return;
+    const loadingIndicator = this.loadingStatus.querySelector(".loading-indicator");
+    if (this.isLoading) {
+      loadingIndicator == null ? void 0 : loadingIndicator.addClass("loading");
+      this.loadingStatus.innerHTML = `
+                <div class="loading-indicator loading">
+                    <div class="loading-spinner"></div>
+                    <span>${message}</span>
+                </div>
+            `;
+    } else {
+      loadingIndicator == null ? void 0 : loadingIndicator.removeClass("loading");
+      this.loadingStatus.innerHTML = `
+                <div class="loading-indicator">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                    </svg>
+                    <span>${message}</span>
+                </div>
+            `;
+    }
   }
 };
 var ConfirmModal = class extends import_obsidian.Modal {
