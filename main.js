@@ -366,32 +366,88 @@ ${content}` : content;
   async loadTags() {
     const tagCounts = this.getTagsWithCount();
     this.tagContainer.empty();
-    const allTagBtn = this.tagContainer.createEl("button", {
-      text: this.plugin.settings.showTagCount ? `All ${this.app.vault.getMarkdownFiles().length}` : "All",
-      cls: "tag-btn active"
+    const dropdownContainer = this.tagContainer.createDiv("tag-dropdown-container");
+    const dropdown = dropdownContainer.createEl("select", {
+      cls: "tag-dropdown"
     });
-    allTagBtn.addEventListener("click", () => {
-      this.clearTagSelection();
-      allTagBtn.addClass("active");
-      this.refreshView();
+    dropdown.createEl("option", {
+      text: "\u9009\u62E9\u6807\u7B7E...",
+      value: ""
     });
+    const dropdownPanel = dropdownContainer.createDiv("dropdown-panel");
     Array.from(tagCounts.entries()).sort(([a], [b]) => a.localeCompare(b)).forEach(([tag, count]) => {
-      const tagBtn = this.tagContainer.createEl("button", {
-        cls: "tag-btn"
+      const option = dropdownPanel.createDiv("dropdown-option");
+      option.createSpan({ text: tag });
+      option.createSpan({
+        text: count.toString(),
+        cls: "tag-count"
       });
-      const tagText = tagBtn.createSpan({
-        text: tag
+      option.addEventListener("click", () => {
+        if (!this.selectedTags.has(tag)) {
+          this.addSelectedTag(tag, selectedTagsContainer);
+          this.selectedTags.add(tag);
+          this.refreshView();
+        }
+        dropdown.value = "";
       });
-      if (this.plugin.settings.showTagCount) {
-        tagBtn.createSpan({
-          text: count.toString(),
-          cls: "tag-count"
-        });
+    });
+    const selectedTagsContainer = this.tagContainer.createDiv("selected-tags-container");
+    let isMouseOverDropdown = false;
+    let isMouseOverPanel = false;
+    let hideTimeout;
+    dropdown.addEventListener("mouseenter", () => {
+      isMouseOverDropdown = true;
+      clearTimeout(hideTimeout);
+      dropdownPanel.style.display = "grid";
+    });
+    dropdown.addEventListener("mouseleave", () => {
+      isMouseOverDropdown = false;
+      if (!isMouseOverPanel) {
+        hideTimeout = setTimeout(() => {
+          if (!isMouseOverDropdown && !isMouseOverPanel) {
+            dropdownPanel.style.display = "none";
+          }
+        }, 200);
       }
-      tagBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        this.toggleTag(tag, tagBtn);
-      });
+    });
+    dropdownPanel.addEventListener("mouseenter", () => {
+      isMouseOverPanel = true;
+      clearTimeout(hideTimeout);
+    });
+    dropdownPanel.addEventListener("mouseleave", () => {
+      isMouseOverPanel = false;
+      if (!isMouseOverDropdown) {
+        hideTimeout = setTimeout(() => {
+          if (!isMouseOverDropdown && !isMouseOverPanel) {
+            dropdownPanel.style.display = "none";
+          }
+        }, 200);
+      }
+    });
+    document.addEventListener("click", (e) => {
+      if (!dropdownContainer.contains(e.target)) {
+        dropdownPanel.style.display = "none";
+      }
+    });
+    this.selectedTags.forEach((tag) => {
+      this.addSelectedTag(tag, selectedTagsContainer);
+    });
+  }
+  // 添加新方法：创建已选标签
+  addSelectedTag(tag, container) {
+    const tagEl = container.createDiv("selected-tag");
+    tagEl.createSpan({
+      text: tag,
+      cls: "tag-text"
+    });
+    const removeBtn = tagEl.createSpan({
+      text: "\xD7",
+      cls: "remove-tag"
+    });
+    removeBtn.addEventListener("click", () => {
+      this.selectedTags.delete(tag);
+      tagEl.remove();
+      this.refreshView();
     });
   }
   /**
@@ -1015,7 +1071,7 @@ ${content}` : content;
       }
     }
   }
-  // 添加时间轴滚动监听方法
+  // 添时间轴滚动听方法
   setupTimelineScroll(container) {
     try {
       console.log("\u8BBE\u7F6E\u65F6\u95F4\u8F74\u6EDA\u52A8\u76D1\u542C...");
@@ -1169,7 +1225,7 @@ ${content}` : content;
           const confirm = await new ConfirmModal(
             this.app,
             "\u786E\u8BA4\u5220\u9664",
-            `\u662F\u5426\u786E\u5B9A\u8981\u5220\u9664\u9009\u4E2D\u7684 ${files.length} \u4E2A\u6587\u4EF6\uFF1F`
+            `\u662F\u5426\u786E\u5B9A\u8981\u5220\u9664\u9009\u4E2D\u7684 ${files.length} \u4E2A\uFFFD\uFFFD\u4EF6\uFF1F`
           ).show();
           if (confirm) {
             try {
@@ -1256,7 +1312,7 @@ ${content}` : content;
       calendarBtn.toggleClass("active", this.isCalendarVisible);
     });
   }
-  // 切换日历的显示状态
+  // 切换日历显示状态
   toggleCalendar() {
     console.log("\u5207\u6362\u65E5\u5386\u663E\u793A\u72B6\u6001, \u5F53\u524D\u72B6\u6001:", this.isCalendarVisible);
     this.isCalendarVisible = !this.isCalendarVisible;
@@ -1308,7 +1364,7 @@ ${content}` : content;
     this.calendarContainer.style.opacity = "1";
     this.calendarContainer.style.visibility = "visible";
   }
-  // 隐藏日历 
+  // 隐日历 
   hideCalendar() {
     console.log("\u9690\u85CF\u65E5\u5386");
     if (this.calendarContainer) {
@@ -1725,7 +1781,7 @@ ${emptyNotes.map((file) => file.basename).join("\n")}`
   // 创建列表视图
   async createListView() {
     if (this.currentLoadingView !== "list") {
-      console.log("\u4E2D\u65AD\u5217\u8868\u89C6\u56FE\u52A0\u8F7D\uFF1A\u89C6\u56FE\u5DF2\u5207\u6362");
+      console.log("\u4E2D\u5217\u8868\u89C6\u56FE\u52A0\u8F7D\uFF1A\u89C6\u56FE\u5DF2\u5207\u6362");
       return;
     }
     try {

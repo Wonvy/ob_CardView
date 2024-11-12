@@ -481,45 +481,127 @@ export class CardView extends ItemView {
         const tagCounts = this.getTagsWithCount();
         this.tagContainer.empty();
 
-        // 添加 "All" 标签
-        const allTagBtn = this.tagContainer.createEl('button', {
-            text: this.plugin.settings.showTagCount ? 
-                `All ${this.app.vault.getMarkdownFiles().length}` : 'All',
-            cls: 'tag-btn active'
-        });
+        // 创建左侧下拉列表容器
+        const dropdownContainer = this.tagContainer.createDiv('tag-dropdown-container');
         
-        allTagBtn.addEventListener('click', () => {
-            this.clearTagSelection();
-            allTagBtn.addClass('active');
-            this.refreshView();
+        // 创建下拉列表
+        const dropdown = dropdownContainer.createEl('select', {
+            cls: 'tag-dropdown'
         });
 
-        // 添加其他标签
+        // 添加默认选项
+        dropdown.createEl('option', {
+            text: '选择标签...',
+            value: ''
+        });
+
+        // 创建自定义下拉面板
+        const dropdownPanel = dropdownContainer.createDiv('dropdown-panel');
+
+        // 添加所有标签选项
         Array.from(tagCounts.entries())
             .sort(([a], [b]) => a.localeCompare(b))
             .forEach(([tag, count]) => {
-                const tagBtn = this.tagContainer.createEl('button', { 
-                    cls: 'tag-btn'
+                // 创建选项元素
+                const option = dropdownPanel.createDiv('dropdown-option');
+                option.createSpan({ text: tag });
+                option.createSpan({ 
+                    text: count.toString(),
+                    cls: 'tag-count'
                 });
-                
-                // 创建标签文本
-                const tagText = tagBtn.createSpan({
-                    text: tag
-                });
-                
-                // 如果需要显示数量,添加数量标签
-                if (this.plugin.settings.showTagCount) {
-                    tagBtn.createSpan({
-                        text: count.toString(),
-                        cls: 'tag-count'
-                    });
-                }
-                
-                tagBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    this.toggleTag(tag, tagBtn);
+
+                // 添加点击事件
+                option.addEventListener('click', () => {
+                    if (!this.selectedTags.has(tag)) {
+                        this.addSelectedTag(tag, selectedTagsContainer);
+                        this.selectedTags.add(tag);
+                        this.refreshView();
+                    }
+                    dropdown.value = '';  // 重置下拉列表
                 });
             });
+
+        // 创建右侧已选标签容器
+        const selectedTagsContainer = this.tagContainer.createDiv('selected-tags-container');
+
+        // 修改下拉列表的显示/隐藏逻辑
+        let isMouseOverDropdown = false;
+        let isMouseOverPanel = false;
+        let hideTimeout: NodeJS.Timeout;
+
+        // 鼠标进入下拉框时显示面板
+        dropdown.addEventListener('mouseenter', () => {
+            isMouseOverDropdown = true;
+            clearTimeout(hideTimeout);
+            dropdownPanel.style.display = 'grid';
+        });
+
+        // 鼠标离开下拉框时
+        dropdown.addEventListener('mouseleave', () => {
+            isMouseOverDropdown = false;
+            // 如果鼠标不在面板上，则延迟隐藏
+            if (!isMouseOverPanel) {
+                hideTimeout = setTimeout(() => {
+                    if (!isMouseOverDropdown && !isMouseOverPanel) {
+                        dropdownPanel.style.display = 'none';
+                    }
+                }, 200);
+            }
+        });
+
+        // 监听鼠标进入面板
+        dropdownPanel.addEventListener('mouseenter', () => {
+            isMouseOverPanel = true;
+            clearTimeout(hideTimeout);
+        });
+
+        // 监听鼠标离开面板
+        dropdownPanel.addEventListener('mouseleave', () => {
+            isMouseOverPanel = false;
+            // 如果鼠标不在下拉框上，则延迟隐藏
+            if (!isMouseOverDropdown) {
+                hideTimeout = setTimeout(() => {
+                    if (!isMouseOverDropdown && !isMouseOverPanel) {
+                        dropdownPanel.style.display = 'none';
+                    }
+                }, 200);
+            }
+        });
+
+        // 点击其他地方时，检查鼠标是否在面板或下拉框上
+        document.addEventListener('click', (e) => {
+            if (!dropdownContainer.contains(e.target as Node)) {
+                dropdownPanel.style.display = 'none';
+            }
+        });
+
+        // 显示已选标签
+        this.selectedTags.forEach(tag => {
+            this.addSelectedTag(tag, selectedTagsContainer);
+        });
+    }
+
+    // 添加新方法：创建已选标签
+    private addSelectedTag(tag: string, container: HTMLElement) { 
+        const tagEl = container.createDiv('selected-tag');
+        
+        // 标签文本
+        tagEl.createSpan({
+            text: tag,
+            cls: 'tag-text'
+        });
+        
+        // 删除按钮
+        const removeBtn = tagEl.createSpan({
+            text: '×',
+            cls: 'remove-tag'
+        });
+        
+        removeBtn.addEventListener('click', () => {
+            this.selectedTags.delete(tag);
+            tagEl.remove();
+            this.refreshView();
+        });
     }
 
     /**
@@ -863,7 +945,7 @@ export class CardView extends ItemView {
         const folderPath = header.createDiv('note-folder');
         const folder = file.parent ? file.parent.path : '根目录';
 
-        // 拆分文件夹路径并处理根目录的特殊情况
+        // 拆分文夹路径并处根目录的特殊情况
         const pathParts = folder === '根目录' ? ['根目录'] : folder.split('/');
 
         pathParts.forEach((part, index) => {
@@ -1345,7 +1427,7 @@ export class CardView extends ItemView {
                                 }
                             });
 
-                            // 添加日期组到���档片段
+                            // 添加日期组到档片段
                             fragment.appendChild(dateGroup);
                             
                             // 异步处理卡片创建
@@ -1358,7 +1440,7 @@ export class CardView extends ItemView {
                 });
             }
 
-            // 一次性添加所有内容到容器
+            // 一次���添加所有内���到容器
             container.appendChild(fragment);
             
             this.timelineCurrentPage++;
@@ -1374,7 +1456,7 @@ export class CardView extends ItemView {
         }
     }
 
-    // 添加时间轴滚动监听方法
+    // 添时间轴滚动听方法
     private setupTimelineScroll(container: HTMLElement) {
         try {
             console.log('设置时间轴滚动监听...');
@@ -1581,7 +1663,7 @@ export class CardView extends ItemView {
                         const confirm = await new ConfirmModal(
                             this.app,
                             "确认删除",
-                            `是否确定要删除选中的 ${files.length} 个文件？`
+                            `是否确定要删除选中的 ${files.length} 个��件？`
                         ).show();
 
                         if (confirm) {
@@ -1688,7 +1770,7 @@ export class CardView extends ItemView {
         });
     }
 
-    // 切换日历的显示状态
+    // 切换日历显示状态
     private toggleCalendar() {
         console.log('切换日历显示状态, 当前状态:', this.isCalendarVisible);
         
@@ -1765,7 +1847,7 @@ export class CardView extends ItemView {
         this.calendarContainer.style.visibility = 'visible';
     }
 
-    // 隐藏日历 
+    // 隐日历 
     private hideCalendar() {
         console.log('隐藏日历');
         
@@ -2156,7 +2238,7 @@ export class CardView extends ItemView {
                         text: i.toString()
                     });
                     
-                    // 添加点击事件
+                    // 添加点击事
                     monthBtn.addEventListener('click', () => {
                         this.selectMonth(i - 1);
                     });
@@ -2349,7 +2431,7 @@ export class CardView extends ItemView {
     // 创建列表视图
     private async createListView() {
         if (this.currentLoadingView !== 'list') {
-            console.log('中断列表视图加载：视图已切换');
+            console.log('中列表视图加载：视图已切换');
             return;
         }
 
@@ -2714,7 +2796,7 @@ export class CardView extends ItemView {
             }
         });
 
-        // 修改标签输入处理
+        // 修改标签入处理
         if (tagInput) {
             tagInput.addEventListener('keydown', (e) => {
                 if (e.key === ' ' && tagInput.value.trim()) {
