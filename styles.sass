@@ -2200,11 +2200,34 @@
                 gap: 0
                 grid-template-columns: none
 
+// 主页视图下的容器样式覆盖
+.main-layout .content-section.view-home
+    .card-view-content
+        padding: 0
+        height: 100%
+        overflow: hidden
+        
+        .card-container
+            display: block  // 覆盖原有的 grid 布局
+            height: 100%
+            padding: 0
+            margin: 0
+            gap: 0
+            grid-template-columns: none  // 移除网格列设置
+            justify-content: initial  // 移除原有的居中对齐
+            
+            // 移除原有的卡片间距和对齐方式
+            &.grid-view
+                display: block
+                gap: 0
+                grid-template-columns: none
+
 // 主页视图样式优化
 .home-container
     padding: 20px
     height: 100%
     overflow-y: auto
+    background: var(--background-primary)  // 添加背景色
     
     .module-manager
         display: flex
@@ -2430,3 +2453,134 @@
                 
                 &.level-4
                     background-color: #216e39
+
+// 日历模块样式
+.calendar-module
+    display: flex
+    height: 100%
+    gap: 16px
+    
+    // 日历部分
+    .calendar-section
+        flex: 1
+        min-width: 280px
+        
+        .calendar-container
+            background: var(--background-primary)
+            border: 1px solid var(--background-modifier-border)
+            border-radius: 8px
+            padding: 16px
+            
+            .calendar-header
+                display: flex
+                justify-content: space-between
+                align-items: center
+                margin-bottom: 16px
+                
+                .calendar-nav-btn
+                    background: transparent
+                    border: 1px solid var(--background-modifier-border)
+                    border-radius: 4px
+                    padding: 4px 8px
+                    color: var(--text-muted)
+                    cursor: pointer
+                    transition: all 0.2s ease
+                    
+                    &:hover
+                        background: var(--background-modifier-hover)
+                        color: var(--text-normal)
+                
+                .calendar-title
+                    font-weight: 500
+                    color: var(--text-normal)
+            
+            .calendar-weekdays
+                display: grid
+                grid-template-columns: repeat(7, 1fr)
+                gap: 4px
+                margin-bottom: 8px
+                
+                .weekday
+                    text-align: center
+                    color: var(--text-muted)
+                    font-size: 0.9em
+            
+            .calendar-grid
+                display: grid
+                grid-template-columns: repeat(7, 1fr)
+                gap: 4px
+                
+                .calendar-day
+                    aspect-ratio: 1
+                    padding: 4px
+                    border-radius: 4px
+                    cursor: pointer
+                    position: relative
+                    transition: all 0.2s ease
+                    
+                    &:hover
+                        background: var(--background-modifier-hover)
+                        transform: translateY(-1px)
+                    
+                    &.today
+                        background: var(--background-modifier-hover)
+                        .day-number
+                            color: var(--text-accent)
+                            font-weight: bold
+                    
+                    &.empty
+                        background: none
+                        cursor: default
+                    
+                    .day-number
+                        font-size: 0.9em
+                        color: var(--text-normal)
+                    
+                    .note-count
+                        position: absolute
+                        bottom: 2px
+                        right: 2px
+                        min-width: 18px
+                        height: 18px
+                        background: var(--interactive-accent)
+                        color: var(--text-on-accent)
+                        border-radius: 9px
+                        font-size: 0.8em
+                        display: flex
+                        align-items: center
+                        justify-content: center
+    
+    // 笔记列表部分
+    .notes-section
+        flex: 1
+        min-width: 200px
+        border: 1px solid var(--background-modifier-border)
+        border-radius: 8px
+        padding: 16px
+        
+        .date-title
+            font-weight: 500
+            color: var(--text-normal)
+            margin-bottom: 12px
+            padding-bottom: 8px
+            border-bottom: 1px solid var(--background-modifier-border)
+        
+        .notes-list
+            display: flex
+            flex-direction: column
+            gap: 8px
+            
+            .note-item
+                padding: 8px
+                border-radius: 4px
+                cursor: pointer
+                transition: all 0.2s ease
+                
+                &:hover
+                    background: var(--background-modifier-hover)
+                    transform: translateX(4px)
+        
+        .empty-message
+            color: var(--text-muted)
+            text-align: center
+            padding: 20px

@@ -2253,7 +2253,7 @@ ${content}` : content;
       });
     }
   }
-  // 速笔记-清理��入
+  // 速笔记-清理入
   clearQuickNoteInputs(titleInput, contentInput, tags, tagsContainer, tagInput) {
     var _a;
     if (titleInput) {
@@ -2353,7 +2353,7 @@ ${content}` : content;
   saveRecentTags(tags) {
     localStorage.setItem("recent-tags", JSON.stringify(tags));
   }
-  // 加载最近��签
+  // 加载最近标签
   loadRecentTags() {
     const saved = localStorage.getItem("recent-tags");
     return saved ? JSON.parse(saved) : [];
@@ -3182,7 +3182,77 @@ ${content}` : content;
   }
   // 渲染日历模块
   async renderCalendarModule(container) {
-    const calendarContainer = container.createDiv("calendar-module-container");
+    const moduleContainer = container.createDiv("calendar-module");
+    const calendarSection = moduleContainer.createDiv("calendar-section");
+    const notesSection = moduleContainer.createDiv("notes-section");
+    const calendarContainer = calendarSection.createDiv("calendar-container");
+    const header = calendarContainer.createDiv("calendar-header");
+    const prevBtn = header.createEl("button", { cls: "calendar-nav-btn" });
+    prevBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>';
+    header.createDiv("calendar-title").setText(
+      `${this.currentDate.getFullYear()}\u5E74${this.currentDate.getMonth() + 1}\u6708`
+    );
+    const nextBtn = header.createEl("button", { cls: "calendar-nav-btn" });
+    nextBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>';
+    const weekdays = ["\u65E5", "\u4E00", "\u4E8C", "\u4E09", "\u56DB", "\u4E94", "\u516D"];
+    const weekHeader = calendarContainer.createDiv("calendar-weekdays");
+    weekdays.forEach((day) => {
+      weekHeader.createDiv("weekday").setText(day);
+    });
+    const grid = calendarContainer.createDiv("calendar-grid");
+    const notesByDate = this.getNotesByDate(
+      this.currentDate.getFullYear(),
+      this.currentDate.getMonth()
+    );
+    this.renderCalendarDays(grid, notesByDate, notesSection);
+    prevBtn.addEventListener("click", () => {
+      this.currentDate.setMonth(this.currentDate.getMonth() - 1);
+      this.renderCalendarModule(container);
+    });
+    nextBtn.addEventListener("click", () => {
+      this.currentDate.setMonth(this.currentDate.getMonth() + 1);
+      this.renderCalendarModule(container);
+    });
+  }
+  // 渲染日历天数
+  renderCalendarDays(grid, notesByDate, notesSection) {
+    const year = this.currentDate.getFullYear();
+    const month = this.currentDate.getMonth();
+    const firstDay = new Date(year, month, 1).getDay();
+    const lastDay = new Date(year, month + 1, 0).getDate();
+    for (let i = 0; i < firstDay; i++) {
+      grid.createDiv("calendar-day empty");
+    }
+    for (let day = 1; day <= lastDay; day++) {
+      const dateCell = grid.createDiv("calendar-day");
+      const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+      const today = /* @__PURE__ */ new Date();
+      if (today.getFullYear() === year && today.getMonth() === month && today.getDate() === day) {
+        dateCell.addClass("today");
+      }
+      dateCell.createDiv("day-number").setText(String(day));
+      const dayNotes = notesByDate[dateStr] || [];
+      if (dayNotes.length > 0) {
+        dateCell.createDiv("note-count").setText(dayNotes.length.toString());
+      }
+      dateCell.addEventListener("mouseenter", () => {
+        notesSection.empty();
+        if (dayNotes.length > 0) {
+          const dateTitle = notesSection.createDiv("date-title");
+          dateTitle.setText(`${dateStr} \u7684\u7B14\u8BB0`);
+          const notesList = notesSection.createDiv("notes-list");
+          dayNotes.forEach((note) => {
+            const noteItem = notesList.createDiv("note-item");
+            noteItem.setText(note.basename);
+            noteItem.addEventListener("click", () => {
+              this.openInAppropriateLeaf(note);
+            });
+          });
+        } else {
+          notesSection.createDiv("empty-message").setText("\u5F53\u5929\u6CA1\u6709\u7B14\u8BB0");
+        }
+      });
+    }
   }
   // 添加获取周开始和结束时间的方法
   getStartOfWeek() {

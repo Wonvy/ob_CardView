@@ -1019,7 +1019,7 @@ export class CardView extends ItemView {
             return;
         }
 
-        // 如果有其他视图正在加载，中���它
+        // 如果有其他视图正在加载，中它
         if (this.currentLoadingView) {
             console.log(`中断 ${this.currentLoadingView} 视图的加载`);
             this.isLoading = false;
@@ -1043,7 +1043,7 @@ export class CardView extends ItemView {
             contentSection.addClass(`view-${view}`);
         }
 
-        // 根据视图类型加载相内容
+        // 根据视图类型加��相内容
         let statusMessage = '';
         try {
             switch (view) {
@@ -3150,7 +3150,7 @@ export class CardView extends ItemView {
         }
     }
 
-    // 速笔记-清理��入
+    // 速笔记-清理入
     private clearQuickNoteInputs(
         titleInput: HTMLInputElement | null,
         contentInput: HTMLTextAreaElement,
@@ -3227,7 +3227,7 @@ export class CardView extends ItemView {
             const moveX = Math.abs(e.clientX - startX);
             const moveY = Math.abs(e.clientY - startY);
             
-            // 如果移动超过阈值���则不是点击
+            // 如果移动超过阈值则不是点击
             if (moveX > 5 || moveY > 5) {
                 isClick = false;
             }
@@ -3299,7 +3299,7 @@ export class CardView extends ItemView {
         localStorage.setItem('recent-tags', JSON.stringify(tags));
     }
 
-    // 加载最近��签
+    // 加载最近标签
     private loadRecentTags(): string[] {
         const saved = localStorage.getItem('recent-tags');
         return saved ? JSON.parse(saved) : [];
@@ -3673,7 +3673,7 @@ export class CardView extends ItemView {
                 // 只更新网格布局
                 const containerWidth = this.container.offsetWidth;
                 const totalGap = value >= 0 ? currentSettings.cardGap : 0; // 确保不小于0
-                // 最大列数
+                // ���大列数
                 const maxColumns = Math.floor(containerWidth / (180 + totalGap));
                 console.log('containerWidth', containerWidth);
                 console.log('totalGap', totalGap);
@@ -4457,9 +4457,119 @@ export class CardView extends ItemView {
 
     // 渲染日历模块
     private async renderCalendarModule(container: HTMLElement) {
-        // 复用现有的日历渲染逻辑，但调整样式和大小
-        const calendarContainer = container.createDiv('calendar-module-container');
-        // ... 日历渲染代码
+        const moduleContainer = container.createDiv('calendar-module');
+        
+        // 创建左右布局
+        const calendarSection = moduleContainer.createDiv('calendar-section');
+        const notesSection = moduleContainer.createDiv('notes-section');
+        
+        // 创建日历部分
+        const calendarContainer = calendarSection.createDiv('calendar-container');
+        
+        // 创建日历头部
+        const header = calendarContainer.createDiv('calendar-header');
+        
+        // 上个月按钮
+        const prevBtn = header.createEl('button', { cls: 'calendar-nav-btn' });
+        prevBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>';
+        
+        // 显示年月
+        header.createDiv('calendar-title').setText(
+            `${this.currentDate.getFullYear()}年${this.currentDate.getMonth() + 1}月`
+        );
+        
+        // 下个月按钮
+        const nextBtn = header.createEl('button', { cls: 'calendar-nav-btn' });
+        nextBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>';
+
+        // 创建星期头部
+        const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
+        const weekHeader = calendarContainer.createDiv('calendar-weekdays');
+        weekdays.forEach(day => {
+            weekHeader.createDiv('weekday').setText(day);
+        });
+
+        // 创建日历网格
+        const grid = calendarContainer.createDiv('calendar-grid');
+        
+        // 获取当月的笔记
+        const notesByDate = this.getNotesByDate(
+            this.currentDate.getFullYear(),
+            this.currentDate.getMonth()
+        );
+        
+        // 填充日期格子
+        this.renderCalendarDays(grid, notesByDate, notesSection);
+        
+        // 添加导航事件
+        prevBtn.addEventListener('click', () => {
+            this.currentDate.setMonth(this.currentDate.getMonth() - 1);
+            this.renderCalendarModule(container);
+        });
+        
+        nextBtn.addEventListener('click', () => {
+            this.currentDate.setMonth(this.currentDate.getMonth() + 1);
+            this.renderCalendarModule(container);
+        });
+    }
+
+    // 渲染日历天数
+    private renderCalendarDays(grid: HTMLElement, notesByDate: Record<string, TFile[]>, notesSection: HTMLElement) {
+        const year = this.currentDate.getFullYear();
+        const month = this.currentDate.getMonth();
+        const firstDay = new Date(year, month, 1).getDay();
+        const lastDay = new Date(year, month + 1, 0).getDate();
+        
+        // 填充前置空白日期
+        for (let i = 0; i < firstDay; i++) {
+            grid.createDiv('calendar-day empty');
+        }
+        
+        // 填充日期格子
+        for (let day = 1; day <= lastDay; day++) {
+            const dateCell = grid.createDiv('calendar-day');
+            const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            
+            // 检查是否是今天
+            const today = new Date();
+            if (today.getFullYear() === year && 
+                today.getMonth() === month && 
+                today.getDate() === day) {
+                dateCell.addClass('today');
+            }
+            
+            // 添加日期数字
+            dateCell.createDiv('day-number').setText(String(day));
+            
+            // 如果有笔记，添加标记
+            const dayNotes = notesByDate[dateStr] || [];
+            if (dayNotes.length > 0) {
+                dateCell.createDiv('note-count').setText(dayNotes.length.toString());
+            }
+            
+            // 添加鼠标事件
+            dateCell.addEventListener('mouseenter', () => {
+                // 清空并显示当天的笔记
+                notesSection.empty();
+                if (dayNotes.length > 0) {
+                    const dateTitle = notesSection.createDiv('date-title');
+                    dateTitle.setText(`${dateStr} 的笔记`);
+                    
+                    const notesList = notesSection.createDiv('notes-list');
+                    dayNotes.forEach(note => {
+                        const noteItem = notesList.createDiv('note-item');
+                        noteItem.setText(note.basename);
+                        
+                        noteItem.addEventListener('click', () => {
+                            this.openInAppropriateLeaf(note);
+                        });
+                    });
+                } else {
+                    notesSection.createDiv('empty-message')
+                        .setText('当天没有笔记');
+                }
+            });
+        }
     }
 
     // 添加获取周开始和结束时间的方法
@@ -4597,7 +4707,7 @@ class ModuleManagerModal extends Modal {
             this.modules[newIndex] = temp;
             // 更新顺序
             this.modules.forEach((m, i) => m.order = i);
-            // 重新渲染列���
+            // 重新渲染列
             this.onOpen();
         }
     }

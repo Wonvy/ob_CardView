@@ -2078,10 +2078,31 @@
   grid-template-columns: none;
 }
 
+.main-layout .content-section.view-home .card-view-content {
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+}
+.main-layout .content-section.view-home .card-view-content .card-container {
+  display: block;
+  height: 100%;
+  padding: 0;
+  margin: 0;
+  gap: 0;
+  grid-template-columns: none;
+  justify-content: initial;
+}
+.main-layout .content-section.view-home .card-view-content .card-container.grid-view {
+  display: block;
+  gap: 0;
+  grid-template-columns: none;
+}
+
 .home-container {
   padding: 20px;
   height: 100%;
   overflow-y: auto;
+  background: var(--background-primary);
 }
 .home-container .module-manager {
   display: flex;
@@ -2302,6 +2323,136 @@
 }
 .heatmap-container .heatmap-grid .days-container .day-cell.level-4 {
   background-color: #216e39;
+}
+
+.calendar-module {
+  display: flex;
+  height: 100%;
+  gap: 16px;
+}
+.calendar-module .calendar-section {
+  flex: 1;
+  min-width: 280px;
+}
+.calendar-module .calendar-section .calendar-container {
+  background: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 8px;
+  padding: 16px;
+}
+.calendar-module .calendar-section .calendar-container .calendar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.calendar-module .calendar-section .calendar-container .calendar-header .calendar-nav-btn {
+  background: transparent;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 4px;
+  padding: 4px 8px;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.calendar-module .calendar-section .calendar-container .calendar-header .calendar-nav-btn:hover {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+.calendar-module .calendar-section .calendar-container .calendar-header .calendar-title {
+  font-weight: 500;
+  color: var(--text-normal);
+}
+.calendar-module .calendar-section .calendar-container .calendar-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  margin-bottom: 8px;
+}
+.calendar-module .calendar-section .calendar-container .calendar-weekdays .weekday {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.9em;
+}
+.calendar-module .calendar-section .calendar-container .calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+.calendar-module .calendar-section .calendar-container .calendar-grid .calendar-day {
+  aspect-ratio: 1;
+  padding: 4px;
+  border-radius: 4px;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s ease;
+}
+.calendar-module .calendar-section .calendar-container .calendar-grid .calendar-day:hover {
+  background: var(--background-modifier-hover);
+  transform: translateY(-1px);
+}
+.calendar-module .calendar-section .calendar-container .calendar-grid .calendar-day.today {
+  background: var(--background-modifier-hover);
+}
+.calendar-module .calendar-section .calendar-container .calendar-grid .calendar-day.today .day-number {
+  color: var(--text-accent);
+  font-weight: bold;
+}
+.calendar-module .calendar-section .calendar-container .calendar-grid .calendar-day.empty {
+  background: none;
+  cursor: default;
+}
+.calendar-module .calendar-section .calendar-container .calendar-grid .calendar-day .day-number {
+  font-size: 0.9em;
+  color: var(--text-normal);
+}
+.calendar-module .calendar-section .calendar-container .calendar-grid .calendar-day .note-count {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  min-width: 18px;
+  height: 18px;
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+  border-radius: 9px;
+  font-size: 0.8em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.calendar-module .notes-section {
+  flex: 1;
+  min-width: 200px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 8px;
+  padding: 16px;
+}
+.calendar-module .notes-section .date-title {
+  font-weight: 500;
+  color: var(--text-normal);
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+.calendar-module .notes-section .notes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.calendar-module .notes-section .notes-list .note-item {
+  padding: 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.calendar-module .notes-section .notes-list .note-item:hover {
+  background: var(--background-modifier-hover);
+  transform: translateX(4px);
+}
+.calendar-module .notes-section .empty-message {
+  color: var(--text-muted);
+  text-align: center;
+  padding: 20px;
 }
 
 /*# sourceMappingURL=styles.css.map */
