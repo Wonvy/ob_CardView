@@ -34,6 +34,7 @@ var import_obsidian2 = require("obsidian");
 var import_obsidian = require("obsidian");
 var VIEW_TYPE_CARD = "card-view";
 var CardView = class extends import_obsidian.ItemView {
+  // 构造函数
   constructor(leaf, plugin) {
     super(leaf);
     this.cardSettings = {
@@ -267,7 +268,7 @@ var CardView = class extends import_obsidian.ItemView {
     this.loadingStatus.innerHTML = `
             <div class="loading-indicator">
                 <div class="loading-spinner"></div>
-                <span>\u51C6\uFFFD\uFFFD\uFFFD\u52A0\u8F7D...</span>
+                <span>\u51C6\u52A0\u8F7D...</span>
             </div>
         `;
     this.statusLeft.appendChild(this.loadingStatus);
@@ -345,22 +346,8 @@ ${content}` : content;
         new import_obsidian.Notice("\u521B\u5EFA\u7B14\u8BB0\u5931\u8D25");
       }
     });
-    const quickNoteBackdrop = mainLayout.createDiv("quick-note-backdrop");
   }
-  /**
-   * 获取所有笔记中的标签
-   * @returns 去后的标签组
-   */
-  getAllTags() {
-    const tags = /* @__PURE__ */ new Set();
-    this.app.vault.getMarkdownFiles().forEach((file) => {
-      const cache = this.app.metadataCache.getFileCache(file);
-      if (cache == null ? void 0 : cache.tags) {
-        cache.tags.forEach((tag) => tags.add(tag.tag));
-      }
-    });
-    return Array.from(tags);
-  }
+  // 获取标签和数量
   getTagsWithCount() {
     const tagCounts = /* @__PURE__ */ new Map();
     this.app.vault.getMarkdownFiles().forEach((file) => {
@@ -374,9 +361,7 @@ ${content}` : content;
     });
     return tagCounts;
   }
-  /**
-   * 加载有标签并创标签过滤器
-   */
+  // 加载标签
   async loadTags() {
     const tagCounts = this.getTagsWithCount();
     this.tagContainer.empty();
@@ -450,7 +435,7 @@ ${content}` : content;
     const rightArea = this.tagContainer.createDiv("filter-toolbar-right");
     this.createCardSettings(rightArea);
   }
-  // 添加新方法：创建已选标签
+  // 添加已选标签
   addSelectedTag(tag, container) {
     const tagEl = container.createDiv("selected-tag");
     tagEl.createSpan({
@@ -467,10 +452,7 @@ ${content}` : content;
       this.refreshView();
     });
   }
-  /**
-   * 创建视图切换按钮
-   * @param container - 按钮容器元素
-   */
+  // 创建视图切换按钮
   createViewSwitcher(container) {
     const views = [
       { id: "card", icon: "grid", text: "\u5361\u7247\u89C6\u56FE" },
@@ -498,7 +480,7 @@ ${content}` : content;
       });
     });
   }
-  // 修改 switchView 方法
+  // 切换视图
   switchView(view) {
     if (this.currentLoadingView && this.currentLoadingView !== view) {
       console.log(`\u4E2D\u65AD ${this.currentLoadingView} \u89C6\u56FE\u7684\u52A0\u8F7D`);
@@ -537,7 +519,7 @@ ${content}` : content;
     }
     this.updateLoadingStatus(statusMessage);
   }
-  // 修改 loadNotes 方法
+  // 加载笔记
   async loadNotes() {
     try {
       console.log("\u5F00\u59CB\u52A0\u8F7D\u7B14\u8BB0...");
@@ -564,7 +546,7 @@ ${content}` : content;
       }
     }
   }
-  // 修改 loadNextPage 方法
+  // 加载下一页
   async loadNextPage() {
     if (this.currentView !== "card") {
       console.log("\u4E2D\u65AD\u5361\u7247\u52A0\u8F7D\uFF1A\u89C6\u56FE\u5DF2\u5207\u6362");
@@ -595,7 +577,6 @@ ${content}` : content;
       );
       cards.forEach((card) => {
         if (card instanceof HTMLElement) {
-          card.style.width = `${this.cardSize}px`;
           if (this.loadingIndicator.parentNode === this.container) {
             this.container.insertBefore(card, this.loadingIndicator);
           } else {
@@ -622,7 +603,7 @@ ${content}` : content;
       }
     }
   }
-  // 添加文件过滤方法
+  // 过滤文件
   async filterFiles(files) {
     var _a;
     const searchTerm = (_a = this.currentSearchTerm) == null ? void 0 : _a.trim().toLowerCase();
@@ -648,7 +629,7 @@ ${content}` : content;
     }));
     return filteredFiles.filter((file) => file !== null);
   }
-  // 修改 setupInfiniteScroll 方法
+  // 设置无限滚动
   setupInfiniteScroll() {
     try {
       console.log("\u8BBE\u7F6E\u65E0\u9650\u6EDA\u52A8...");
@@ -694,17 +675,11 @@ ${content}` : content;
       console.error("setupInfiniteScroll \u9519\u8BEF:", error);
     }
   }
-  /**
-   * 创建单个笔记卡片
-   * @param file - 笔记文件
-   * @returns 卡片HTML元素
-   */
+  // 创建笔记卡片
   async createNoteCard(file) {
     const card = document.createElement("div");
     card.addClass("note-card");
     card.setAttribute("data-path", file.path);
-    card.style.width = `${this.cardSize}px`;
-    card.style.height = `${this.cardHeight}px`;
     const header = card.createDiv("note-card-header");
     if (this.cardSettings[this.currentView].showDate) {
       const lastModified = header.createDiv("note-date show");
@@ -760,7 +735,7 @@ ${content}` : content;
     }
     try {
       const noteContent = cardContent.createDiv("note-content");
-      if (this.cardSettings.card.showContent) {
+      if (this.cardSettings[this.currentView].showContent) {
         noteContent.addClass("show");
       }
       noteContent.setAttribute("data-path", file.path);
@@ -844,7 +819,7 @@ ${content}` : content;
     }
     return card;
   }
-  // 切换预览栏的显示状态
+  // 预览栏-切换
   togglePreview() {
     this.isPreviewCollapsed = !this.isPreviewCollapsed;
     const previewWrapper = this.containerEl.querySelector(".preview-wrapper");
@@ -873,7 +848,7 @@ ${content}` : content;
       toggleButton.style.transform = this.isPreviewCollapsed ? "" : "rotate(180deg)";
     }
   }
-  // 修改预览栏大小调整方法
+  // 预览栏-调整大小
   setupResizer() {
     let startX;
     let startWidth;
@@ -928,7 +903,7 @@ ${content}` : content;
       this.container.style.gridTemplateColumns = `repeat(${columns}, ${actualCardWidth}px)`;
     }
   }
-  // 创建新笔记
+  // 笔记-创建
   async createNewNote(date) {
     const baseFileName = date ? date.toLocaleDateString() : "\u672A\u547D\u540D";
     let fileName = baseFileName;
@@ -954,7 +929,7 @@ ${content}` : content;
       console.error("\u521B\u5EFA\u7B14\u8BB0\u5931\u8D25:", error);
     }
   }
-  // 修改 createQuickNote 方法
+  // 快速笔记-创建
   async createQuickNote(content, types, fileName) {
     try {
       let finalFileName = fileName;
@@ -977,7 +952,7 @@ ${content}` : content;
       return null;
     }
   }
-  // 修改 loadTimelinePage 方法
+  // 时间轴-加载
   async loadTimelinePage(container) {
     if (this.currentLoadingView !== "timeline") {
       console.log("\u4E2D\u65AD\u65F6\u95F4\u8F74\u89C6\u56FE\u52A0\u8F7D\uFF1A\u89C6\u56FE\u5DF2\u5207\u6362");
@@ -1016,14 +991,15 @@ ${content}` : content;
             for (const date of batchDates) {
               const dateGroup = document.createElement("div");
               dateGroup.className = "timeline-date-group";
-              dateGroup.innerHTML = `
-                                <div class="timeline-date-node">
-                                    <div class="timeline-node-circle"></div>
-                                    <div class="timeline-date-label">${date}</div>
-                                </div>
-                                <div class="timeline-notes-list"></div>
-                            `;
-              const notesList = dateGroup.querySelector(".timeline-notes-list");
+              if (this.cardSettings.timeline.showDate) {
+                dateGroup.innerHTML = `
+                                    <div class="timeline-date-node">
+                                        <div class="timeline-node-circle"></div>
+                                        <div class="timeline-date-label">${date}</div>
+                                    </div>
+                                `;
+              }
+              const notesList = dateGroup.createDiv("timeline-notes-list");
               const notes = notesByDate.get(date) || [];
               const cardPromises = notes.map(async (file) => {
                 const placeholder = document.createElement("div");
@@ -1063,7 +1039,7 @@ ${content}` : content;
       }
     }
   }
-  // 添时间轴滚动听方法
+  // 时间轴-滚动监听
   setupTimelineScroll(container) {
     try {
       console.log("\u8BBE\u7F6E\u65F6\u95F4\u8F74\u6EDA\u76D1\u542C...");
@@ -1096,7 +1072,7 @@ ${content}` : content;
       console.error("\u8BBE\u7F6E\u65F6\u95F4\u8F74\u6EDA\u52A8\u76D1\u542C\u5931\u8D25:", error);
     }
   }
-  // 刷新视图（用于搜索和过滤）
+  // 刷新视图
   async refreshView() {
     this.currentPage = 1;
     this.hasMoreNotes = true;
@@ -1114,29 +1090,7 @@ ${content}` : content;
     this.setupInfiniteScroll();
     this.updateLoadingStatus("\u5237\u65B0\u89C6\u56FE...");
   }
-  // 添加标签切换方法
-  toggleTag(tag, tagBtn) {
-    if (this.selectedTags.has(tag)) {
-      this.selectedTags.delete(tag);
-      tagBtn.removeClass("active");
-    } else {
-      this.selectedTags.add(tag);
-      tagBtn.addClass("active");
-    }
-    const allBtn = this.tagContainer.querySelector("button");
-    if (allBtn) {
-      allBtn.removeClass("active");
-    }
-    this.refreshView();
-  }
-  // 清除标签选择
-  clearTagSelection() {
-    this.selectedTags.clear();
-    this.tagContainer.querySelectorAll(".tag-btn").forEach((btn) => {
-      btn.removeClass("active");
-    });
-  }
-  // 处理卡片择
+  // 卡片-选择
   handleCardSelection(path, event) {
     const card = this.container.querySelector(`[data-path="${path}"]`);
     if (!card) {
@@ -1171,18 +1125,18 @@ ${content}` : content;
     }
     this.lastSelectedNote = path;
   }
-  // 清除所有选择
+  // 清除选择
   clearSelection() {
     this.selectedNotes.clear();
     this.container.querySelectorAll(".note-card.selected").forEach((card) => {
       card.removeClass("selected");
     });
   }
-  // 获选中的文件
+  // 获取选中的文件
   getSelectedFiles() {
     return Array.from(this.selectedNotes).map((path) => this.app.vault.getAbstractFileByPath(path)).filter((file) => file instanceof import_obsidian.TFile);
   }
-  // 显示右键菜单
+  // 右键菜单
   showContextMenu(event, files) {
     const menu = new import_obsidian.Menu();
     if (files.length > 0) {
@@ -1244,12 +1198,12 @@ ${content}` : content;
     }
     menu.showAtMouseEvent(event);
   }
-  // 修改调整卡片大小的方法
+  // 卡片-调整大小
   adjustCardSize(delta) {
     const adjustment = delta > 0 ? -10 : 10;
     const newSize = Math.max(
       this.plugin.settings.minCardWidth,
-      Math.min(this.plugin.settings.maxCardWidth, this.cardSize + adjustment)
+      this.cardSize + adjustment
     );
     if (newSize !== this.cardSize) {
       this.cardSize = newSize;
@@ -1257,7 +1211,7 @@ ${content}` : content;
       this.plugin.saveCardWidth(newSize);
     }
   }
-  // 添调整卡片高度的法
+  // 卡片-调整高度
   adjustCardHeight(delta) {
     var _a, _b;
     const adjustment = delta > 0 ? -10 : 10;
@@ -1271,7 +1225,7 @@ ${content}` : content;
       this.plugin.saveCardHeight(newHeight);
     }
   }
-  // 添加更新卡片大小的方法
+  // 卡片-更新大小
   updateCardSize(width) {
     this.cardSize = width;
     this.container.querySelectorAll(".note-card").forEach((card) => {
@@ -1281,7 +1235,7 @@ ${content}` : content;
     });
     this.container.style.gridTemplateColumns = `repeat(auto-fill, ${width}px)`;
   }
-  // 添加更新卡片高度的方
+  // 卡片-更新高度
   updateCardHeight(height) {
     this.cardHeight = height;
     this.container.querySelectorAll(".note-card").forEach((card) => {
@@ -1290,7 +1244,7 @@ ${content}` : content;
       }
     });
   }
-  // 创建日历钮
+  // 日历-创建按钮
   createCalendarButton(leftTools) {
     const calendarBtn = leftTools.createEl("button", {
       cls: "calendar-toggle-button"
@@ -1304,7 +1258,7 @@ ${content}` : content;
       calendarBtn.toggleClass("active", this.isCalendarVisible);
     });
   }
-  // 切换日历显示状态
+  // 日历-切换
   toggleCalendar() {
     console.log("\u5207\u6362\u65E5\u5386\u663E\u793A\u72B6\u6001, \u5F53\u524D\u72B6\u6001:", this.isCalendarVisible);
     this.isCalendarVisible = !this.isCalendarVisible;
@@ -1320,7 +1274,7 @@ ${content}` : content;
       calendarBtn.toggleClass("active", this.isCalendarVisible);
     }
   }
-  // 添加按月份过滤的法
+  //  按月份过滤
   filterNotesByMonth(date) {
     const year = date.getFullYear();
     const month = date.getMonth();
@@ -1330,7 +1284,7 @@ ${content}` : content;
     };
     this.refreshView();
   }
-  // 显示历
+  // 日历-显示
   showCalendar() {
     console.log("\u5F00\u59CB\u663E\u793A\u65E5\u5386");
     if (!this.calendarContainer) {
@@ -1356,7 +1310,7 @@ ${content}` : content;
     this.calendarContainer.style.opacity = "1";
     this.calendarContainer.style.visibility = "visible";
   }
-  // 隐日历 
+  // 日历-隐藏
   hideCalendar() {
     console.log("\u9690\u85CF\u65E5\u5386");
     if (this.calendarContainer) {
@@ -1369,7 +1323,7 @@ ${content}` : content;
       }
     }
   }
-  // 渲染日历
+  // 日历-渲染
   renderCalendar() {
     if (!this.calendarContainer) {
       return;
@@ -1426,7 +1380,7 @@ ${content}` : content;
       });
     }
   }
-  // 获取每天的笔记数量
+  // 日历-获取每日笔记数量
   getNotesCountByDate(year, month) {
     const counts = {};
     const files = this.app.vault.getMarkdownFiles();
@@ -1439,7 +1393,7 @@ ${content}` : content;
     });
     return counts;
   }
-  // 根据日期过滤笔记
+  // 日历-根据日期过滤笔记
   filterNotesByDate(dateStr) {
     if (this.currentFilter.type === "date" && this.currentFilter.value === dateStr) {
       this.clearDateFilter();
@@ -1455,7 +1409,7 @@ ${content}` : content;
     }
     this.refreshView();
   }
-  // 清除日期过滤
+  // 日历-清除日期过滤
   clearDateFilter() {
     this.currentFilter = { type: "none" };
     if (this.calendarContainer) {
@@ -1507,7 +1461,7 @@ ${content}` : content;
     const regex = new RegExp(`(${escapedSearchTerm})`, "gi");
     return text.replace(regex, '<span class="search-highlight">$1</span>');
   }
-  // 文件内容搜索
+  // 搜索=文件内容
   async fileContentContainsSearch(file) {
     if (!this.currentSearchTerm || this.currentSearchTerm.trim() === "") {
       return true;
@@ -1522,7 +1476,7 @@ ${content}` : content;
       return false;
     }
   }
-  // 在 CardView 类中添加搜索处理方法
+  // 搜索-设置
   setupSearch() {
     const debounce = (fn, delay) => {
       let timeoutId;
@@ -1536,7 +1490,7 @@ ${content}` : content;
       this.refreshView();
     }, 200));
   }
-  // 创建命令按钮
+  // 命令-创建按钮
   createCommandButton(toolbar) {
     const commandContainer = toolbar.createDiv("command-container");
     const commandBtn = commandContainer.createEl("button", {
@@ -1573,7 +1527,7 @@ ${content}` : content;
       }
     });
   }
-  // 删除空白笔记
+  // 命令-删除空白笔记
   async deleteEmptyNotes() {
     const selectedFiles = this.getSelectedFiles();
     if (selectedFiles.length === 0) {
@@ -1605,7 +1559,7 @@ ${emptyNotes.map((file) => file.basename).join("\n")}`
       new import_obsidian.Notice(`\u5220\u9664 ${emptyNotes.length} \u4E2A\u7A7A\u767D\u7B14\u8BB0`);
     }
   }
-  // 创建月视图
+  // 月历-创建月视图
   async createMonthView() {
     if (this.currentLoadingView !== "month") {
       console.log("\u4E2D\u65AD\u6708\u5386\u89C6\u56FE\u52A0\u8F7D\uFF1A\u89C6\u56FE\u5DF2\u5207\u6362");
@@ -1657,12 +1611,12 @@ ${emptyNotes.map((file) => file.basename).join("\n")}`
       }
     }
   }
-  // 选择月份
+  // 月历-选择月份
   selectMonth(month) {
     this.currentDate = new Date(this.currentDate.getFullYear(), month);
     this.updateMonthView();
   }
-  // 更新月视图
+  // 月历-更新月视图
   updateMonthView() {
     const monthView = this.container.querySelector(".month-view");
     if (!monthView) return;
@@ -1680,7 +1634,7 @@ ${emptyNotes.map((file) => file.basename).join("\n")}`
       this.renderMonthGrid(grid);
     }
   }
-  // 月份导航
+  // 月历-月份导航
   navigateMonth(delta) {
     const newDate = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth() + delta);
     if (newDate.getFullYear() !== this.currentDate.getFullYear()) {
@@ -1692,12 +1646,12 @@ ${emptyNotes.map((file) => file.basename).join("\n")}`
     this.currentDate = newDate;
     this.updateMonthView();
   }
-  // 跳转到今天
+  // 月历-跳转到今天
   goToToday() {
     this.currentDate = /* @__PURE__ */ new Date();
     this.updateMonthView();
   }
-  // 渲染月视图网格
+  // 月历-渲染月视图格
   renderMonthGrid(grid) {
     const year = this.currentDate.getFullYear();
     const month = this.currentDate.getMonth();
@@ -1745,7 +1699,7 @@ ${emptyNotes.map((file) => file.basename).join("\n")}`
       }
     }
   }
-  // 获取定月份笔记
+  // 月历-获取每日笔记数量
   getNotesByDate(year, month) {
     const notesByDate = {};
     const files = this.app.vault.getMarkdownFiles();
@@ -1761,16 +1715,12 @@ ${emptyNotes.map((file) => file.basename).join("\n")}`
     });
     return notesByDate;
   }
-  // 格式化月份标题
-  formatMonthTitle(date) {
-    return `${date.getFullYear()}${date.getMonth() + 1}\u6708`;
-  }
-  // 年份航
+  // 年份导航
   navigateYear(delta) {
     this.currentDate = new Date(this.currentDate.getFullYear() + delta, this.currentDate.getMonth());
     this.updateMonthView();
   }
-  // 创建列表视图
+  // 列表-创建视图
   async createListView() {
     if (this.currentLoadingView !== "list") {
       console.log("\u4E2D\u5217\u8868\u89C6\u56FE\u52A0\u8F7D\uFF1A\u89C6\u56FE\u5DF2\u5207\u6362");
@@ -1828,13 +1778,14 @@ ${emptyNotes.map((file) => file.basename).join("\n")}`
         const notesArea = contentArea.createDiv("folder-content");
         this.showFolderContent(notesArea, rootNotes);
       }
+      this.updateCardLayout();
     } finally {
       if (this.currentLoadingView === "list") {
         this.currentLoadingView = null;
       }
     }
   }
-  // 显示文件夹内容
+  // 列表-显示文件夹内容
   showFolderContent(container, notes) {
     container.empty();
     notes.sort((a, b) => b.stat.mtime - a.stat.mtime);
@@ -1849,7 +1800,7 @@ ${emptyNotes.map((file) => file.basename).join("\n")}`
       this.addNoteItemEvents(noteItem, note);
     });
   }
-  // 添加 addNoteItemEvents 方法
+  // 列表-添加笔记项事件
   addNoteItemEvents(noteItem, note) {
     noteItem.addEventListener("click", (e) => {
       this.handleCardSelection(note.path, e);
@@ -1877,11 +1828,11 @@ ${emptyNotes.map((file) => file.basename).join("\n")}`
       }
     });
   }
-  // 添加刷新标签的方法
+  // 标签-刷新
   refreshTags() {
     this.loadTags();
   }
-  // 在 CardView 类中添加新的方法来处理滚动同步
+  // 滚动同步
   setupScrollSync() {
     const cardContainer = this.container;
     const previewContainer = this.previewContainer;
@@ -1902,6 +1853,7 @@ ${emptyNotes.map((file) => file.basename).join("\n")}`
       }, 150);
     });
   }
+  // 快速笔记-设置事件
   setupQuickNoteEvents(input, toolbar, tagSuggestions) {
     var _a, _b, _c;
     const titleInput = (_a = input.parentElement) == null ? void 0 : _a.querySelector(".quick-note-title");
@@ -2053,7 +2005,7 @@ ${content}` : content;
       });
     }
   }
-  // 添加清理输入状态的辅助方法
+  // 快速笔记-清理输入
   clearQuickNoteInputs(titleInput, contentInput, tags, tagsContainer, tagInput) {
     var _a;
     if (titleInput) {
@@ -2069,17 +2021,7 @@ ${content}` : content;
       });
     }
   }
-  // 高亮新笔记
-  highlightNewNote(path) {
-    const noteCard = this.container.querySelector(`[data-path="${path}"]`);
-    if (noteCard) {
-      noteCard.addClass("highlight");
-      setTimeout(() => {
-        noteCard.removeClass("highlight");
-      }, 5e3);
-    }
-  }
-  // 修改 setupDraggable 方法
+  // 拖拽
   setupDraggable(element) {
     let isDragging = false;
     let offsetX;
@@ -2159,39 +2101,16 @@ ${content}` : content;
       }
     });
   }
-  // 修改 toggleMinimize 方法
-  toggleMinimize(element) {
-    const isMinimized = element.hasClass("minimized");
-    const rect = element.getBoundingClientRect();
-    if (isMinimized) {
-      const currentLeft = rect.left;
-      const currentTop = rect.top;
-      element.removeClass("minimized");
-      element.style.width = "800px";
-      element.style.removeProperty("height");
-      element.style.left = `${currentLeft}px`;
-      element.style.top = `${currentTop}px`;
-      element.style.transform = "none";
-    } else {
-      const currentLeft = rect.left;
-      const currentTop = rect.top;
-      element.style.width = "40px";
-      element.style.height = "40px";
-      element.style.left = `${currentLeft}px`;
-      element.style.top = `${currentTop}px`;
-      element.style.transform = "none";
-      element.addClass("minimized");
-    }
-  }
-  // 添加保存和加载近标签的方法
+  // 保存最近标签
   saveRecentTags(tags) {
     localStorage.setItem("recent-tags", JSON.stringify(tags));
   }
+  // 加载最近标签
   loadRecentTags() {
     const saved = localStorage.getItem("recent-tags");
     return saved ? JSON.parse(saved) : [];
   }
-  // 修改 minimizeQuickNote 和 restoreQuickNote 方法
+  // 快速笔记-最小化
   minimizeQuickNote(element) {
     const workspaceLeafContent = this.containerEl.closest(".workspace-leaf-content");
     if (!workspaceLeafContent) return;
@@ -2228,7 +2147,7 @@ ${content}` : content;
     const backdrop = this.containerEl.querySelector(".quick-note-backdrop");
     backdrop == null ? void 0 : backdrop.removeClass("active");
   }
-  // 恢快速笔记
+  // 快速笔记-恢复
   restoreQuickNote(element) {
     if (!element.hasClass("minimized")) return;
     const workspaceLeafContent = this.containerEl.closest(".workspace-leaf-content");
@@ -2266,37 +2185,7 @@ ${content}` : content;
     const backdrop = this.containerEl.querySelector(".quick-note-backdrop");
     backdrop == null ? void 0 : backdrop.addClass("active");
   }
-  // 添加更新高亮标签的方法
-  updateHighlightedTags() {
-    const tagButtons = this.tagContainer.querySelectorAll(".tag-btn");
-    tagButtons.forEach((btn) => {
-      btn.removeClass("highlighted");
-    });
-    tagButtons.forEach((btn) => {
-      var _a;
-      const tagText = (_a = btn.textContent) == null ? void 0 : _a.split(" ")[0];
-      if (tagText && this.selectedTags.has(tagText)) {
-        btn.addClass("highlighted");
-      }
-    });
-  }
-  // 修改 addTag 方法
-  addTag(tagText, tags, tagsContainer) {
-    if (!tagText || tags.has(tagText)) return;
-    const tagItem = tagsContainer.createDiv("tag-item");
-    tagItem.setText(tagText);
-    const removeBtn = tagItem.createDiv("remove-tag");
-    removeBtn.setText("\xD7");
-    removeBtn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      tags.delete(tagText);
-      tagItem.remove();
-      this.updateHighlightedTags();
-    });
-    tags.add(tagText);
-    this.updateHighlightedTags();
-  }
-  // 添加位置判断方法
+  // 获取快速笔记位置
   getQuickNotePosition(element) {
     const workspaceLeafContent = this.containerEl.closest(".workspace-leaf-content");
     if (!workspaceLeafContent) return "center";
@@ -2312,13 +2201,13 @@ ${content}` : content;
     if (!isRight && isBottom) return "bottom-left";
     return "center";
   }
-  // 添加观察笔记内容的方法
+  // 笔记内容-观察
   observeNoteContent(element, file) {
     if (this.intersectionObserver) {
       this.intersectionObserver.observe(element);
     }
   }
-  // 添加加载笔记内容的方法
+  // 笔记内容-加载
   async loadNoteContent(container, file) {
     if (this.loadedNotes.has(file.path)) return;
     try {
@@ -2347,14 +2236,14 @@ ${content}` : content;
       container.setText("\u52A0\u8F7D\u5931\u8D25");
     }
   }
-  // 修改 onClose 方法
+  // 关闭
   async onClose() {
     if (this.intersectionObserver) {
       this.intersectionObserver.disconnect();
     }
     this.loadedNotes.clear();
   }
-  // 添加更新状态栏的方法
+  // 状态栏-更新加载状态
   updateLoadingStatus(message) {
     if (!this.loadingStatus) return;
     const loadingIndicator = this.loadingStatus.querySelector(".loading-indicator");
@@ -2379,7 +2268,7 @@ ${content}` : content;
             `;
     }
   }
-  // 添加 createTimelineView 方法
+  // 创建时间轴视图
   async createTimelineView() {
     try {
       this.container.empty();
@@ -2396,13 +2285,14 @@ ${content}` : content;
       this.timelineIsLoading = false;
       await this.loadTimelinePage(timelineContainer);
       this.setupTimelineScroll(timelineContainer);
+      this.updateCardLayout();
     } catch (error) {
       console.error("\u521B\u5EFA\u65F6\u95F4\u8F74\u89C6\u56FE\u5931\u8D25:", error);
       new import_obsidian.Notice("\u521B\u5EFA\u65F6\u95F4\u8F74\u89C6\u56FE\u5931\u8D25");
       this.updateLoadingStatus("\u521B\u5EFA\u65F6\u95F4\u8F74\u89C6\u56FE\u5931\u8D25");
     }
   }
-  // 在 createViewSwitcher 方法后添加新的方法
+  // 创建卡片设置面板
   createCardSettings(toolbar) {
     const settingsContainer = toolbar.createDiv("card-settings-container");
     const settingsBtn = settingsContainer.createEl("button", {
@@ -2410,33 +2300,96 @@ ${content}` : content;
     });
     settingsBtn.innerHTML = `
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-            <span>\u89C6\u56FE\u8BBE\u7F6E</span>
+            <span>\u5361\u7247\u8BBE\u7F6E</span>
         `;
     const settingsPanel = settingsContainer.createDiv("card-settings-panel");
     settingsPanel.style.display = "none";
+    settingsBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const isVisible = settingsPanel.style.display === "block";
+      if (!isVisible) {
+        this.updateSettingsPanel(settingsPanel);
+      }
+      settingsPanel.style.display = isVisible ? "none" : "block";
+    });
+    document.addEventListener("click", (e) => {
+      if (!settingsContainer.contains(e.target)) {
+        settingsPanel.style.display = "none";
+      }
+    });
+  }
+  // 更新设置面板状态
+  updateSettingsPanel(settingsPanel) {
+    settingsPanel.empty();
     const currentSettings = this.cardSettings[this.currentView];
     const basicSettings = settingsPanel.createDiv("settings-section");
     basicSettings.createEl("h3", { text: "\u57FA\u672C\u8BBE\u7F6E" });
     const showDateOption = this.createCheckboxOption(basicSettings, "\u663E\u793A\u65E5\u671F", currentSettings.showDate);
     showDateOption.addEventListener("change", (e) => {
       currentSettings.showDate = e.target.checked;
-      this.refreshView();
+      const dateElements = this.container.querySelectorAll(".note-date");
+      dateElements.forEach((element) => {
+        if (currentSettings.showDate) {
+          element.removeClass("hide");
+          element.addClass("show");
+        } else {
+          element.removeClass("show");
+          element.addClass("hide");
+        }
+      });
     });
     const showContentOption = this.createCheckboxOption(basicSettings, "\u663E\u793A\u7B14\u8BB0\u5185\u5BB9", currentSettings.showContent);
     showContentOption.addEventListener("change", (e) => {
       currentSettings.showContent = e.target.checked;
-      this.refreshView();
+      const contentElements = this.container.querySelectorAll(".note-content");
+      contentElements.forEach((element) => {
+        if (currentSettings.showContent) {
+          element.addClass("show");
+        } else {
+          element.removeClass("show");
+        }
+      });
     });
     const layoutSettings = settingsPanel.createDiv("settings-section");
     layoutSettings.createEl("h3", { text: "\u5E03\u5C40\u8BBE\u7F6E" });
     this.createSliderOption(layoutSettings, "\u5361\u7247\u9AD8\u5EA6", currentSettings.cardHeight, 200, 500, 10, (value) => {
       currentSettings.cardHeight = value;
-      this.updateCardLayout();
+      this.container.querySelectorAll(".note-card").forEach((card) => {
+        if (card instanceof HTMLElement) {
+          card.style.height = `${value}px`;
+        }
+      });
     });
     this.createSliderOption(layoutSettings, "\u5361\u7247\u95F4\u8DDD", currentSettings.cardGap, 8, 40, 4, (value) => {
       currentSettings.cardGap = value;
-      this.updateCardLayout();
+      if (this.currentView === "card") {
+        this.container.style.gap = `${value}px`;
+      } else if (this.currentView === "timeline") {
+        const notesLists = this.container.querySelectorAll(".timeline-notes-list");
+        notesLists.forEach((list) => {
+          if (list instanceof HTMLElement) {
+            list.style.gap = `${value}px`;
+          }
+        });
+      }
     });
+    const updateCardsPerRow = (value) => {
+      cardsPerRowInput.value = value.toString();
+      currentSettings.cardsPerRow = value;
+      if (this.currentView === "card") {
+        const containerWidth = this.container.offsetWidth;
+        const totalGap = value > 0 ? currentSettings.cardGap * (value - 1) : 0;
+        const cardWidth = value > 0 ? (containerWidth - totalGap) / value : this.cardSize;
+        this.container.style.gridTemplateColumns = `repeat(${value}, ${cardWidth}px)`;
+      } else if (this.currentView === "timeline") {
+        const notesLists = this.container.querySelectorAll(".timeline-notes-list");
+        notesLists.forEach((list) => {
+          if (list instanceof HTMLElement) {
+            list.style.gridTemplateColumns = `repeat(${value}, 1fr)`;
+          }
+        });
+      }
+    };
     const cardsPerRowContainer = layoutSettings.createDiv("setting-item");
     cardsPerRowContainer.createEl("label", { text: "\u6BCF\u884C\u5361\u7247\u6570\u91CF" });
     const controlGroup = cardsPerRowContainer.createDiv("setting-control-group");
@@ -2453,19 +2406,6 @@ ${content}` : content;
       cls: "cards-per-row-btn increase",
       text: "+"
     });
-    const updateCardsPerRow = (value) => {
-      const minCardWidth = 200;
-      const containerWidth = this.container.offsetWidth;
-      const maxPossibleCards = Math.floor((containerWidth + currentSettings.cardGap) / (minCardWidth + currentSettings.cardGap));
-      if (value > maxPossibleCards) {
-        new import_obsidian.Notice(`\u6BCF\u884C\u6700\u591A\u663E\u793A ${maxPossibleCards} \u5F20\u5361\u7247\uFF08\u53D7\u5BB9\u5668\u5BBD\u5EA6\u9650\u5236\uFF09`);
-        value = maxPossibleCards;
-      }
-      value = Math.max(0, value);
-      cardsPerRowInput.value = value.toString();
-      currentSettings.cardsPerRow = value;
-      this.updateCardLayout();
-    };
     decreaseBtn.addEventListener("click", () => {
       const currentValue = parseInt(cardsPerRowInput.value) || 4;
       if (currentValue > 0) {
@@ -2480,18 +2420,78 @@ ${content}` : content;
       const value = parseInt(e.target.value);
       updateCardsPerRow(isNaN(value) ? 4 : value);
     });
-    settingsBtn.addEventListener("click", (e) => {
-      e.stopPropagation();
-      const isVisible = settingsPanel.style.display === "block";
-      settingsPanel.style.display = isVisible ? "none" : "block";
-    });
-    document.addEventListener("click", (e) => {
-      if (!settingsContainer.contains(e.target)) {
-        settingsPanel.style.display = "none";
+    cardsPerRowInput.addEventListener("wheel", (e) => {
+      e.preventDefault();
+      if (document.activeElement === cardsPerRowInput) {
+        const delta = e.deltaY > 0 ? -1 : 1;
+        const currentValue = parseInt(cardsPerRowInput.value) || 4;
+        updateCardsPerRow(currentValue + delta);
       }
     });
   }
-  // 创建滑块选项的辅助方法
+  // 创建复选框选项
+  createCheckboxOption(container, label, defaultChecked) {
+    const settingItem = container.createDiv("setting-item");
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.checked = defaultChecked;
+    settingItem.appendChild(checkbox);
+    const labelEl = document.createElement("label");
+    labelEl.textContent = label;
+    settingItem.appendChild(labelEl);
+    return checkbox;
+  }
+  // 更新卡片布局
+  updateCardLayout() {
+    const container = this.container;
+    if (!container) return;
+    const currentSettings = this.cardSettings[this.currentView];
+    container.style.gap = `${currentSettings.cardGap}px`;
+    container.querySelectorAll(".note-card").forEach((card) => {
+      if (card instanceof HTMLElement) {
+        card.style.height = `${currentSettings.cardHeight}px`;
+      }
+    });
+    const minCardWidth = 150;
+    const containerWidth = container.offsetWidth;
+    const maxPossibleCards = Math.floor((containerWidth + currentSettings.cardGap) / (minCardWidth + currentSettings.cardGap));
+    if (currentSettings.cardsPerRow > 0) {
+      const columns = Math.min(currentSettings.cardsPerRow, maxPossibleCards);
+      const totalGap = currentSettings.cardGap * (columns - 1);
+      const cardWidth = (containerWidth - totalGap) / columns;
+      container.style.gridTemplateColumns = `repeat(${columns}, ${cardWidth}px)`;
+    } else {
+      const defaultColumns = this.cardSettings[this.currentView].cardsPerRow;
+      const columns = Math.min(defaultColumns, maxPossibleCards);
+      const totalGap = currentSettings.cardGap * (columns - 1);
+      const cardWidth = (containerWidth - totalGap) / columns;
+      container.style.gridTemplateColumns = `repeat(${columns}, ${cardWidth}px)`;
+    }
+  }
+  // 设置观察器
+  setupIntersectionObserver() {
+    this.intersectionObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach(async (entry) => {
+          if (entry.isIntersecting) {
+            const noteContent = entry.target;
+            const filePath = noteContent.getAttribute("data-path");
+            if (filePath && !this.loadedNotes.has(filePath)) {
+              const file = this.app.vault.getAbstractFileByPath(filePath);
+              if (file instanceof import_obsidian.TFile) {
+                await this.loadNoteContent(noteContent, file);
+              }
+            }
+          }
+        });
+      },
+      {
+        rootMargin: "100px",
+        threshold: 0.1
+      }
+    );
+  }
+  // 创建滑块选项
   createSliderOption(container, label, defaultValue, min, max, step, onChange) {
     const settingItem = container.createDiv("setting-item");
     settingItem.createEl("label", { text: label });
@@ -2500,13 +2500,15 @@ ${content}` : content;
       cls: "setting-control-btn decrease",
       text: "-"
     });
-    const numberInput = document.createElement("input");
-    numberInput.type = "number";
-    numberInput.value = defaultValue.toString();
-    numberInput.min = min.toString();
-    numberInput.max = max.toString();
-    numberInput.step = step.toString();
-    controlGroup.appendChild(numberInput);
+    const numberInput = controlGroup.createEl("input", {
+      type: "number",
+      value: defaultValue.toString(),
+      attr: {
+        min: min.toString(),
+        max: max.toString(),
+        step: step.toString()
+      }
+    });
     const increaseBtn = controlGroup.createEl("button", {
       cls: "setting-control-btn increase",
       text: "+"
@@ -2531,73 +2533,11 @@ ${content}` : content;
     numberInput.addEventListener("wheel", (e) => {
       e.preventDefault();
       if (document.activeElement === numberInput) {
-        const delta = e.deltaY > 0 ? -1 : 1;
+        const delta = e.deltaY > 0 ? -step : step;
         const currentValue = parseInt(numberInput.value) || defaultValue;
         updateValue(currentValue + delta);
       }
     });
-  }
-  // 创建复选框选项的辅助方法
-  createCheckboxOption(container, label, defaultChecked) {
-    const settingItem = container.createDiv("setting-item");
-    const checkbox = document.createElement("input");
-    checkbox.type = "checkbox";
-    checkbox.checked = defaultChecked;
-    settingItem.appendChild(checkbox);
-    const labelEl = document.createElement("label");
-    labelEl.textContent = label;
-    settingItem.appendChild(labelEl);
-    return checkbox;
-  }
-  // 更新卡片布局的方法
-  updateCardLayout() {
-    const container = this.container;
-    if (!container) return;
-    const currentSettings = this.cardSettings[this.currentView];
-    container.style.gap = `${currentSettings.cardGap}px`;
-    container.querySelectorAll(".note-card").forEach((card) => {
-      if (card instanceof HTMLElement) {
-        card.style.height = `${currentSettings.cardHeight}px`;
-      }
-    });
-    const minCardWidth = 200;
-    const containerWidth = container.offsetWidth;
-    const maxPossibleCards = Math.floor((containerWidth + currentSettings.cardGap) / (minCardWidth + currentSettings.cardGap));
-    if (currentSettings.cardsPerRow > 0) {
-      const columns = Math.min(currentSettings.cardsPerRow, maxPossibleCards);
-      const totalGap = currentSettings.cardGap * (columns - 1);
-      const cardWidth = (containerWidth - totalGap) / columns;
-      container.style.gridTemplateColumns = `repeat(${columns}, ${cardWidth}px)`;
-    } else {
-      const defaultColumns = this.cardSettings[this.currentView].cardsPerRow;
-      const columns = Math.min(defaultColumns, maxPossibleCards);
-      const totalGap = currentSettings.cardGap * (columns - 1);
-      const cardWidth = (containerWidth - totalGap) / columns;
-      container.style.gridTemplateColumns = `repeat(${columns}, ${cardWidth}px)`;
-    }
-  }
-  // 添加 setupIntersectionObserver 方法
-  setupIntersectionObserver() {
-    this.intersectionObserver = new IntersectionObserver(
-      (entries) => {
-        entries.forEach(async (entry) => {
-          if (entry.isIntersecting) {
-            const noteContent = entry.target;
-            const filePath = noteContent.getAttribute("data-path");
-            if (filePath && !this.loadedNotes.has(filePath)) {
-              const file = this.app.vault.getAbstractFileByPath(filePath);
-              if (file instanceof import_obsidian.TFile) {
-                await this.loadNoteContent(noteContent, file);
-              }
-            }
-          }
-        });
-      },
-      {
-        rootMargin: "100px",
-        threshold: 0.1
-      }
-    );
   }
 };
 var ConfirmModal = class extends import_obsidian.Modal {

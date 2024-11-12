@@ -305,7 +305,8 @@
     // 卡片布局优化   
     .note-card 
       position: relative
-      width: 280px
+      min-width: 240px
+      min-height: 100px
       height: 200px
       background-color: var(--background-secondary)
       border-radius: 8px
@@ -1778,6 +1779,16 @@
     transform: rotate(360deg)
 
 
+
+.note-card
+  .note-date
+    &.show
+      display: block
+
+    &.hide
+      display: none
+
+
 // 修改笔记内容样式
 .note-card-content 
     .note-content
@@ -1787,6 +1798,9 @@
         // 当设置为显示内容时，始终显示
         &.show
             display: block
+
+        &.hide
+            display: none
             
         // 当鼠标悬停时显示
         &.hover-show
