@@ -2360,7 +2360,7 @@ ${content}` : content;
         }
       });
     });
-    this.createSliderOption(layoutSettings, "\u5361\u7247\u95F4\u8DDD", currentSettings.cardGap, 8, 40, 4, (value) => {
+    this.createSliderOption(layoutSettings, "\u5361\u7247\u95F4\u8DDD", currentSettings.cardGap, 0, 40, 4, (value) => {
       currentSettings.cardGap = value;
       if (this.currentView === "card") {
         this.container.style.gap = `${value}px`;
@@ -2378,9 +2378,13 @@ ${content}` : content;
       currentSettings.cardsPerRow = value;
       if (this.currentView === "card") {
         const containerWidth = this.container.offsetWidth;
-        const totalGap = value > 0 ? currentSettings.cardGap * (value - 1) : 0;
-        const cardWidth = value > 0 ? (containerWidth - totalGap) / value : this.cardSize;
-        this.container.style.gridTemplateColumns = `repeat(${value}, ${cardWidth}px)`;
+        const totalGap = value >= 0 ? currentSettings.cardGap : 0;
+        const maxColumns = Math.floor(containerWidth / (180 + totalGap));
+        console.log("containerWidth", containerWidth);
+        console.log("totalGap", totalGap);
+        console.log("maxColumns", maxColumns);
+        const repeatValue = value > maxColumns ? maxColumns : value;
+        this.container.style.gridTemplateColumns = `repeat(${repeatValue}, minmax(150px, 1fr))`;
       } else if (this.currentView === "timeline") {
         const notesLists = this.container.querySelectorAll(".timeline-notes-list");
         notesLists.forEach((list) => {
@@ -2409,7 +2413,7 @@ ${content}` : content;
     decreaseBtn.addEventListener("click", () => {
       const currentValue = parseInt(cardsPerRowInput.value) || 4;
       if (currentValue > 0) {
-        updateCardsPerRow(currentValue - 1);
+        updateCardsPerRow(Math.max(1, currentValue - 1));
       }
     });
     increaseBtn.addEventListener("click", () => {

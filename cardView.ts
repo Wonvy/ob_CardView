@@ -3322,7 +3322,7 @@ export class CardView extends ItemView {
         });
 
         // 卡片间距设置
-        this.createSliderOption(layoutSettings, '卡片间距', currentSettings.cardGap, 8, 40, 4, (value) => {
+        this.createSliderOption(layoutSettings, '卡片间距', currentSettings.cardGap, 0, 40, 4, (value) => {
             currentSettings.cardGap = value;
             if (this.currentView === 'card') {
                 // 卡片视图更新间距
@@ -3340,17 +3340,22 @@ export class CardView extends ItemView {
 
         // 每行卡片数量设置1
         const updateCardsPerRow = (value: number) => {
-            // ... 现有的验证代码 ...
-            
-            cardsPerRowInput.value = value.toString();
-            currentSettings.cardsPerRow = value;
+
+            cardsPerRowInput.value = value.toString();// 更新输入框的值
+            currentSettings.cardsPerRow = value; // 更新设置
             
             if (this.currentView === 'card') {
                 // 只更新网格布局
                 const containerWidth = this.container.offsetWidth;
-                const totalGap = value > 0 ? currentSettings.cardGap * (value - 1) : 0;
-                const cardWidth = value > 0 ? (containerWidth - totalGap) / value : this.cardSize;
-                this.container.style.gridTemplateColumns = `repeat(${value}, ${cardWidth}px)`;
+                const totalGap = value >= 0 ? currentSettings.cardGap : 0; // 确保不小于0
+                // 最大列数
+                const maxColumns = Math.floor(containerWidth / (180 + totalGap));
+                console.log('containerWidth', containerWidth);
+                console.log('totalGap', totalGap);
+                console.log('maxColumns', maxColumns);
+                // 如果宽度小于150px，则repeat取最大的数
+                const repeatValue = value > maxColumns ? maxColumns : value;
+                this.container.style.gridTemplateColumns = `repeat(${repeatValue}, minmax(150px, 1fr))`;
             } else if (this.currentView === 'timeline') {
                 // 更新时间轴视图的卡片布局
                 const notesLists = this.container.querySelectorAll('.timeline-notes-list');
@@ -3387,11 +3392,11 @@ export class CardView extends ItemView {
             text: '+'
         });
 
-        // 添加按钮事件
+        // 减少按钮事件
         decreaseBtn.addEventListener('click', () => {
-            const currentValue = parseInt(cardsPerRowInput.value) || 4;
+            const currentValue = parseInt(cardsPerRowInput.value) || 4; // 默认值为4
             if (currentValue > 0) { // 只有当值大于0时才减少
-                updateCardsPerRow(currentValue - 1);
+                updateCardsPerRow(Math.max(1, currentValue - 1)); // 确保不小于0
             }
         });
 
