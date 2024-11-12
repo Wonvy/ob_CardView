@@ -109,7 +109,7 @@ var EnhancedFileSelectionModal = class extends import_obsidian.Modal {
       }
     });
     const cancelButton = buttonContainer.createEl("button", {
-      text: "\u53D6\u6D88"
+      text: "\u53D6"
     });
     cancelButton.addEventListener("click", () => this.close());
   }
@@ -220,6 +220,48 @@ var CardView = class extends import_obsidian.ItemView {
       }
     };
     this.scrollTimeout = null;
+    this.homeModules = [
+      {
+        id: "heatmap",
+        name: "\u6D3B\u52A8\u70ED\u529B\u56FE",
+        type: "heatmap",
+        visible: true,
+        order: 0,
+        columns: 4
+      },
+      {
+        id: "weekly",
+        name: "\u672C\u5468\u7B14\u8BB0",
+        type: "weekly",
+        visible: true,
+        order: 1,
+        columns: 4
+      },
+      {
+        id: "recent",
+        name: "\u6700\u8FD1\u7F16\u8F91",
+        type: "recent",
+        visible: true,
+        order: 2,
+        columns: 4
+      },
+      {
+        id: "stats",
+        name: "\u7B14\u8BB0\u7EDF\u8BA1",
+        type: "stats",
+        visible: true,
+        order: 3,
+        columns: 4
+      },
+      {
+        id: "calendar",
+        name: "\u65E5\u5386",
+        type: "calendar",
+        visible: true,
+        order: 4,
+        columns: 4
+      }
+    ];
     this.plugin = plugin;
     this.currentView = "card";
     this.container = createDiv();
@@ -353,7 +395,7 @@ var CardView = class extends import_obsidian.ItemView {
     const noteInput = inputContainer.createEl("textarea", {
       cls: "quick-note-input",
       attr: {
-        placeholder: "\u8F93\u5165\u7B14\u8BB0\u5185\u5BB9\uFF0C\u6309 Enter \u53D1\u9001..."
+        placeholder: "\u8F93\u5165\u7B14\u5185\u5BB9\uFF0C\u6309 Enter \u53D1\u9001..."
       }
     });
     const tagsContainer = inputContainer.createDiv("tags-container");
@@ -613,25 +655,49 @@ ${content}` : content;
   // 创建视图切换按钮
   createViewSwitcher(container) {
     const views = [
-      { id: "card", icon: "grid", text: "\u5361\u7247\u89C6\u56FE" },
-      { id: "list", icon: "list", text: "\u5217\u8868\u89C6\u56FE" },
-      { id: "timeline", icon: "clock", text: "\u65F6\u95F4\u8F74\u89C6\u56FE" },
-      { id: "month", icon: "calendar", text: "\u6708\u5386\u89C6\u56FE" },
-      { id: "week", icon: "calendar", text: "\u5468\u89C6\u56FE" }
+      {
+        id: "home",
+        icon: "home",
+        text: "\u4E3B\u9875\u89C6\u56FE",
+        svg: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>'
+      },
+      {
+        id: "card",
+        icon: "grid",
+        text: "\u5361\u7247\u89C6\u56FE",
+        svg: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>'
+      },
+      {
+        id: "list",
+        icon: "list",
+        text: "\u5217\u8868\u89C6\u56FE",
+        svg: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>'
+      },
+      {
+        id: "timeline",
+        icon: "clock",
+        text: "\u65F6\u95F4\u8F74\u89C6\u56FE",
+        svg: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>'
+      },
+      {
+        id: "month",
+        icon: "calendar",
+        text: "\u6708\u5386\u89C6\u56FE",
+        svg: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>'
+      },
+      {
+        id: "week",
+        icon: "calendar",
+        text: "\u5468\u89C6\u56FE",
+        svg: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>'
+      }
     ];
     views.forEach((view) => {
       const btn = container.createEl("button", {
         cls: `view-switch-btn ${view.id === this.currentView ? "active" : ""}`
       });
-      const iconHtml = {
-        "grid": '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>',
-        "list": '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>',
-        "clock": '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>',
-        "calendar": '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>',
-        "week": '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>'
-      };
       const iconSpan = btn.createSpan({ cls: "view-switch-icon" });
-      iconSpan.innerHTML = iconHtml[view.icon];
+      iconSpan.innerHTML = view.svg;
       btn.createSpan({ text: view.text, cls: "view-switch-text" });
       btn.addEventListener("click", () => {
         container.querySelectorAll(".view-switch-btn").forEach((b) => b.removeClass("active"));
@@ -658,12 +724,16 @@ ${content}` : content;
     this.container.setAttribute("data-view", view);
     const contentSection = this.containerEl.querySelector(".content-section");
     if (contentSection) {
-      contentSection.removeClass("view-card", "view-list", "view-timeline", "view-month", "view-week");
+      contentSection.removeClass("view-home", "view-card", "view-list", "view-timeline", "view-month", "view-week");
       contentSection.addClass(`view-${view}`);
     }
     let statusMessage = "";
     try {
       switch (view) {
+        case "home":
+          statusMessage = "\u5207\u6362\u5230\u4E3B\u9875\u89C6\u56FE";
+          this.createHomeView();
+          break;
         case "card":
           statusMessage = "\u5207\u6362\u5230\u5361\u7247\u89C6\u56FE";
           this.loadNotes();
@@ -742,7 +812,7 @@ ${content}` : content;
           try {
             return await this.createNoteCard(file);
           } catch (error) {
-            console.error("\u521B\u5EFA\u5361\u7247\u5931\uFFFD\uFFFD:", file.path, error);
+            console.error("\u521B\u5EFA\u5361\u7247\u5931:", file.path, error);
             return null;
           }
         })
@@ -849,147 +919,153 @@ ${content}` : content;
   }
   // 创建笔记卡片
   async createNoteCard(file) {
-    const card = document.createElement("div");
-    card.addClass("note-card");
-    card.setAttribute("data-path", file.path);
-    const header = card.createDiv("note-card-header");
-    if (this.cardSettings[this.currentView].showDate) {
-      const lastModified = header.createDiv("note-date show");
-      lastModified.setText(new Date(file.stat.mtime).toLocaleDateString());
-    }
-    const folderPath = header.createDiv("note-folder");
-    const folder = file.parent ? file.parent.path : "\u6839\u76EE\u5F55";
-    const pathParts = folder === "\u6839\u76EE\u5F55" ? ["\u6839\u76EE\u5F55"] : folder.split("/");
-    pathParts.forEach((part, index) => {
-      if (index > 0) {
-        folderPath.createSpan({ text: " / ", cls: "folder-separator" });
-      }
-      const folderPart = folderPath.createSpan({
-        text: part,
-        cls: "folder-part clickable"
-      });
-      const currentPath = folder === "\u6839\u76EE\u5F55" ? "" : pathParts.slice(0, index + 1).join("/");
-      const underline = folderPart.createSpan({ cls: "folder-underline" });
-      folderPart.addEventListener("mouseenter", () => {
-        underline.addClass("active");
-      });
-      folderPart.addEventListener("mouseleave", () => {
-        underline.removeClass("active");
-      });
-      folderPart.addEventListener("click", async (e) => {
-        e.stopPropagation();
-        e.preventDefault();
-        const fileExplorer = this.app.workspace.getLeavesOfType("file-explorer")[0];
-        if (fileExplorer && fileExplorer.view) {
-          this.app.workspace.revealLeaf(fileExplorer);
-          const targetFolder = currentPath ? this.app.vault.getAbstractFileByPath(currentPath) : this.app.vault.getRoot();
-          if (targetFolder && (targetFolder instanceof import_obsidian.TFolder || !currentPath)) {
-            await fileExplorer.view.revealInFolder(targetFolder);
-          }
-        }
-      });
-    });
-    const openButton = header.createDiv("note-open-button");
-    openButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>`;
-    openButton.setAttribute("title", "\u5728\u65B0\u6807\u7B7E\u9875\u4E2D\u6253\u5F00");
-    openButton.style.opacity = "0";
-    const cardContent = card.createDiv("note-card-content");
-    const title = cardContent.createDiv("note-title");
-    let displayTitle = file.basename;
-    const timePattern = /^\d{4}[-./]\d{2}[-./]\d{2}/;
-    if (timePattern.test(displayTitle)) {
-      displayTitle = displayTitle.replace(timePattern, "").trim();
-    }
-    if (this.currentSearchTerm) {
-      title.innerHTML = this.highlightText(displayTitle, this.currentSearchTerm);
-    } else {
-      title.setText(displayTitle);
-    }
     try {
-      const noteContent = cardContent.createDiv("note-content");
-      if (this.cardSettings[this.currentView].showContent) {
-        noteContent.addClass("show");
+      const card = document.createElement("div");
+      card.addClass("note-card");
+      card.setAttribute("data-path", file.path);
+      const header = card.createDiv("note-card-header");
+      if (this.cardSettings[this.currentView].showDate) {
+        const lastModified = header.createDiv("note-date show");
+        lastModified.setText(new Date(file.stat.mtime).toLocaleDateString());
       }
-      noteContent.setAttribute("data-path", file.path);
-      const loadingPlaceholder = noteContent.createDiv("content-placeholder");
-      loadingPlaceholder.setText("Loading...");
-      this.observeNoteContent(noteContent, file);
-      card.addEventListener("mouseenter", async () => {
-        openButton.style.opacity = "1";
-        if (!this.cardSettings.card.showContent) {
-          const noteContent2 = cardContent.querySelector(".note-content");
-          if (noteContent2) {
-            noteContent2.addClass("hover-show");
-            if (!this.loadedNotes.has(file.path)) {
-              await this.loadNoteContent(noteContent2, file);
+      const folderPath = header.createDiv("note-folder");
+      const folder = file.parent ? file.parent.path : "\u6839\u76EE\u5F55";
+      const pathParts = folder === "\u6839\u76EE\u5F55" ? ["\u6839\u76EE\u5F55"] : folder.split("/");
+      pathParts.forEach((part, index) => {
+        if (index > 0) {
+          folderPath.createSpan({ text: " / ", cls: "folder-separator" });
+        }
+        const folderPart = folderPath.createSpan({
+          text: part,
+          cls: "folder-part clickable"
+        });
+        const currentPath = folder === "\u6839\u76EE\u5F55" ? "" : pathParts.slice(0, index + 1).join("/");
+        const underline = folderPart.createSpan({ cls: "folder-underline" });
+        folderPart.addEventListener("mouseenter", () => {
+          underline.addClass("active");
+        });
+        folderPart.addEventListener("mouseleave", () => {
+          underline.removeClass("active");
+        });
+        folderPart.addEventListener("click", async (e) => {
+          e.stopPropagation();
+          e.preventDefault();
+          const fileExplorer = this.app.workspace.getLeavesOfType("file-explorer")[0];
+          if (fileExplorer && fileExplorer.view) {
+            this.app.workspace.revealLeaf(fileExplorer);
+            const targetFolder = currentPath ? this.app.vault.getAbstractFileByPath(currentPath) : this.app.vault.getRoot();
+            if (targetFolder && (targetFolder instanceof import_obsidian.TFolder || !currentPath)) {
+              await fileExplorer.view.revealInFolder(targetFolder);
             }
-          }
-        }
-        try {
-          this.previewContainer.empty();
-          const content = await this.app.vault.read(file);
-          await import_obsidian.MarkdownRenderer.render(
-            this.app,
-            content,
-            this.previewContainer,
-            file.path,
-            this
-          );
-        } catch (error) {
-          console.error("\u9884\u89C8\u52A0\u8F7D\u5931\u8D25:", error);
-        }
-      });
-      card.addEventListener("mouseleave", () => {
-        openButton.style.opacity = "0";
-        if (!this.cardSettings.card.showContent) {
-          const noteContent2 = cardContent.querySelector(".note-content");
-          if (noteContent2) {
-            noteContent2.removeClass("hover-show");
-          }
-        }
-      });
-      openButton.addEventListener("click", async (e) => {
-        e.stopPropagation();
-        await this.openInAppropriateLeaf(file);
-        card.addClass("selected");
-        this.container.querySelectorAll(".note-card").forEach((cardElement) => {
-          if (cardElement !== card) {
-            cardElement.removeClass("selected");
           }
         });
       });
-      card.addEventListener("click", (e) => {
-        this.handleCardSelection(file.path, e);
-      });
-      card.addEventListener("dblclick", async () => {
-        await this.openInAppropriateLeaf(file);
-      });
-      card.addEventListener("contextmenu", (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        if (!card.hasClass("selected")) {
-          if (!e.ctrlKey) {
-            this.clearSelection();
-          }
-          this.selectedNotes.add(file.path);
-          card.addClass("selected");
-          this.lastSelectedNote = file.path;
+      const openButton = header.createDiv("note-open-button");
+      openButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>`;
+      openButton.setAttribute("title", "\u5728\u65B0\u6807\u7B7E\u9875\u4E2D\u6253\u5F00");
+      openButton.style.opacity = "0";
+      const cardContent = card.createDiv("note-card-content");
+      const title = cardContent.createDiv("note-title");
+      let displayTitle = file.basename;
+      const timePattern = /^\d{4}[-./]\d{2}[-./]\d{2}/;
+      if (timePattern.test(displayTitle)) {
+        displayTitle = displayTitle.replace(timePattern, "").trim();
+      }
+      if (this.currentSearchTerm) {
+        title.innerHTML = this.highlightText(displayTitle, this.currentSearchTerm);
+      } else {
+        title.setText(displayTitle);
+      }
+      try {
+        const noteContent = cardContent.createDiv("note-content");
+        if (this.cardSettings[this.currentView].showContent) {
+          noteContent.addClass("show");
         }
-        this.showContextMenu(e, this.getSelectedFiles());
+        noteContent.setAttribute("data-path", file.path);
+        const loadingPlaceholder = noteContent.createDiv("content-placeholder");
+        loadingPlaceholder.setText("Loading...");
+        this.observeNoteContent(noteContent, file);
+        card.addEventListener("mouseenter", async () => {
+          openButton.style.opacity = "1";
+          if (!this.cardSettings.card.showContent) {
+            const noteContent2 = cardContent.querySelector(".note-content");
+            if (noteContent2) {
+              noteContent2.addClass("hover-show");
+              if (!this.loadedNotes.has(file.path)) {
+                await this.loadNoteContent(noteContent2, file);
+              }
+            }
+          }
+          try {
+            this.previewContainer.empty();
+            const content = await this.app.vault.read(file);
+            await import_obsidian.MarkdownRenderer.render(
+              this.app,
+              content,
+              this.previewContainer,
+              file.path,
+              this
+            );
+          } catch (error) {
+            console.error("\u9884\u89C8\u52A0\u8F7D\u5931\u8D25:", error);
+          }
+        });
+        card.addEventListener("mouseleave", () => {
+          openButton.style.opacity = "0";
+          if (!this.cardSettings.card.showContent) {
+            const noteContent2 = cardContent.querySelector(".note-content");
+            if (noteContent2) {
+              noteContent2.removeClass("hover-show");
+            }
+          }
+        });
+        openButton.addEventListener("click", async (e) => {
+          e.stopPropagation();
+          await this.openInAppropriateLeaf(file);
+          card.addClass("selected");
+          this.container.querySelectorAll(".note-card").forEach((cardElement) => {
+            if (cardElement !== card) {
+              cardElement.removeClass("selected");
+            }
+          });
+        });
+        card.addEventListener("click", (e) => {
+          this.handleCardSelection(file.path, e);
+        });
+        card.addEventListener("dblclick", async () => {
+          await this.openInAppropriateLeaf(file);
+        });
+        card.addEventListener("contextmenu", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          if (!card.hasClass("selected")) {
+            if (!e.ctrlKey) {
+              this.clearSelection();
+            }
+            this.selectedNotes.add(file.path);
+            card.addClass("selected");
+            this.lastSelectedNote = file.path;
+          }
+          this.showContextMenu(e, this.getSelectedFiles());
+        });
+      } catch (error) {
+        console.error("\u7B14\u8BB0\u52A0\u8F7D\u5931\u8D25:", error);
+        throw error;
+      }
+      card.addEventListener("mouseenter", async () => {
+        openButton.style.opacity = "1";
       });
+      card.addEventListener("mouseleave", () => {
+        openButton.style.opacity = "0";
+      });
+      if (this.cardSettings.card.showContent) {
+        const noteContent = cardContent.createDiv("note-content");
+      }
+      return card;
     } catch (error) {
       console.error("\u7B14\u8BB0\u52A0\u8F7D\u5931\u8D25:", error);
+      throw error;
     }
-    card.addEventListener("mouseenter", async () => {
-      openButton.style.opacity = "1";
-    });
-    card.addEventListener("mouseleave", () => {
-      openButton.style.opacity = "0";
-    });
-    if (this.cardSettings.card.showContent) {
-      const noteContent = cardContent.createDiv("note-content");
-    }
-    return card;
   }
   // 预览栏-切换
   togglePreview() {
@@ -1211,7 +1287,7 @@ ${content}` : content;
       }
     }
   }
-  // 时间轴-滚动监听
+  // 时间轴-滚动听
   setupTimelineScroll(container) {
     try {
       console.log("\u8BBE\u7F6E\u65F6\u95F4\u8F74\u6EDA\u76D1\u542C...");
@@ -1235,7 +1311,7 @@ ${content}` : content;
       container.addEventListener("scroll", () => {
         const { scrollTop, scrollHeight, clientHeight } = container;
         if (scrollHeight - scrollTop - clientHeight < 100 && !this.timelineIsLoading && this.timelineHasMore) {
-          console.log("\u6EDA\u52A8\u89E6\u53D1\u65F6\uFFFD\uFFFD\u8F74\u52A0\u8F7D\u66F4\u591A");
+          console.log("\u6EDA\u52A8\u89E6\u53D1\u65F6\u8F74\u52A0\u8F7D\u66F4\u591A");
           this.loadTimelinePage(container);
         }
       });
@@ -1895,7 +1971,7 @@ ${emptyNotes.map((file) => file.basename).join("\n")}`
   // 列表-创建视图
   async createListView() {
     if (this.currentLoadingView !== "list") {
-      console.log("\u4E2D\u5217\u8868\u89C6\u56FE\u52A0\u8F7D\uFF1A\u89C6\u56FE\u5DF2\u5207\u6362");
+      console.log("\u4E2D\u5217\u8868\u89C6\u56FE\u52A0\u8F7D\uFF1A\u89C6\u56FE\u5DF2\u6362");
       return;
     }
     try {
@@ -2025,7 +2101,7 @@ ${emptyNotes.map((file) => file.basename).join("\n")}`
       }, 150);
     });
   }
-  // 快速笔记-设置事件
+  // 快速记-设置事件
   setupQuickNoteEvents(input, toolbar, tagSuggestions) {
     var _a, _b, _c;
     const titleInput = (_a = input.parentElement) == null ? void 0 : _a.querySelector(".quick-note-title");
@@ -2127,7 +2203,7 @@ ${content}` : content;
             item.addClass("inactive");
           });
           await this.refreshView();
-          new import_obsidian.Notice("\u7B14\u8BB0\u521B\u5EFA\u6210\u529F");
+          new import_obsidian.Notice("\u7B14\u521B\u5EFA\u6210\u529F");
         }
       } catch (error) {
         console.error("\u521B\u5EFA\u7B14\u8BB0\u5931\u8D25:", error);
@@ -2177,7 +2253,7 @@ ${content}` : content;
       });
     }
   }
-  // 快速笔记-清理输入
+  // 速笔记-清理输入
   clearQuickNoteInputs(titleInput, contentInput, tags, tagsContainer, tagInput) {
     var _a;
     if (titleInput) {
@@ -2461,7 +2537,7 @@ ${content}` : content;
     } catch (error) {
       console.error("\u521B\u5EFA\u65F6\u95F4\u8F74\u89C6\u56FE\u5931\u8D25:", error);
       new import_obsidian.Notice("\u521B\u5EFA\u65F6\u95F4\u8F74\u89C6\u56FE\u5931\u8D25");
-      this.updateLoadingStatus("\u521B\u5EFA\u65F6\u95F4\u8F74\u89C6\u56FE\u5931\u8D25");
+      this.updateLoadingStatus("\u521B\u5EFA\u65F6\u95F4\u89C6\u56FE\u5931\u8D25");
     }
   }
   // 创建卡片设置面板
@@ -2726,7 +2802,7 @@ ${content}` : content;
       target.setMonth(0, 1 + (4 - target.getDay() + 7) % 7);
     }
     const weekNum = 1 + Math.ceil((firstThursday - target.valueOf()) / 6048e5);
-    console.log(`\u8BA1\u7B97\u5468\u6570 - \u65E5\u671F:${date.toISOString()}, \u5468\u6570:${weekNum}`);
+    console.log(`\u8BA1\u7B97\u5468\u6570 - \u671F:${date.toISOString()}, \u5468\u6570:${weekNum}`);
     return weekNum;
   }
   // 创建周视图
@@ -2735,7 +2811,7 @@ ${content}` : content;
       return;
     }
     try {
-      console.log("\u5F00\u59CB\u521B\u5EFA\u5468\u89C6\u56FE");
+      console.log("\u5F00\u59CB\u521B\u5EFA\u5468\u56FE");
       this.container.empty();
       const weekContainer = this.container.createDiv("week-view");
       const header = weekContainer.createDiv("week-header");
@@ -2793,7 +2869,7 @@ ${content}` : content;
         ...weekDates.slice(1),
         // 周一到周六
         weekDates[0]
-        // 周日
+        // 周
       ];
       reorderedDates.forEach(async (date) => {
         const dayNotes = notesContainer.createDiv("day-notes-column");
@@ -2945,11 +3021,236 @@ ${content}` : content;
       return 1;
     }
   }
+  async createHomeView() {
+    if (this.currentLoadingView !== "home") {
+      return;
+    }
+    try {
+      this.container.empty();
+      const homeContainer = this.container.createDiv("home-container");
+      const moduleManager = homeContainer.createDiv("module-manager");
+      const manageBtn = moduleManager.createEl("button", {
+        cls: "module-manage-btn",
+        text: "\u7BA1\u7406\u6A21\u5757"
+      });
+      manageBtn.addEventListener("click", () => {
+        this.showModuleManager();
+      });
+      const moduleGrid = homeContainer.createDiv("module-grid");
+      const visibleModules = this.homeModules.filter((m) => m.visible).sort((a, b) => a.order - b.order);
+      for (const module2 of visibleModules) {
+        await this.createModule(moduleGrid, module2);
+      }
+    } catch (error) {
+      console.error("\u521B\u5EFA\u4E3B\u9875\u89C6\u56FE\u5931\u8D25:", error);
+      new import_obsidian.Notice("\u521B\u5EFA\u4E3B\u9875\u89C6\u56FE\u5931\u8D25");
+    } finally {
+      if (this.currentLoadingView === "home") {
+        this.currentLoadingView = null;
+      }
+    }
+  }
+  // 创建单个模块
+  async createModule(container, module2) {
+    const moduleEl = container.createDiv(`module-container ${module2.type}-module`);
+    moduleEl.style.gridColumn = `span ${module2.columns || 4}`;
+    const header = moduleEl.createDiv("module-header");
+    header.createEl("h3", { text: module2.name });
+    const resizeControls = moduleEl.createDiv("module-resize");
+    const decreaseBtn = resizeControls.createEl("button");
+    decreaseBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line></svg>`;
+    const increaseBtn = resizeControls.createEl("button");
+    increaseBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>`;
+    const content = moduleEl.createDiv("module-content");
+    await this.renderModuleContent(content, module2);
+  }
+  // 显示模块管理器
+  showModuleManager() {
+    const modal = new ModuleManagerModal(this.app, this.homeModules, (modules) => {
+      this.homeModules = modules;
+      this.createHomeView();
+    });
+    modal.open();
+  }
+  // 渲染热力图
+  async renderHeatmap(container) {
+    const heatmapContainer = container.createDiv("heatmap-container");
+  }
+  // 渲染本周笔记
+  async renderWeeklyNotes(container) {
+    const weeklyContainer = container.createDiv("weekly-notes");
+    const weekStart = this.getStartOfWeek();
+    const weekEnd = this.getEndOfWeek();
+    const notes = this.app.vault.getMarkdownFiles().filter((file) => {
+      const mtime = new Date(file.stat.mtime);
+      return mtime >= weekStart && mtime <= weekEnd;
+    }).sort((a, b) => b.stat.mtime - a.stat.mtime).slice(0, 10);
+    for (const note of notes) {
+      const noteItem = weeklyContainer.createDiv("note-item");
+      noteItem.createEl("span", { text: note.basename, cls: "note-title" });
+      noteItem.createEl("span", {
+        text: new Date(note.stat.mtime).toLocaleDateString(),
+        cls: "note-date"
+      });
+      noteItem.addEventListener("click", () => {
+        this.openInAppropriateLeaf(note);
+      });
+    }
+  }
+  // 渲染最近编辑
+  async renderRecentNotes(container) {
+    const recentContainer = container.createDiv("recent-notes");
+    const notes = this.app.vault.getMarkdownFiles().sort((a, b) => b.stat.mtime - a.stat.mtime).slice(0, 10);
+  }
+  // 渲染统计信息
+  async renderStats(container) {
+    const statsContainer = container.createDiv("stats-container");
+    const files = this.app.vault.getMarkdownFiles();
+    const totalNotes = files.length;
+    let totalWords = 0;
+    for (const file of files) {
+      const content = await this.app.vault.read(file);
+      totalWords += content.split(/\s+/).length;
+    }
+    const allTags = /* @__PURE__ */ new Set();
+    files.forEach((file) => {
+      const cache = this.app.metadataCache.getFileCache(file);
+      if (cache == null ? void 0 : cache.tags) {
+        cache.tags.forEach((tag) => allTags.add(tag.tag));
+      }
+    });
+    this.createStatCard(statsContainer, "\u603B\u7B14\u8BB0\u6570", totalNotes);
+    this.createStatCard(statsContainer, "\u603B\u5B57\u6570", totalWords);
+    this.createStatCard(statsContainer, "\u4F7F\u7528\u6807\u7B7E\u6570", allTags.size);
+  }
+  // 添加创建统计卡片的辅助方法
+  createStatCard(container, label, value) {
+    const card = container.createDiv("stat-card");
+    card.createDiv("stat-label").setText(label);
+    card.createDiv("stat-value").setText(value.toString());
+  }
+  // 渲染日历模块
+  async renderCalendarModule(container) {
+    const calendarContainer = container.createDiv("calendar-module-container");
+  }
+  // 添加获取周开始和结束时间的方法
+  getStartOfWeek() {
+    const date = /* @__PURE__ */ new Date();
+    const day = date.getDay();
+    const diff = date.getDate() - day + (day === 0 ? -6 : 1);
+    return new Date(date.setDate(diff));
+  }
+  getEndOfWeek() {
+    const date = /* @__PURE__ */ new Date();
+    const day = date.getDay();
+    const diff = date.getDate() - day + (day === 0 ? 0 : 7);
+    return new Date(date.setDate(diff));
+  }
+  // 添加获取热力图数据的方法
+  getHeatmapData() {
+    const data = [];
+    const files = this.app.vault.getMarkdownFiles();
+    const dateCount = /* @__PURE__ */ new Map();
+    files.forEach((file) => {
+      const date = new Date(file.stat.mtime).toISOString().split("T")[0];
+      dateCount.set(date, (dateCount.get(date) || 0) + 1);
+    });
+    dateCount.forEach((count, date) => {
+      data.push({ date, count });
+    });
+    return data;
+  }
+  // 添加保存模块设置的方法
+  async saveModuleSettings() {
+    await this.plugin.saveData({
+      modules: this.homeModules
+    });
+  }
+  // 添加渲染模块内容的方法
+  async renderModuleContent(container, module2) {
+    switch (module2.type) {
+      case "heatmap":
+        await this.renderHeatmap(container);
+        break;
+      case "weekly":
+        await this.renderWeeklyNotes(container);
+        break;
+      case "recent":
+        await this.renderRecentNotes(container);
+        break;
+      case "stats":
+        await this.renderStats(container);
+        break;
+      case "calendar":
+        await this.renderCalendarModule(container);
+        break;
+    }
+  }
+};
+var ModuleManagerModal = class extends import_obsidian.Modal {
+  constructor(app, modules, onSave) {
+    super(app);
+    this.modules = [...modules];
+    this.onSave = onSave;
+    this.previewContainer = createDiv();
+  }
+  onOpen() {
+    const { contentEl } = this;
+    contentEl.empty();
+    contentEl.createEl("h2", { text: "\u7BA1\u7406\u4E3B\u9875\u6A21\u5757" });
+    this.previewContainer = contentEl.createDiv("preview-container");
+    this.updatePreview();
+    const moduleList = contentEl.createDiv("module-list");
+    this.modules.forEach((module2, index) => {
+      const moduleItem = moduleList.createDiv("module-item");
+      moduleItem.createDiv("drag-handle").innerHTML = "\u22EE\u22EE";
+      const visibilityToggle = moduleItem.createEl("input", {
+        type: "checkbox",
+        attr: { checked: module2.visible }
+      });
+      visibilityToggle.addEventListener("change", () => {
+        this.modules[index].visible = visibilityToggle.checked;
+      });
+      moduleItem.createEl("span", { text: module2.name });
+      const moveUp = moduleItem.createEl("button", { text: "\u2191" });
+      const moveDown = moduleItem.createEl("button", { text: "\u2193" });
+      moveUp.addEventListener("click", () => this.moveModule(index, -1));
+      moveDown.addEventListener("click", () => this.moveModule(index, 1));
+    });
+    const saveBtn = contentEl.createEl("button", {
+      text: "\u4FDD\u5B58",
+      cls: "mod-cta"
+    });
+    saveBtn.addEventListener("click", () => {
+      this.onSave(this.modules);
+      this.close();
+    });
+  }
+  moveModule(index, direction) {
+    const newIndex = index + direction;
+    if (newIndex >= 0 && newIndex < this.modules.length) {
+      const temp = this.modules[index];
+      this.modules[index] = this.modules[newIndex];
+      this.modules[newIndex] = temp;
+      this.modules.forEach((m, i) => m.order = i);
+      this.onOpen();
+    }
+  }
+  // 添加预览更新方法
+  updatePreview() {
+    this.previewContainer.empty();
+    const previewGrid = this.previewContainer.createDiv("module-grid");
+    this.modules.filter((m) => m.visible).sort((a, b) => a.order - b.order).forEach((module2) => {
+      const modulePreview = previewGrid.createDiv("module-preview");
+      modulePreview.style.gridColumn = `span ${module2.columns || 4}`;
+      modulePreview.createEl("h4", { text: module2.name });
+    });
+  }
 };
 
 // main.ts
 var DEFAULT_SETTINGS = {
-  defaultView: "card",
+  defaultView: "home",
   cardWidth: 280,
   minCardWidth: 280,
   maxCardWidth: 600,
@@ -2967,9 +3268,9 @@ var CardViewSettingTab = class extends import_obsidian2.PluginSettingTab {
     const { containerEl } = this;
     containerEl.empty();
     new import_obsidian2.Setting(containerEl).setName("\u9ED8\u8BA4\u89C6\u56FE").setDesc("\u9009\u62E9\u9ED8\u8BA4\u7684\u89C6\u56FE\u6A21\u5F0F").addDropdown((dropdown) => {
-      dropdown.addOption("card", "\u5361\u7247\u89C6\u56FE").addOption("list", "\u5217\u8868\u89C6\u56FE").addOption("timeline", "\u65F6\u95F4\u8F74\u89C6\u56FE").addOption("month", "\u6708\u89C6\u56FE").addOption("week", "\u5468\u89C6\u56FE").setValue(this.plugin.settings.defaultView);
+      dropdown.addOption("home", "\u4E3B\u9875\u89C6\u56FE").addOption("card", "\u5361\u7247\u89C6\u56FE").addOption("list", "\u5217\u8868\u89C6\u56FE").addOption("timeline", "\u65F6\u95F4\u8F74\u89C6\u56FE").addOption("month", "\u6708\u89C6\u56FE").addOption("week", "\u5468\u89C6\u56FE").setValue(this.plugin.settings.defaultView);
       dropdown.onChange(async (value) => {
-        if (value === "card" || value === "list" || value === "timeline" || value === "month" || value === "week") {
+        if (value === "home" || value === "card" || value === "list" || value === "timeline" || value === "month" || value === "week") {
           this.plugin.settings.defaultView = value;
           await this.plugin.saveSettings();
         }
@@ -3070,6 +3371,9 @@ var CardViewPlugin = class extends import_obsidian2.Plugin {
       });
     }
     workspace.revealLeaf(leaf);
+    if (leaf.view instanceof CardView) {
+      leaf.view.switchView(this.settings.defaultView);
+    }
   }
   updateAllCardViews() {
     this.app.workspace.getLeavesOfType(VIEW_TYPE_CARD).forEach((leaf) => {

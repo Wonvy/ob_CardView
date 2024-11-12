@@ -2078,4 +2078,167 @@
   grid-template-columns: none;
 }
 
+.home-container {
+  padding: 20px;
+  height: 100%;
+  overflow-y: auto;
+}
+.home-container .module-manager {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 16px;
+}
+.home-container .module-manager .module-manage-btn {
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.home-container .module-manager .module-manage-btn:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+.home-container .module-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 20px;
+}
+.home-container .module-grid .module-container {
+  background: var(--background-secondary);
+  border-radius: 8px;
+  border: 1px solid var(--background-modifier-border);
+  overflow: hidden;
+  transition: all 0.3s ease;
+  grid-column: span 4;
+  position: relative;
+}
+.home-container .module-grid .module-container:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+.home-container .module-grid .module-container .module-resize {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+.home-container .module-grid .module-container .module-resize button {
+  background: var(--background-primary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 4px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.home-container .module-grid .module-container .module-resize button:hover {
+  background: var(--background-modifier-hover);
+  border-color: var(--interactive-accent);
+}
+.home-container .module-grid .module-container .module-resize button svg {
+  width: 14px;
+  height: 14px;
+  color: var(--text-muted);
+}
+.home-container .module-grid .module-container:hover .module-resize {
+  opacity: 1;
+}
+.home-container .module-grid .module-container .module-header {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--background-modifier-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.home-container .module-grid .module-container .module-header h3 {
+  margin: 0;
+  font-size: 1.1em;
+  color: var(--text-normal);
+}
+.home-container .module-grid .module-container .module-content {
+  padding: 16px;
+}
+.home-container .module-grid .module-container .module-content.heatmap-module {
+  height: 200px;
+}
+.home-container .module-grid .module-container .module-content .note-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--background-modifier-border);
+  cursor: pointer;
+}
+.home-container .module-grid .module-container .module-content .note-item:hover {
+  background: var(--background-modifier-hover);
+}
+.home-container .module-grid .module-container .module-content .stat-card {
+  text-align: center;
+  padding: 16px;
+}
+.home-container .module-grid .module-container .module-content .stat-card .stat-value {
+  font-size: 2em;
+  font-weight: bold;
+  color: var(--text-accent);
+}
+.home-container .module-grid .module-container .module-content .stat-card .stat-label {
+  color: var(--text-muted);
+  font-size: 0.9em;
+}
+
+.module-manager-modal .module-list {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin: 16px 0;
+}
+.module-manager-modal .module-list .module-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--background-modifier-border);
+  background: var(--background-primary);
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+.module-manager-modal .module-list .module-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+.module-manager-modal .module-list .module-item .drag-handle {
+  cursor: move;
+  color: var(--text-muted);
+  padding: 4px;
+}
+.module-manager-modal .module-list .module-item .module-preview {
+  flex: 1;
+  min-height: 100px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.module-manager-modal .module-list .module-item .module-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.module-manager-modal .module-list .module-item .module-controls button {
+  padding: 4px 8px;
+  background: var(--background-modifier-hover);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.module-manager-modal .module-list .module-item .module-controls button:hover {
+  background: var(--background-modifier-hover-plus);
+}
+
 /*# sourceMappingURL=styles.css.map */

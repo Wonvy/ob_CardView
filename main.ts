@@ -2,7 +2,7 @@ import { App, PluginManifest,Plugin, PluginSettingTab, Setting, TFile, Workspace
 import { CardView, VIEW_TYPE_CARD } from './cardView';
 
 interface CardViewPluginSettings {
-    defaultView: 'card' | 'list' | 'timeline' | 'month' | 'week';
+    defaultView: 'home' | 'card' | 'list' | 'timeline' | 'month' | 'week';
     cardWidth: number;
     minCardWidth: number;
     maxCardWidth: number;
@@ -13,7 +13,7 @@ interface CardViewPluginSettings {
 }
 
 const DEFAULT_SETTINGS: CardViewPluginSettings = {
-    defaultView: 'card',
+    defaultView: 'home',
     cardWidth: 280,
     minCardWidth: 280,
     maxCardWidth: 600,
@@ -40,6 +40,7 @@ class CardViewSettingTab extends PluginSettingTab {
             .setDesc('选择默认的视图模式')
             .addDropdown(dropdown => {
                 dropdown
+                    .addOption('home', '主页视图')
                     .addOption('card', '卡片视图')
                     .addOption('list', '列表视图')
                     .addOption('timeline', '时间轴视图')
@@ -48,7 +49,8 @@ class CardViewSettingTab extends PluginSettingTab {
                     .setValue(this.plugin.settings.defaultView);
                 
                 dropdown.onChange(async (value) => {
-                    if (value === 'card' || value === 'list' || value === 'timeline' || value === 'month' || value === 'week') {
+                    if (value === 'home' || value === 'card' || value === 'list' || 
+                        value === 'timeline' || value === 'month' || value === 'week') {
                         this.plugin.settings.defaultView = value;
                         await this.plugin.saveSettings();
                     }
@@ -217,6 +219,11 @@ export default class CardViewPlugin extends Plugin {
             });
         }
         workspace.revealLeaf(leaf);
+
+        // 如果是新创建的视图,设置为默认视图
+        if (leaf.view instanceof CardView) {
+            leaf.view.switchView(this.settings.defaultView);
+        }
     }
 
     updateAllCardViews() {

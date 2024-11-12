@@ -2148,7 +2148,7 @@
                     padding: 12px
                     cursor: pointer
                     transition: all 0.2s ease
-                    flex-shrink: 0  // 防止卡片被压缩
+                    flex-shrink: 0  // 防止卡片被
                     
                     &:hover
                         transform: translateY(-2px)
@@ -2199,3 +2199,171 @@
                 display: block
                 gap: 0
                 grid-template-columns: none
+
+// 主页视图样式优化
+.home-container
+    padding: 20px
+    height: 100%
+    overflow-y: auto
+    
+    .module-manager
+        display: flex
+        justify-content: flex-end
+        margin-bottom: 16px
+        
+        .module-manage-btn
+            background: var(--interactive-accent)
+            color: var(--text-on-accent)
+            padding: 8px 16px
+            border-radius: 4px
+            cursor: pointer
+            transition: all 0.2s ease
+            
+            &:hover
+                opacity: 0.9
+                transform: translateY(-1px)
+    
+    .module-grid
+        display: grid
+        grid-template-columns: repeat(12, 1fr) // 使用12列网格系统
+        gap: 20px
+        
+        .module-container
+            background: var(--background-secondary)
+            border-radius: 8px
+            border: 1px solid var(--background-modifier-border)
+            overflow: hidden
+            transition: all 0.3s ease
+            grid-column: span 4 // 默认占4列
+            position: relative
+            
+            &:hover
+                transform: translateY(-2px)
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1)
+            
+            // 添加模块大小控制按钮
+            .module-resize
+                position: absolute
+                top: 8px
+                right: 8px
+                display: flex
+                gap: 4px
+                opacity: 0
+                transition: opacity 0.2s ease
+                
+                button
+                    background: var(--background-primary)
+                    border: 1px solid var(--background-modifier-border)
+                    border-radius: 4px
+                    width: 24px
+                    height: 24px
+                    display: flex
+                    align-items: center
+                    justify-content: center
+                    cursor: pointer
+                    transition: all 0.2s ease
+                    
+                    &:hover
+                        background: var(--background-modifier-hover)
+                        border-color: var(--interactive-accent)
+                    
+                    svg
+                        width: 14px
+                        height: 14px
+                        color: var(--text-muted)
+            
+            &:hover .module-resize
+                opacity: 1
+            
+            .module-header
+                padding: 12px 16px
+                border-bottom: 1px solid var(--background-modifier-border)
+                display: flex
+                justify-content: space-between
+                align-items: center
+                
+                h3
+                    margin: 0
+                    font-size: 1.1em
+                    color: var(--text-normal)
+            
+            .module-content
+                padding: 16px
+                
+                // 热力图模块样式
+                &.heatmap-module
+                    height: 200px
+                
+                // 笔记列表模块样式
+                .note-item
+                    display: flex
+                    justify-content: space-between
+                    padding: 8px 0
+                    border-bottom: 1px solid var(--background-modifier-border)
+                    cursor: pointer
+                    
+                    &:hover
+                        background: var(--background-modifier-hover)
+                
+                // 统计卡片样式
+                .stat-card
+                    text-align: center
+                    padding: 16px
+                    
+                    .stat-value
+                        font-size: 2em
+                        font-weight: bold
+                        color: var(--text-accent)
+                    
+                    .stat-label
+                        color: var(--text-muted)
+                        font-size: 0.9em
+
+// 模块管理器模态框样式优化
+.module-manager-modal
+    .module-list
+        display: grid
+        grid-template-columns: repeat(2, 1fr)
+        gap: 16px
+        margin: 16px 0
+        
+        .module-item
+            display: flex
+            align-items: center
+            gap: 12px
+            padding: 12px
+            border: 1px solid var(--background-modifier-border)
+            background: var(--background-primary)
+            border-radius: 6px
+            transition: all 0.2s ease
+            
+            &:hover
+                transform: translateY(-2px)
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1)
+            
+            .drag-handle
+                cursor: move
+                color: var(--text-muted)
+                padding: 4px
+            
+            .module-preview
+                flex: 1
+                min-height: 100px
+                border: 1px solid var(--background-modifier-border)
+                border-radius: 4px
+                overflow: hidden
+                
+            .module-controls
+                display: flex
+                flex-direction: column
+                gap: 8px
+                
+                button
+                    padding: 4px 8px
+                    background: var(--background-modifier-hover)
+                    border: none
+                    border-radius: 4px
+                    cursor: pointer
+                    
+                    &:hover
+                        background: var(--background-modifier-hover-plus)
