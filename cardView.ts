@@ -491,7 +491,7 @@ export class CardView extends ItemView {
 
         // 添加默认选项
         dropdown.createEl('option', {
-            text: '选择标签...',
+            text: '标签',
             value: ''
         });
 

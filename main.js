@@ -371,7 +371,7 @@ ${content}` : content;
       cls: "tag-dropdown"
     });
     dropdown.createEl("option", {
-      text: "\u9009\u62E9\u6807\u7B7E...",
+      text: "\u6807\u7B7E",
       value: ""
     });
     const dropdownPanel = dropdownContainer.createDiv("dropdown-panel");
