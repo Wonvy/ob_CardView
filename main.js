@@ -79,6 +79,8 @@ var CardView = class extends import_obsidian.ItemView {
     this.statusLeft = createDiv("status-left");
     this.statusRight = createDiv("status-right");
     this.loadingStatus = createDiv("status-item");
+    // 在 CardView 类中添加新属性
+    this.currentLoadingView = null;
     this.plugin = plugin;
     this.currentView = plugin.settings.defaultView;
     this.loadingIndicator = createDiv("loading-indicator");
@@ -264,6 +266,7 @@ var CardView = class extends import_obsidian.ItemView {
     this.statusBar.appendChild(this.statusLeft);
     this.statusBar.appendChild(this.statusRight);
     contentSection.appendChild(this.statusBar);
+    this.currentLoadingView = "card";
     await this.loadNotes();
     this.calendarContainer = createDiv();
     this.calendarContainer.addClass("calendar-container");
@@ -321,7 +324,7 @@ ${content}` : content;
         if (file) {
           this.clearQuickNoteInputs(titleInput != null ? titleInput : null, noteInput, tags, tagsContainer != null ? tagsContainer : null, tagInput != null ? tagInput : null);
           await this.refreshView();
-          new import_obsidian.Notice("\u7B14\u8BB0\u521B\u5EFA\u6210\u529F");
+          new import_obsidian.Notice("\u7B14\u521B\u5EFA\u6210\u529F");
         }
       } catch (error) {
         console.error("\u521B\u5EFA\u7B14\u8BB0\u5931\u8D25:", error);
@@ -422,6 +425,45 @@ ${content}` : content;
       });
     });
   }
+  // 修改 switchView 方法
+  switchView(view) {
+    if (this.currentLoadingView && this.currentLoadingView !== view) {
+      console.log(`\u4E2D\u65AD ${this.currentLoadingView} \u89C6\u56FE\u7684\u52A0\u8F7D`);
+      this.isLoading = false;
+      this.timelineIsLoading = false;
+      this.hasMoreNotes = false;
+      this.timelineHasMore = false;
+    }
+    this.currentView = view;
+    this.currentLoadingView = view;
+    this.container.setAttribute("data-view", view);
+    this.container.empty();
+    const contentSection = this.containerEl.querySelector(".content-section");
+    if (contentSection) {
+      contentSection.removeClass("view-card", "view-list", "view-timeline", "view-month");
+      contentSection.addClass(`view-${view}`);
+    }
+    let statusMessage = "";
+    switch (view) {
+      case "card":
+        statusMessage = "\u5207\u6362\u5230\u5361\u7247\u89C6\u56FE";
+        this.loadNotes();
+        break;
+      case "list":
+        statusMessage = "\u5207\u6362\u5230\u5217\u8868\u89C6\u56FE - \u6309\u6587\u4EF6\u5939\u5206\u7EC4";
+        this.createListView();
+        break;
+      case "timeline":
+        statusMessage = "\u5207\u6362\u5230\u65F6\u95F4\u8F74\u89C6\u56FE - \u6309\u65E5\u671F\u5206\u7EC4";
+        this.createTimelineView();
+        break;
+      case "month":
+        statusMessage = "\u5207\u6362\u5230\u6708\u5386\u89C6\u56FE";
+        this.createMonthView();
+        break;
+    }
+    this.updateLoadingStatus(statusMessage);
+  }
   // 修改 loadNotes 方法
   async loadNotes() {
     try {
@@ -443,10 +485,18 @@ ${content}` : content;
     } catch (error) {
       console.error("loadNotes \u9519\u8BEF:", error);
       new import_obsidian.Notice("\u52A0\u8F7D\u7B14\u8BB0\u5931\u8D25\uFF0C\u8BF7\u68C0\u67E5\u63A7\u5236\u53F0\u83B7\u53D6\u8BE6\u7EC6\u4FE1\u606F");
+    } finally {
+      if (this.currentLoadingView === "card") {
+        this.currentLoadingView = null;
+      }
     }
   }
   // 修改 loadNextPage 方法
   async loadNextPage() {
+    if (this.currentView !== "card") {
+      console.log("\u4E2D\u65AD\u5361\u7247\u52A0\u8F7D\uFF1A\u89C6\u56FE\u5DF2\u5207\u6362");
+      return;
+    }
     if (this.isLoading || !this.hasMoreNotes) {
       return;
     }
@@ -480,6 +530,10 @@ ${content}` : content;
           }
         }
       });
+      if (this.hasMoreNotes) {
+        this.container.appendChild(this.loadingIndicator);
+        this.loadingIndicator.style.minHeight = "100px";
+      }
       this.currentPage++;
     } catch (error) {
       console.error("loadNextPage \u9519\u8BEF:", error);
@@ -489,6 +543,9 @@ ${content}` : content;
       this.isLoading = false;
       if (!this.hasMoreNotes) {
         this.updateLoadingStatus("\u52A0\u8F7D\u5B8C\u6210");
+        this.loadingIndicator.style.display = "none";
+      } else {
+        this.loadingIndicator.style.display = "flex";
       }
     }
   }
@@ -521,24 +578,25 @@ ${content}` : content;
   // 修改 setupInfiniteScroll 方法
   setupInfiniteScroll() {
     try {
-      console.log("\u8BBE\u7F6E\u9650\u6EDA\u52A8...");
+      console.log("\u8BBE\u7F6E\u65E0\u9650\u6EDA\u52A8...");
       const observer = new IntersectionObserver(
         (entries) => {
           entries.forEach((entry) => {
-            if (entry.isIntersecting && !this.isLoading && this.hasMoreNotes) {
-              console.log("\u89E6\u53D1\u52A0\u8F7D\u66F4\u591A");
+            if (entry.isIntersecting && !this.isLoading && this.hasMoreNotes && this.currentView === "card") {
+              console.log("Intersection Observer \u89E6\u53D1\u52A0\u8F7D\u66F4\u591A");
               this.loadNextPage();
             }
           });
         },
         {
           root: this.container,
-          rootMargin: "100px",
+          rootMargin: "200px",
           threshold: 0.1
         }
       );
       observer.observe(this.loadingIndicator);
       console.log("\u5DF2\u6DFB\u52A0 Intersection Observer");
+      let scrollTimeout;
       this.container.addEventListener("scroll", () => {
         const { scrollTop, scrollHeight, clientHeight } = this.container;
         const scrollPercentage = Math.round(scrollTop / (scrollHeight - clientHeight) * 100);
@@ -552,11 +610,27 @@ ${content}` : content;
             this.statusRight.appendChild(scrollStatus);
           }
         }
-        if (scrollHeight - scrollTop - clientHeight < 100 && !this.isLoading && this.hasMoreNotes) {
+        clearTimeout(scrollTimeout);
+        scrollTimeout = setTimeout(() => {
+          const triggerThreshold = 300;
+          if (scrollHeight - scrollTop - clientHeight < triggerThreshold && !this.isLoading && this.hasMoreNotes && this.currentView === "card") {
+            console.log("\u6EDA\u52A8\u89E6\u53D1\u52A0\u8F7D\u66F4\u591A", {
+              scrollTop,
+              scrollHeight,
+              clientHeight,
+              remaining: scrollHeight - scrollTop - clientHeight
+            });
+            this.loadNextPage();
+          }
+        }, 100);
+      });
+      setTimeout(() => {
+        const { scrollHeight, clientHeight } = this.container;
+        if (scrollHeight <= clientHeight && !this.isLoading && this.hasMoreNotes && this.currentView === "card") {
+          console.log("\u521D\u59CB\u5185\u5BB9\u4E0D\u8DB3\uFF0C\u89E6\u53D1\u52A0\u8F7D\u66F4\u591A");
           this.loadNextPage();
         }
-      });
-      console.log("\u5DF2\u6DFB\u52A0\u6EDA\u52A8\u4E8B\u4EF6\u76D1\u542C");
+      }, 100);
     } catch (error) {
       console.error("setupInfiniteScroll \u9519\u8BEF:", error);
     }
@@ -722,29 +796,6 @@ ${content}` : content;
     });
     return card;
   }
-  /**
-   * 切换视图模式
-   * @param view - 目标视图模式
-   */
-  switchView(view) {
-    this.currentView = view;
-    this.container.setAttribute("data-view", view);
-    this.container.empty();
-    const contentSection = this.containerEl.querySelector(".content-section");
-    if (contentSection) {
-      contentSection.removeClass("view-card", "view-list", "view-timeline", "view-month");
-      contentSection.addClass(`view-${view}`);
-    }
-    if (view === "list") {
-      this.createListView();
-    } else if (view === "timeline") {
-      this.createTimelineView();
-    } else if (view === "month") {
-      this.createMonthView();
-    } else {
-      this.loadNotes();
-    }
-  }
   // 切换预览栏的显示状态
   togglePreview() {
     this.isPreviewCollapsed = !this.isPreviewCollapsed;
@@ -878,41 +929,21 @@ ${content}` : content;
       return null;
     }
   }
-  // 修改 createTimelineView 方法
-  async createTimelineView() {
-    try {
-      console.log("\u5F00\u59CB\u521B\u5EFA\u65F6\u95F4\u8F74\u89C6\u56FE...");
-      const timelineContainer = this.container.createDiv("timeline-container");
-      this.timelineLoadingIndicator.innerHTML = `
-                <div class="loading-spinner"></div>
-                <div class="loading-text">\u52A0\u8F7D\u4E2D...</div>
-            `;
-      this.timelineLoadingIndicator.style.display = "none";
-      timelineContainer.appendChild(this.timelineLoadingIndicator);
-      this.timelineCurrentPage = 1;
-      this.timelineHasMore = true;
-      this.timelineIsLoading = false;
-      await this.loadTimelinePage(timelineContainer);
-      this.setupTimelineScroll(timelineContainer);
-    } catch (error) {
-      console.error("\u521B\u5EFA\u65F6\u95F4\u8F74\u89C6\u56FE\u5931\u8D25:", error);
-      new import_obsidian.Notice("\u521B\u5EFA\u65F6\u95F4\u8F74\u89C6\u56FE\u5931\u8D25");
-    }
-  }
-  // 添加加载时间轴页面的方法
+  // 修改 loadTimelinePage 方法
   async loadTimelinePage(container) {
+    if (this.currentLoadingView !== "timeline") {
+      console.log("\u4E2D\u65AD\u65F6\u95F4\u8F74\u89C6\u56FE\u52A0\u8F7D\uFF1A\u89C6\u56FE\u5DF2\u5207\u6362");
+      return;
+    }
     if (this.timelineIsLoading || !this.timelineHasMore) {
-      console.log("\u8DF3\u8FC7\u65F6\u95F4\u8F74\u52A0\u8F7D: isLoading=", this.timelineIsLoading, "hasMore=", this.timelineHasMore);
       return;
     }
     try {
-      console.log("\u52A0\u8F7D\u65F6\u95F4\u8F74\u7B2C", this.timelineCurrentPage, "\u9875");
       this.timelineIsLoading = true;
-      this.timelineLoadingIndicator.style.display = "flex";
+      this.updateLoadingStatus("\u52A0\u8F7D\u65F6\u95F4\u8F74...");
       const files = this.app.vault.getMarkdownFiles();
-      const notesByDate = /* @__PURE__ */ new Map();
       const filteredFiles = await this.filterFiles(files);
-      console.log("\u8FC7\u6EE4\u540E\u6587\u4EF6\u6570:", filteredFiles.length);
+      const notesByDate = /* @__PURE__ */ new Map();
       filteredFiles.forEach((file) => {
         var _a;
         const date = new Date(file.stat.mtime).toLocaleDateString();
@@ -921,40 +952,67 @@ ${content}` : content;
         }
         (_a = notesByDate.get(date)) == null ? void 0 : _a.push(file);
       });
-      const sortedDates = Array.from(notesByDate.keys()).sort(
-        (a, b) => new Date(b).getTime() - new Date(a).getTime()
-      );
+      const sortedDates = Array.from(notesByDate.keys()).sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
       const start = (this.timelineCurrentPage - 1) * this.timelinePageSize;
       const end = start + this.timelinePageSize;
       const pageDates = sortedDates.slice(start, end);
       this.timelineHasMore = end < sortedDates.length;
-      for (const date of pageDates) {
-        const dateGroup = container.createDiv("timeline-date-group");
-        const dateNode = dateGroup.createDiv("timeline-date-node");
-        dateNode.createDiv("timeline-node-circle");
-        dateNode.createDiv("timeline-date-label").setText(date);
-        const notesList = dateGroup.createDiv("timeline-notes-list");
-        const notes = notesByDate.get(date) || [];
-        await Promise.all(notes.map(async (file) => {
-          try {
-            const card = await this.createNoteCard(file);
-            if (card instanceof HTMLElement) {
-              card.style.width = "100%";
-              notesList.appendChild(card);
+      this.updateLoadingStatus(`\u65F6\u95F4\u8F74\u89C6\u56FE - \u52A0\u8F7D\u7B2C ${this.timelineCurrentPage} \u9875 (${start + 1}-${end} / ${sortedDates.length} \u5929)`);
+      const fragment = document.createDocumentFragment();
+      const batchSize = 3;
+      const batches = Math.ceil(pageDates.length / batchSize);
+      for (let i = 0; i < batches; i++) {
+        await new Promise((resolve) => {
+          window.requestAnimationFrame(async () => {
+            const batchDates = pageDates.slice(i * batchSize, (i + 1) * batchSize);
+            for (const date of batchDates) {
+              const dateGroup = document.createElement("div");
+              dateGroup.className = "timeline-date-group";
+              dateGroup.innerHTML = `
+                                <div class="timeline-date-node">
+                                    <div class="timeline-node-circle"></div>
+                                    <div class="timeline-date-label">${date}</div>
+                                </div>
+                                <div class="timeline-notes-list"></div>
+                            `;
+              const notesList = dateGroup.querySelector(".timeline-notes-list");
+              const notes = notesByDate.get(date) || [];
+              const cardPromises = notes.map(async (file) => {
+                const placeholder = document.createElement("div");
+                placeholder.className = "note-card-placeholder";
+                placeholder.style.width = "100%";
+                placeholder.style.height = "200px";
+                placeholder.style.backgroundColor = "var(--background-secondary)";
+                placeholder.style.borderRadius = "8px";
+                placeholder.style.marginBottom = "1rem";
+                notesList.appendChild(placeholder);
+                const card = await this.createNoteCard(file);
+                if (card instanceof HTMLElement) {
+                  card.style.width = "100%";
+                  if (this.currentView === "timeline") {
+                    notesList.replaceChild(card, placeholder);
+                  }
+                }
+              });
+              fragment.appendChild(dateGroup);
+              Promise.all(cardPromises).catch((error) => {
+                console.error("\u521B\u5EFA\u5361\u7247\u5931\u8D25:", error);
+              });
             }
-          } catch (error) {
-            console.error("\u521B\u5EFA\u7B14\u8BB0\u5361\u7247\u5931\u8D25:", file.path, error);
-          }
-        }));
+            resolve();
+          });
+        });
       }
+      container.appendChild(fragment);
       this.timelineCurrentPage++;
-      console.log("\u65F6\u95F4\u8F74\u9875\u9762\u52A0\u8F7D\u5B8C\u6210\uFF0C\u5F53\u524D\u9875\u6570:", this.timelineCurrentPage);
     } catch (error) {
       console.error("\u52A0\u8F7D\u65F6\u95F4\u8F74\u9875\u9762\u5931\u8D25:", error);
-      new import_obsidian.Notice("\u52A0\u8F7D\u5931\u8D25");
+      this.updateLoadingStatus("\u52A0\u8F7D\u5931\u8D25");
     } finally {
       this.timelineIsLoading = false;
-      this.timelineLoadingIndicator.style.display = "none";
+      if (this.currentLoadingView === "timeline") {
+        this.currentLoadingView = null;
+      }
     }
   }
   // 添加时间轴滚动监听方法
@@ -985,7 +1043,7 @@ ${content}` : content;
           this.loadTimelinePage(container);
         }
       });
-      console.log("\u5DF2\u6DFB\u52A0\u65F6\u95F4\u8F74\u6EDA\u52A8\u4E8B\u4EF6\u76D1\u542C");
+      console.log("\u5DF2\u6DFB\u52A0\u65F6\u8F74\u6EDA\u52A8\u4E8B\u4EF6\u76D1\u542C");
     } catch (error) {
       console.error("\u8BBE\u7F6E\u65F6\u95F4\u8F74\u6EDA\u52A8\u76D1\u542C\u5931\u8D25:", error);
     }
@@ -1500,46 +1558,56 @@ ${emptyNotes.map((file) => file.basename).join("\n")}`
     }
   }
   // 创建月视图
-  createMonthView() {
-    if (!this.container.querySelector(".month-view")) {
-      const monthContainer = this.container.createDiv("month-view");
-      const header = monthContainer.createDiv("month-header");
-      const yearGroup = header.createDiv("year-group");
-      const prevYearBtn = yearGroup.createEl("button", { cls: "year-nav-btn" });
-      prevYearBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>';
-      const yearDisplay = yearGroup.createDiv("year-display");
-      yearDisplay.setText(this.currentDate.getFullYear().toString());
-      const nextYearBtn = yearGroup.createEl("button", { cls: "year-nav-btn" });
-      nextYearBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>';
-      prevYearBtn.addEventListener("click", () => this.navigateYear(-1));
-      nextYearBtn.addEventListener("click", () => this.navigateYear(1));
-      const monthSelector = header.createDiv("month-selector");
-      for (let i = 1; i <= 12; i++) {
-        const monthBtn = monthSelector.createDiv({
-          cls: `month-btn ${i === this.currentDate.getMonth() + 1 ? "active" : ""}`,
-          text: i.toString()
-        });
-        monthBtn.addEventListener("click", () => {
-          this.selectMonth(i - 1);
-        });
-      }
-      const todayBtn = header.createEl("button", {
-        cls: "today-btn",
-        text: "\u4ECA\u5929"
-      });
-      todayBtn.addEventListener("click", () => this.goToToday());
-      monthSelector.addEventListener("wheel", (e) => {
-        e.preventDefault();
-        this.navigateMonth(e.deltaY > 0 ? 1 : -1);
-      });
-      const weekdays = ["\u65E5", "\u4E00", "\u4E8C", "\u4E09", "\u56DB", "\u4E94", "\u516D"];
-      const weekHeader = monthContainer.createDiv("month-weekdays");
-      weekdays.forEach((day) => {
-        weekHeader.createDiv("weekday").setText(day);
-      });
-      monthContainer.createDiv("month-grid");
+  async createMonthView() {
+    if (this.currentLoadingView !== "month") {
+      console.log("\u4E2D\u65AD\u6708\u5386\u89C6\u56FE\u52A0\u8F7D\uFF1A\u89C6\u56FE\u5DF2\u5207\u6362");
+      return;
     }
-    this.updateMonthView();
+    try {
+      if (!this.container.querySelector(".month-view")) {
+        const monthContainer = this.container.createDiv("month-view");
+        const header = monthContainer.createDiv("month-header");
+        const yearGroup = header.createDiv("year-group");
+        const prevYearBtn = yearGroup.createEl("button", { cls: "year-nav-btn" });
+        prevYearBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>';
+        const yearDisplay = yearGroup.createDiv("year-display");
+        yearDisplay.setText(this.currentDate.getFullYear().toString());
+        const nextYearBtn = yearGroup.createEl("button", { cls: "year-nav-btn" });
+        nextYearBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>';
+        prevYearBtn.addEventListener("click", () => this.navigateYear(-1));
+        nextYearBtn.addEventListener("click", () => this.navigateYear(1));
+        const monthSelector = header.createDiv("month-selector");
+        for (let i = 1; i <= 12; i++) {
+          const monthBtn = monthSelector.createDiv({
+            cls: `month-btn ${i === this.currentDate.getMonth() + 1 ? "active" : ""}`,
+            text: i.toString()
+          });
+          monthBtn.addEventListener("click", () => {
+            this.selectMonth(i - 1);
+          });
+        }
+        const todayBtn = header.createEl("button", {
+          cls: "today-btn",
+          text: "\u4ECA\u5929"
+        });
+        todayBtn.addEventListener("click", () => this.goToToday());
+        monthSelector.addEventListener("wheel", (e) => {
+          e.preventDefault();
+          this.navigateMonth(e.deltaY > 0 ? 1 : -1);
+        });
+        const weekdays = ["\u65E5", "\u4E00", "\u4E8C", "\u4E09", "\u56DB", "\u4E94", "\u516D"];
+        const weekHeader = monthContainer.createDiv("month-weekdays");
+        weekdays.forEach((day) => {
+          weekHeader.createDiv("weekday").setText(day);
+        });
+        monthContainer.createDiv("month-grid");
+      }
+      this.updateMonthView();
+    } finally {
+      if (this.currentLoadingView === "month") {
+        this.currentLoadingView = null;
+      }
+    }
   }
   // 选择月份
   selectMonth(month) {
@@ -1656,56 +1724,66 @@ ${emptyNotes.map((file) => file.basename).join("\n")}`
   }
   // 创建列表视图
   async createListView() {
-    const files = this.app.vault.getMarkdownFiles();
-    const folderStructure = /* @__PURE__ */ new Map();
-    files.forEach((file) => {
-      var _a;
-      const pathParts = file.path.split("/");
-      const rootFolder = pathParts.length > 1 ? pathParts[0] : "\u6839\u76EE\u5F55";
-      const subFolder = pathParts.length > 2 ? pathParts[1] : "";
-      if (!folderStructure.has(rootFolder)) {
-        folderStructure.set(rootFolder, /* @__PURE__ */ new Map());
-      }
-      const subFolders = folderStructure.get(rootFolder);
-      if (subFolders) {
-        if (!subFolders.has(subFolder)) {
-          subFolders.set(subFolder, []);
+    if (this.currentLoadingView !== "list") {
+      console.log("\u4E2D\u65AD\u5217\u8868\u89C6\u56FE\u52A0\u8F7D\uFF1A\u89C6\u56FE\u5DF2\u5207\u6362");
+      return;
+    }
+    try {
+      const files = this.app.vault.getMarkdownFiles();
+      const folderStructure = /* @__PURE__ */ new Map();
+      files.forEach((file) => {
+        var _a;
+        const pathParts = file.path.split("/");
+        const rootFolder = pathParts.length > 1 ? pathParts[0] : "\u6839\u76EE\u5F55";
+        const subFolder = pathParts.length > 2 ? pathParts[1] : "";
+        if (!folderStructure.has(rootFolder)) {
+          folderStructure.set(rootFolder, /* @__PURE__ */ new Map());
         }
-        (_a = subFolders.get(subFolder)) == null ? void 0 : _a.push(file);
-      }
-    });
-    for (const [rootFolder, subFolders] of folderStructure) {
-      const folderGroup = this.container.createDiv("folder-group");
-      const folderHeader = folderGroup.createDiv("folder-header");
-      const folderIcon = folderHeader.createDiv("folder-icon");
-      folderIcon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>`;
-      const folderName = folderHeader.createDiv("folder-name");
-      folderName.setText(rootFolder);
-      const contentArea = folderGroup.createDiv("folder-content-area");
-      const sideNav = contentArea.createDiv("folder-sidebar");
-      const rootNotes = subFolders.get("") || [];
-      if (rootNotes.length > 0) {
-        const rootTitle = sideNav.createDiv("folder-title");
-        rootTitle.setText("...");
-        rootTitle.addEventListener("click", () => {
-          this.showFolderContent(notesArea, rootNotes);
-          sideNav.querySelectorAll(".folder-title").forEach((el) => el.removeClass("active"));
-          rootTitle.addClass("active");
-        });
-      }
-      for (const [subFolder, notes] of subFolders) {
-        if (subFolder !== "") {
-          const subTitle = sideNav.createDiv("folder-title sub");
-          subTitle.setText(subFolder);
-          subTitle.addEventListener("mouseenter", () => {
-            this.showFolderContent(notesArea, notes);
+        const subFolders = folderStructure.get(rootFolder);
+        if (subFolders) {
+          if (!subFolders.has(subFolder)) {
+            subFolders.set(subFolder, []);
+          }
+          (_a = subFolders.get(subFolder)) == null ? void 0 : _a.push(file);
+        }
+      });
+      for (const [rootFolder, subFolders] of folderStructure) {
+        const folderGroup = this.container.createDiv("folder-group");
+        const folderHeader = folderGroup.createDiv("folder-header");
+        const folderIcon = folderHeader.createDiv("folder-icon");
+        folderIcon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>`;
+        const folderName = folderHeader.createDiv("folder-name");
+        folderName.setText(rootFolder);
+        const contentArea = folderGroup.createDiv("folder-content-area");
+        const sideNav = contentArea.createDiv("folder-sidebar");
+        const rootNotes = subFolders.get("") || [];
+        if (rootNotes.length > 0) {
+          const rootTitle = sideNav.createDiv("folder-title");
+          rootTitle.setText("...");
+          rootTitle.addEventListener("click", () => {
+            this.showFolderContent(notesArea, rootNotes);
             sideNav.querySelectorAll(".folder-title").forEach((el) => el.removeClass("active"));
-            subTitle.addClass("active");
+            rootTitle.addClass("active");
           });
         }
+        for (const [subFolder, notes] of subFolders) {
+          if (subFolder !== "") {
+            const subTitle = sideNav.createDiv("folder-title sub");
+            subTitle.setText(subFolder);
+            subTitle.addEventListener("mouseenter", () => {
+              this.showFolderContent(notesArea, notes);
+              sideNav.querySelectorAll(".folder-title").forEach((el) => el.removeClass("active"));
+              subTitle.addClass("active");
+            });
+          }
+        }
+        const notesArea = contentArea.createDiv("folder-content");
+        this.showFolderContent(notesArea, rootNotes);
       }
-      const notesArea = contentArea.createDiv("folder-content");
-      this.showFolderContent(notesArea, rootNotes);
+    } finally {
+      if (this.currentLoadingView === "list") {
+        this.currentLoadingView = null;
+      }
     }
   }
   // 显示文件夹内容
@@ -2251,6 +2329,29 @@ ${content}` : content;
                     <span>${message}</span>
                 </div>
             `;
+    }
+  }
+  // 添加 createTimelineView 方法
+  async createTimelineView() {
+    try {
+      this.container.empty();
+      console.log("\u5F00\u59CB\u521B\u5EFA\u65F6\u95F4\u8F74\u89C6\u56FE...");
+      const timelineContainer = this.container.createDiv("timeline-container");
+      this.timelineLoadingIndicator.innerHTML = `
+                <div class="loading-spinner"></div>
+                <div class="loading-text">\u52A0\u8F7D\u4E2D...</div>
+            `;
+      this.timelineLoadingIndicator.style.display = "none";
+      timelineContainer.appendChild(this.timelineLoadingIndicator);
+      this.timelineCurrentPage = 1;
+      this.timelineHasMore = true;
+      this.timelineIsLoading = false;
+      await this.loadTimelinePage(timelineContainer);
+      this.setupTimelineScroll(timelineContainer);
+    } catch (error) {
+      console.error("\u521B\u5EFA\u65F6\u95F4\u8F74\u89C6\u56FE\u5931\u8D25:", error);
+      new import_obsidian.Notice("\u521B\u5EFA\u65F6\u95F4\u8F74\u89C6\u56FE\u5931\u8D25");
+      this.updateLoadingStatus("\u521B\u5EFA\u65F6\u95F4\u8F74\u89C6\u56FE\u5931\u8D25");
     }
   }
 };

@@ -58,6 +58,9 @@ export class CardView extends ItemView {
     private statusRight: HTMLElement = createDiv('status-right');
     private loadingStatus: HTMLElement = createDiv('status-item');
 
+    // 在 CardView 类中添加新属性
+    private currentLoadingView: 'card' | 'list' | 'timeline' | 'month' | null = null;
+
     /**
      * 构造函数
      * @param leaf - 工作区叶子节点
@@ -346,6 +349,8 @@ export class CardView extends ItemView {
         this.statusBar.appendChild(this.statusRight);
         contentSection.appendChild(this.statusBar); // 修改这里，将状态栏添加到 contentSection
         
+        // 设置初始加载视图
+        this.currentLoadingView = 'card';
         await this.loadNotes();
 
         // 初始化日历容器
@@ -353,7 +358,7 @@ export class CardView extends ItemView {
         this.calendarContainer.addClass('calendar-container');
         this.calendarContainer.style.display = 'none';
         
-        // 将日历容器添加到主布局中
+        // 将日容器添加到主布局中
         const mainLayoutElement = containerEl.querySelector('.main-layout');  // 修改变量名
         if (mainLayoutElement) {
             mainLayout.insertBefore(this.calendarContainer, mainLayout.firstChild);
@@ -370,7 +375,7 @@ export class CardView extends ItemView {
                     cards.forEach(card => {
                         card.classList.remove('selected');
                     });
-                } // 里添加了缺失的闭合括号
+                } // 里添加缺失的合括号
             });
         }
 
@@ -426,7 +431,7 @@ export class CardView extends ItemView {
                     // 刷新视图
                     await this.refreshView();
                     
-                    new Notice('笔记创建成功');
+                    new Notice('笔创建成功');
                 }
             } catch (error) {
                 console.error('创建笔记失败:', error);
@@ -557,6 +562,51 @@ export class CardView extends ItemView {
         });
     }
 
+    // 修改 switchView 方法
+    private switchView(view: 'card' | 'list' | 'timeline' | 'month') {
+        // 如果有正在加载的视图，且不是当前要切换的视图，则中断它
+        if (this.currentLoadingView && this.currentLoadingView !== view) {
+            console.log(`中断 ${this.currentLoadingView} 视图的加载`);
+            this.isLoading = false;
+            this.timelineIsLoading = false;
+            this.hasMoreNotes = false;
+            this.timelineHasMore = false;
+        }
+
+        this.currentView = view;
+        this.currentLoadingView = view;
+        this.container.setAttribute('data-view', view);
+        this.container.empty();
+        
+        const contentSection = this.containerEl.querySelector('.content-section');
+        if (contentSection) {
+            contentSection.removeClass('view-card', 'view-list', 'view-timeline', 'view-month');
+            contentSection.addClass(`view-${view}`);
+        }
+
+        // 更新状态栏信息
+        let statusMessage = '';
+        switch (view) {
+            case 'card':
+                statusMessage = '切换到卡片视图';
+                this.loadNotes();
+                break;
+            case 'list':
+                statusMessage = '切换到列表视图 - 按文件夹分组';
+                this.createListView();
+                break;
+            case 'timeline':
+                statusMessage = '切换到时间轴视图 - 按日期分组';
+                this.createTimelineView();
+                break;
+            case 'month':
+                statusMessage = '切换到月历视图';
+                this.createMonthView();
+                break;
+        }
+        this.updateLoadingStatus(statusMessage);
+    }
+
     // 修改 loadNotes 方法
     private async loadNotes() {
         try {
@@ -587,11 +637,21 @@ export class CardView extends ItemView {
         } catch (error) {
             console.error('loadNotes 错误:', error);
             new Notice('加载笔记失败，请检查控制台获取详细信息');
+        } finally {
+            if (this.currentLoadingView === 'card') {
+                this.currentLoadingView = null;
+            }
         }
     }
 
     // 修改 loadNextPage 方法
     private async loadNextPage() {
+        // 添加视图检查
+        if (this.currentView !== 'card') {
+            console.log('中断卡片加载：视图已切换');
+            return;
+        }
+
         if (this.isLoading || !this.hasMoreNotes) {
             return;
         }
@@ -611,7 +671,7 @@ export class CardView extends ItemView {
             
             // 更新状态栏信息
             this.updateLoadingStatus(`正在加载第 ${this.currentPage} 页 (${start + 1}-${end} / ${filteredFiles.length})`);
-            
+
             // 创建卡片
             const cards = await Promise.all(
                 pageFiles.map(async (file) => {
@@ -628,7 +688,6 @@ export class CardView extends ItemView {
             cards.forEach(card => {
                 if (card instanceof HTMLElement) {
                     card.style.width = `${this.cardSize}px`;
-                    // 确保在加载指示器之前插入卡片
                     if (this.loadingIndicator.parentNode === this.container) {
                         this.container.insertBefore(card, this.loadingIndicator);
                     } else {
@@ -636,6 +695,13 @@ export class CardView extends ItemView {
                     }
                 }
             });
+
+            // 确保加载指示器始终在底部
+            if (this.hasMoreNotes) {
+                this.container.appendChild(this.loadingIndicator);
+                // 设置加载指示器的最小高度，确保可以触发滚动
+                this.loadingIndicator.style.minHeight = '100px';
+            }
             
             this.currentPage++;
             
@@ -647,6 +713,9 @@ export class CardView extends ItemView {
             this.isLoading = false;
             if (!this.hasMoreNotes) {
                 this.updateLoadingStatus('加载完成');
+                this.loadingIndicator.style.display = 'none';
+            } else {
+                this.loadingIndicator.style.display = 'flex';
             }
         }
     }
@@ -689,20 +758,24 @@ export class CardView extends ItemView {
     // 修改 setupInfiniteScroll 方法
     private setupInfiniteScroll() {
         try {
-            console.log('设置限滚动...');
+            console.log('设置无限滚动...');
+            
             // 使用 Intersection Observer 监听加载指示器
             const observer = new IntersectionObserver(
                 (entries) => {
                     entries.forEach(entry => {
-                        if (entry.isIntersecting && !this.isLoading && this.hasMoreNotes) {
-                            console.log('触发加载更多');
+                        if (entry.isIntersecting && 
+                            !this.isLoading && 
+                            this.hasMoreNotes && 
+                            this.currentView === 'card') {
+                            console.log('Intersection Observer 触发加载更多');
                             this.loadNextPage();
                         }
                     });
                 },
                 {
                     root: this.container,
-                    rootMargin: '100px',
+                    rootMargin: '200px',
                     threshold: 0.1
                 }
             );
@@ -711,8 +784,10 @@ export class CardView extends ItemView {
             console.log('已添加 Intersection Observer');
             
             // 添加滚动事件处理
+            let scrollTimeout: NodeJS.Timeout;
             this.container.addEventListener('scroll', () => {
                 const { scrollTop, scrollHeight, clientHeight } = this.container;
+                
                 // 添加滚动进度信息到状态栏右侧
                 const scrollPercentage = Math.round((scrollTop / (scrollHeight - clientHeight)) * 100);
                 if (!isNaN(scrollPercentage)) {
@@ -726,11 +801,37 @@ export class CardView extends ItemView {
                     }
                 }
                 
-                if (scrollHeight - scrollTop - clientHeight < 100 && !this.isLoading && this.hasMoreNotes) {
+                // 使用防抖处理滚动加载
+                clearTimeout(scrollTimeout);
+                scrollTimeout = setTimeout(() => {
+                    // 增加触发阈值，提前加载
+                    const triggerThreshold = 300;
+                    if (scrollHeight - scrollTop - clientHeight < triggerThreshold && 
+                        !this.isLoading && 
+                        this.hasMoreNotes && 
+                        this.currentView === 'card') {
+                        console.log('滚动触发加载更多', {
+                            scrollTop,
+                            scrollHeight,
+                            clientHeight,
+                            remaining: scrollHeight - scrollTop - clientHeight
+                        });
+                        this.loadNextPage();
+                    }
+                }, 100);
+            });
+            
+            // 初始检查是否需要加载更多
+            setTimeout(() => {
+                const { scrollHeight, clientHeight } = this.container;
+                if (scrollHeight <= clientHeight && 
+                    !this.isLoading && 
+                    this.hasMoreNotes && 
+                    this.currentView === 'card') {
+                    console.log('初始内容不足，触发加载更多');
                     this.loadNextPage();
                 }
-            });
-            console.log('已添加滚动事件监听');
+            }, 100);
             
         } catch (error) {
             console.error('setupInfiniteScroll 错误:', error);
@@ -968,10 +1069,10 @@ export class CardView extends ItemView {
             console.error('笔记加载失败:', error);
         }
 
-        // 加卡片悬停事件
+        // 加卡片悬停件
         card.addEventListener('mouseenter', async () => {
             openButton.style.opacity = '1';  // 示打开按钮
-            // ... 其他悬停事码 ...
+            // ... 其他悬停事 ...
         });
 
         card.addEventListener('mouseleave', () => {
@@ -982,33 +1083,6 @@ export class CardView extends ItemView {
         return card;
     }
 
-    /**
-     * 切换视图模式
-     * @param view - 目标视图模式
-     */
-    private switchView(view: 'card' | 'list' | 'timeline' | 'month') {
-        this.currentView = view;
-        this.container.setAttribute('data-view', view);
-        this.container.empty();
-        
-        const contentSection = this.containerEl.querySelector('.content-section');
-        if (contentSection) {
-            contentSection.removeClass('view-card', 'view-list', 'view-timeline', 'view-month');
-            contentSection.addClass(`view-${view}`);
-        }
-        
-        if (view === 'list') {
-            this.createListView();
-        } else if (view === 'timeline') {
-            this.createTimelineView();
-        } else if (view === 'month') {
-            this.createMonthView();
-        } else {
-            this.loadNotes();
-        }
-    }
-
-  
     // 切换预览栏的显示状态
     private togglePreview() {
         this.isPreviewCollapsed = !this.isPreviewCollapsed;
@@ -1040,7 +1114,7 @@ export class CardView extends ItemView {
 
         // 更新折叠按图标方向
         const toggleButton = this.containerEl.querySelector('.preview-toggle svg');
-        if (toggleButton instanceof SVGElement) {  // 修改类型检查
+        if (toggleButton instanceof SVGElement) {  // 修改类型检
             toggleButton.style.transform = this.isPreviewCollapsed ? '' : 'rotate(180deg)';
         }
     }
@@ -1142,7 +1216,7 @@ export class CardView extends ItemView {
             // const leaf = this.app.workspace.getLeaf('tab');
             await this.openInAppropriateLeaf(file);
 
-            // 刷新卡片视图
+            // 刷新片视图
             this.loadNotes();
         } catch (error) {
             console.error('创建笔记失败:', error);
@@ -1180,58 +1254,27 @@ export class CardView extends ItemView {
         }
     }
 
-    // 修改 createTimelineView 方法
-    private async createTimelineView() {
-        try {
-            console.log('开始创建时间轴视图...');
-            const timelineContainer = this.container.createDiv('timeline-container');
-            
-            // 初始化加载指示器
-            this.timelineLoadingIndicator.innerHTML = `
-                <div class="loading-spinner"></div>
-                <div class="loading-text">加载中...</div>
-            `;
-            this.timelineLoadingIndicator.style.display = 'none';
-            timelineContainer.appendChild(this.timelineLoadingIndicator);
-            
-            // 重置分页状态
-            this.timelineCurrentPage = 1;
-            this.timelineHasMore = true;
-            this.timelineIsLoading = false;
-            
-            // 加载第一页
-            await this.loadTimelinePage(timelineContainer);
-            
-            // 设置滚动监听
-            this.setupTimelineScroll(timelineContainer);
-            
-        } catch (error) {
-            console.error('创建时间轴视图失败:', error);
-            new Notice('创建时间轴视图失败');
-        }
-    }
-
-    // 添加加载时间轴页面的方法
+    // 修改 loadTimelinePage 方法
     private async loadTimelinePage(container: HTMLElement) {
+        if (this.currentLoadingView !== 'timeline') {
+            console.log('中断时间轴视图加载：视图已切换');
+            return;
+        }
+
         if (this.timelineIsLoading || !this.timelineHasMore) {
-            console.log('跳过时间轴加载: isLoading=', this.timelineIsLoading, 'hasMore=', this.timelineHasMore);
             return;
         }
         
         try {
-            console.log('加载时间轴第', this.timelineCurrentPage, '页');
             this.timelineIsLoading = true;
-            this.timelineLoadingIndicator.style.display = 'flex';
+            this.updateLoadingStatus('加载时间轴...');
             
-            // 获取所有文件并按日期分组
+            // 获取所有文件
             const files = this.app.vault.getMarkdownFiles();
-            const notesByDate = new Map<string, TFile[]>();
-            
-            // 应用过滤
             const filteredFiles = await this.filterFiles(files);
-            console.log('过滤后文件数:', filteredFiles.length);
             
-            // 按日期分组
+            // 按日期分组并排序
+            const notesByDate = new Map<string, TFile[]>();
             filteredFiles.forEach(file => {
                 const date = new Date(file.stat.mtime).toLocaleDateString();
                 if (!notesByDate.has(date)) {
@@ -1240,10 +1283,8 @@ export class CardView extends ItemView {
                 notesByDate.get(date)?.push(file);
             });
             
-            // 按日期排序
-            const sortedDates = Array.from(notesByDate.keys()).sort((a, b) => 
-                new Date(b).getTime() - new Date(a).getTime()
-            );
+            const sortedDates = Array.from(notesByDate.keys())
+                .sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
             
             // 计算分页
             const start = (this.timelineCurrentPage - 1) * this.timelinePageSize;
@@ -1253,42 +1294,83 @@ export class CardView extends ItemView {
             // 检查是否还有更多
             this.timelineHasMore = end < sortedDates.length;
             
-            // 创建时间轴项目
-            for (const date of pageDates) {
-                const dateGroup = container.createDiv('timeline-date-group');
-                
-                // 创建日期节点
-                const dateNode = dateGroup.createDiv('timeline-date-node');
-                dateNode.createDiv('timeline-node-circle');
-                dateNode.createDiv('timeline-date-label').setText(date);
-                
-                // 创建笔记列表
-                const notesList = dateGroup.createDiv('timeline-notes-list');
-                const notes = notesByDate.get(date) || [];
-                
-                // 创建笔记卡片
-                await Promise.all(notes.map(async (file) => {
-                    try {
-                        const card = await this.createNoteCard(file);
-                        if (card instanceof HTMLElement) {
-                            card.style.width = '100%';
-                            notesList.appendChild(card);
+            // 更新状态栏信息
+            this.updateLoadingStatus(`时间轴视图 - 加载第 ${this.timelineCurrentPage} 页 (${start + 1}-${end} / ${sortedDates.length} 天)`);
+
+            // 使用虚拟滚动技术
+            const fragment = document.createDocumentFragment();
+            const batchSize = 3; // 每批处理的日期组数
+            const batches = Math.ceil(pageDates.length / batchSize);
+
+            for (let i = 0; i < batches; i++) {
+                await new Promise<void>(resolve => {
+                    window.requestAnimationFrame(async () => {
+                        const batchDates = pageDates.slice(i * batchSize, (i + 1) * batchSize);
+                        
+                        for (const date of batchDates) {
+                            const dateGroup = document.createElement('div');
+                            dateGroup.className = 'timeline-date-group';
+                            
+                            // 创建日期节点（使用innerHTML提高性能）
+                            dateGroup.innerHTML = `
+                                <div class="timeline-date-node">
+                                    <div class="timeline-node-circle"></div>
+                                    <div class="timeline-date-label">${date}</div>
+                                </div>
+                                <div class="timeline-notes-list"></div>
+                            `;
+
+                            const notesList = dateGroup.querySelector('.timeline-notes-list') as HTMLElement;
+                            const notes = notesByDate.get(date) || [];
+                            
+                            // 批量创建卡片的占位符
+                            const cardPromises = notes.map(async (file) => {
+                                const placeholder = document.createElement('div');
+                                placeholder.className = 'note-card-placeholder';
+                                placeholder.style.width = '100%';
+                                placeholder.style.height = '200px'; // 设置一个固定高度
+                                placeholder.style.backgroundColor = 'var(--background-secondary)';
+                                placeholder.style.borderRadius = '8px';
+                                placeholder.style.marginBottom = '1rem';
+                                notesList.appendChild(placeholder);
+
+                                // 异步创建实际的卡片
+                                const card = await this.createNoteCard(file);
+                                if (card instanceof HTMLElement) {
+                                    card.style.width = '100%';
+                                    // 只有在当前视图仍然是时间轴时才替换占位符
+                                    if (this.currentView === 'timeline') {
+                                        notesList.replaceChild(card, placeholder);
+                                    }
+                                }
+                            });
+
+                            // 添加日期组到���档片段
+                            fragment.appendChild(dateGroup);
+                            
+                            // 异步处理卡片创建
+                            Promise.all(cardPromises).catch(error => {
+                                console.error('创建卡片失败:', error);
+                            });
                         }
-                    } catch (error) {
-                        console.error('创建笔记卡片失败:', file.path, error);
-                    }
-                }));
+                        resolve();
+                    });
+                });
             }
+
+            // 一次性添加所有内容到容器
+            container.appendChild(fragment);
             
             this.timelineCurrentPage++;
-            console.log('时间轴页面加载完成，当前页数:', this.timelineCurrentPage);
             
         } catch (error) {
             console.error('加载时间轴页面失败:', error);
-            new Notice('加载失败');
+            this.updateLoadingStatus('加载失败');
         } finally {
             this.timelineIsLoading = false;
-            this.timelineLoadingIndicator.style.display = 'none';
+            if (this.currentLoadingView === 'timeline') {
+                this.currentLoadingView = null;
+            }
         }
     }
 
@@ -1326,7 +1408,7 @@ export class CardView extends ItemView {
                 }
             });
             
-            console.log('已添加时间轴滚动事件监听');
+            console.log('已添加时轴滚动事件监听');
             
         } catch (error) {
             console.error('设置时间轴滚动监听失败:', error);
@@ -1849,7 +1931,7 @@ export class CardView extends ItemView {
     private async openInAppropriateLeaf(file: TFile, openFile: boolean = true) {
         const fileExplorer = this.app.workspace.getLeavesOfType('file-explorer')[0];
         if (fileExplorer) {
-            this.app.workspace.revealLeaf(fileExplorer);  // 如果文件浏览器已经存在，直接活它
+            this.app.workspace.revealLeaf(fileExplorer);  // 如果文件浏览器已经在，直接活它
             try {
                     if (openFile) {
                         // 只有在需要打开文件时才执行这些操作
@@ -1973,7 +2055,7 @@ export class CardView extends ItemView {
         // 使用击事替代鼠标悬停事件
         let isMenuVisible = false;
         
-        // 点击按钮时切换菜单显示状态
+        // 点击按钮时换菜单显示状态
         commandBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             isMenuVisible = !isMenuVisible;
@@ -2032,73 +2114,84 @@ export class CardView extends ItemView {
     }
 
     // 创建月视图
-    private createMonthView() {
-        if (!this.container.querySelector('.month-view')) {
-            const monthContainer = this.container.createDiv('month-view');
-            
-            // 创建月视图头部
-            const header = monthContainer.createDiv('month-header');
-            
-            // 创建年份显示区域
-            const yearGroup = header.createDiv('year-group');
-            
-            // 添加上一年按钮
-            const prevYearBtn = yearGroup.createEl('button', { cls: 'year-nav-btn' });
-            prevYearBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>';
-            
-            // 创建年份显示
-            const yearDisplay = yearGroup.createDiv('year-display');
-            yearDisplay.setText(this.currentDate.getFullYear().toString());
-            
-            // 添加下一年按钮
-            const nextYearBtn = yearGroup.createEl('button', { cls: 'year-nav-btn' });
-            nextYearBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>';
-            
-            // 添加年份切换事件
-            prevYearBtn.addEventListener('click', () => this.navigateYear(-1));
-            nextYearBtn.addEventListener('click', () => this.navigateYear(1));
+    private async createMonthView() {
+        if (this.currentLoadingView !== 'month') {
+            console.log('中断月历视图加载：视图已切换');
+            return;
+        }
 
-            // 创建月份选择器
-            const monthSelector = header.createDiv('month-selector');
-            
-            // 创建12个月份按钮
-            for (let i = 1; i <= 12; i++) {
-                const monthBtn = monthSelector.createDiv({
-                    cls: `month-btn ${i === this.currentDate.getMonth() + 1 ? 'active' : ''}`,
-                    text: i.toString()
+        try {
+            if (!this.container.querySelector('.month-view')) {
+                const monthContainer = this.container.createDiv('month-view');
+                
+                // 创建月视图头部
+                const header = monthContainer.createDiv('month-header');
+                
+                // 创建年份显示区域
+                const yearGroup = header.createDiv('year-group');
+                
+                // 添加上一年按钮
+                const prevYearBtn = yearGroup.createEl('button', { cls: 'year-nav-btn' });
+                prevYearBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>';
+                
+                // 创建年份显示
+                const yearDisplay = yearGroup.createDiv('year-display');
+                yearDisplay.setText(this.currentDate.getFullYear().toString());
+                
+                // 添加下一年按钮
+                const nextYearBtn = yearGroup.createEl('button', { cls: 'year-nav-btn' });
+                nextYearBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>';
+                
+                // 添加年份切换事件
+                prevYearBtn.addEventListener('click', () => this.navigateYear(-1));
+                nextYearBtn.addEventListener('click', () => this.navigateYear(1));
+
+                // 创建月份选择器
+                const monthSelector = header.createDiv('month-selector');
+                
+                // 创建12个月份按钮
+                for (let i = 1; i <= 12; i++) {
+                    const monthBtn = monthSelector.createDiv({
+                        cls: `month-btn ${i === this.currentDate.getMonth() + 1 ? 'active' : ''}`,
+                        text: i.toString()
+                    });
+                    
+                    // 添加点击事件
+                    monthBtn.addEventListener('click', () => {
+                        this.selectMonth(i - 1);
+                    });
+                }
+                
+                // 添加今天按钮
+                const todayBtn = header.createEl('button', { 
+                    cls: 'today-btn',
+                    text: '今天'
+                });
+                todayBtn.addEventListener('click', () => this.goToToday());
+                
+                // 添加滚轮事件
+                monthSelector.addEventListener('wheel', (e) => {
+                    e.preventDefault();
+                    this.navigateMonth(e.deltaY > 0 ? 1 : -1);
                 });
                 
-                // 添加点击事件
-                monthBtn.addEventListener('click', () => {
-                    this.selectMonth(i - 1);
+                // 创建星期头部
+                const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
+                const weekHeader = monthContainer.createDiv('month-weekdays');
+                weekdays.forEach(day => {
+                    weekHeader.createDiv('weekday').setText(day);
                 });
+                
+                // 创建日历网格
+                monthContainer.createDiv('month-grid');
             }
             
-            // 添加今天按钮
-            const todayBtn = header.createEl('button', { 
-                cls: 'today-btn',
-                text: '今天'
-            });
-            todayBtn.addEventListener('click', () => this.goToToday());
-            
-            // 添加滚轮事件
-            monthSelector.addEventListener('wheel', (e) => {
-                e.preventDefault();
-                this.navigateMonth(e.deltaY > 0 ? 1 : -1);
-            });
-            
-            // 创建星期头部
-            const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
-            const weekHeader = monthContainer.createDiv('month-weekdays');
-            weekdays.forEach(day => {
-                weekHeader.createDiv('weekday').setText(day);
-            });
-            
-            // 创建日历网格
-            monthContainer.createDiv('month-grid');
+            this.updateMonthView();
+        } finally {
+            if (this.currentLoadingView === 'month') {
+                this.currentLoadingView = null;
+            }
         }
-        
-        this.updateMonthView();
     }
 
     // 选择月份
@@ -2136,7 +2229,7 @@ export class CardView extends ItemView {
     private navigateMonth(delta: number) {
         const newDate = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth() + delta);
         
-        // 如果年份变化，需要更新年份显示
+        // 如果年份变化，需要新年份显示
         if (newDate.getFullYear() !== this.currentDate.getFullYear()) {
             const yearDisplay = this.container.querySelector('.year-display');
             if (yearDisplay) {
@@ -2255,81 +2348,92 @@ export class CardView extends ItemView {
 
     // 创建列表视图
     private async createListView() {
-        const files = this.app.vault.getMarkdownFiles();
-        const folderStructure = new Map<string, Map<string, TFile[]>>();
-        
-        // 构建文件夹结构和分组笔记
-        files.forEach(file => {
-            const pathParts = file.path.split('/');
-            const rootFolder = pathParts.length > 1 ? pathParts[0] : '根目录';
-            const subFolder = pathParts.length > 2 ? pathParts[1] : '';
+        if (this.currentLoadingView !== 'list') {
+            console.log('中断列表视图加载：视图已切换');
+            return;
+        }
+
+        try {
+            const files = this.app.vault.getMarkdownFiles();
+            const folderStructure = new Map<string, Map<string, TFile[]>>();
             
-            // 初始化根文件夹结构
-            if (!folderStructure.has(rootFolder)) {
-                folderStructure.set(rootFolder, new Map());
-            }
-            
-            // 将笔记添加到对应的文件夹中
-            const subFolders = folderStructure.get(rootFolder);
-            if (subFolders) {
-                if (!subFolders.has(subFolder)) {
-                    subFolders.set(subFolder, []);
+            // 构建文件夹结构和分组笔记
+            files.forEach(file => {
+                const pathParts = file.path.split('/');
+                const rootFolder = pathParts.length > 1 ? pathParts[0] : '根目录';
+                const subFolder = pathParts.length > 2 ? pathParts[1] : '';
+                
+                // 初始化根文件夹结构
+                if (!folderStructure.has(rootFolder)) {
+                    folderStructure.set(rootFolder, new Map());
                 }
-                subFolders.get(subFolder)?.push(file);
-            }
-        }); // 这里添加逗号
-        
-        // 创建文件夹视图
-        for (const [rootFolder, subFolders] of folderStructure) {
-            const folderGroup = this.container.createDiv('folder-group');
+                
+                // 将笔记添加到对应的文件夹中
+                const subFolders = folderStructure.get(rootFolder);
+                if (subFolders) {
+                    if (!subFolders.has(subFolder)) {
+                        subFolders.set(subFolder, []);
+                    }
+                    subFolders.get(subFolder)?.push(file);
+                }
+            }); // 这里添加逗号
             
-            // 创建文件夹组标题
-            const folderHeader = folderGroup.createDiv('folder-header');
-            
-            // 添加文件夹图标
-            const folderIcon = folderHeader.createDiv('folder-icon');
-            folderIcon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>`;
-            
-            // 添加文件夹名称
-            const folderName = folderHeader.createDiv('folder-name');
-            folderName.setText(rootFolder);
-            
-            // 创建内容区域
-            const contentArea = folderGroup.createDiv('folder-content-area');
-            
-            // 创建左侧子文件夹导航
-            const sideNav = contentArea.createDiv('folder-sidebar');
-            
-            // 创建根文件夹的笔记选项
-            const rootNotes = subFolders.get('') || [];
-            if (rootNotes.length > 0) {
-                const rootTitle = sideNav.createDiv('folder-title');
-                rootTitle.setText('...');//当前目录
-                rootTitle.addEventListener('click', () => {
-                    this.showFolderContent(notesArea, rootNotes);
-                    sideNav.querySelectorAll('.folder-title').forEach(el => el.removeClass('active'));
-                    rootTitle.addClass('active');
-                });
-            }
-            
-            // 创建子文件夹列表
-            for (const [subFolder, notes] of subFolders) {
-                if (subFolder !== '') {
-                    const subTitle = sideNav.createDiv('folder-title sub');
-                    subTitle.setText(subFolder);
-                    subTitle.addEventListener('mouseenter', () => {
-                        this.showFolderContent(notesArea, notes);
+            // 创建文件夹视图
+            for (const [rootFolder, subFolders] of folderStructure) {
+                const folderGroup = this.container.createDiv('folder-group');
+                
+                // 创建文件夹组标题
+                const folderHeader = folderGroup.createDiv('folder-header');
+                
+                // 添加文件夹图标
+                const folderIcon = folderHeader.createDiv('folder-icon');
+                folderIcon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>`;
+                
+                // 添加文件夹名称
+                const folderName = folderHeader.createDiv('folder-name');
+                folderName.setText(rootFolder);
+                
+                // 创建内容区域
+                const contentArea = folderGroup.createDiv('folder-content-area');
+                
+                // 创建左侧子文件夹导航
+                const sideNav = contentArea.createDiv('folder-sidebar');
+                
+                // 创建根文件夹的笔记选项
+                const rootNotes = subFolders.get('') || [];
+                if (rootNotes.length > 0) {
+                    const rootTitle = sideNav.createDiv('folder-title');
+                    rootTitle.setText('...');//当前目录
+                    rootTitle.addEventListener('click', () => {
+                        this.showFolderContent(notesArea, rootNotes);
                         sideNav.querySelectorAll('.folder-title').forEach(el => el.removeClass('active'));
-                        subTitle.addClass('active');
+                        rootTitle.addClass('active');
                     });
                 }
+                
+                // 创建子文件夹列表
+                for (const [subFolder, notes] of subFolders) {
+                    if (subFolder !== '') {
+                        const subTitle = sideNav.createDiv('folder-title sub');
+                        subTitle.setText(subFolder);
+                        subTitle.addEventListener('mouseenter', () => {
+                            this.showFolderContent(notesArea, notes);
+                            sideNav.querySelectorAll('.folder-title').forEach(el => el.removeClass('active'));
+                            subTitle.addClass('active');
+                        });
+                    }
+                }
+                
+                // 建右侧笔记域
+                const notesArea = contentArea.createDiv('folder-content');
+                
+                // 默认显示文件夹的笔
+                this.showFolderContent(notesArea, rootNotes);
             }
-            
-            // 创建右侧笔记区域
-            const notesArea = contentArea.createDiv('folder-content');
-            
-            // 默认显示根文件夹的笔记
-            this.showFolderContent(notesArea, rootNotes);
+        } finally {
+            if (this.currentLoadingView === 'list') {
+                this.currentLoadingView = null;
+            }
         }
     }
 
@@ -2733,7 +2837,7 @@ export class CardView extends ItemView {
         const drag = (e: MouseEvent) => {
             if (!isDragging) return;
             
-            // 计算移动距离
+            // 计算动距离
             const moveX = Math.abs(e.clientX - startX);
             const moveY = Math.abs(e.clientY - startY);
             
@@ -2957,7 +3061,7 @@ export class CardView extends ItemView {
 
     // 添加更新高亮标签的方法
     private updateHighlightedTags() {
-        // 获取所有标签按钮
+        // 获取所有标按钮
         const tagButtons = this.tagContainer.querySelectorAll('.tag-btn');
         
         // 清除所有高亮
@@ -2991,7 +3095,7 @@ export class CardView extends ItemView {
         });
         
         tags.add(tagText);
-        this.updateHighlightedTags();  // 更新高亮显示
+        this.updateHighlightedTags();  // 更新高显示
     }
 
     // 添加位置判断方法
@@ -3029,7 +3133,7 @@ export class CardView extends ItemView {
         if (this.loadedNotes.has(file.path)) return;
         
         try {
-            container.empty(); // 清除加载���位符
+            container.empty(); // 清除加载位符
             
             const content = await this.app.vault.read(file);
             await MarkdownRenderer.render(
@@ -3094,6 +3198,41 @@ export class CardView extends ItemView {
                     <span>${message}</span>
                 </div>
             `;
+        }
+    }
+
+    // 添加 createTimelineView 方法
+    private async createTimelineView() {
+        try {
+            // 清除容器内容
+            this.container.empty();
+            
+            console.log('开始创建时间轴视图...');
+            const timelineContainer = this.container.createDiv('timeline-container');
+            
+            // 初始化加载指示器
+            this.timelineLoadingIndicator.innerHTML = `
+                <div class="loading-spinner"></div>
+                <div class="loading-text">加载中...</div>
+            `;
+            this.timelineLoadingIndicator.style.display = 'none';
+            timelineContainer.appendChild(this.timelineLoadingIndicator);
+            
+            // 重置分页状态
+            this.timelineCurrentPage = 1;
+            this.timelineHasMore = true;
+            this.timelineIsLoading = false;
+            
+            // 加载第一页
+            await this.loadTimelinePage(timelineContainer);
+            
+            // 设置滚动监听
+            this.setupTimelineScroll(timelineContainer);
+            
+        } catch (error) {
+            console.error('创建时间轴视图失败:', error);
+            new Notice('创建时间轴视图失败');
+            this.updateLoadingStatus('创建时间轴视图失败');
         }
     }
 }
