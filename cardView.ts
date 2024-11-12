@@ -18,7 +18,7 @@ export const VIEW_TYPE_HOME = 'home-view';
 export interface HomeModule {
   id: string;
   name: string;
-  type: 'heatmap' | 'recent' | 'weekly' | 'stats' | 'calendar';
+  type: 'heatmap' | 'recent' | 'weekly' | 'stats' | 'calendar' | 'graph' | 'quicknote'; // 添加新类型
   visible: boolean;
   order: number;
   columns: number; // 添加列数属性
@@ -145,7 +145,7 @@ class EnhancedFileSelectionModal extends Modal {
         cancelButton.addEventListener('click', () => this.close());
     }
 
-    // 获取文件夹层次结构
+    // 取文件夹层次结构
     private getFoldersWithHierarchy(): FolderItem[] {
         const folders: FolderItem[] = [];
         const seen = new Set<string>();
@@ -623,7 +623,7 @@ export class CardView extends ItemView {
         // 添事件处理
         this.setupQuickNoteEvents(noteInput, quickNoteToolbar, tagSuggestions);
 
-        // 初始化搜索处理
+        // 初始搜索处理
         this.setupSearch();
 
         // 标签栏
@@ -759,7 +759,7 @@ export class CardView extends ItemView {
                 const tagsContent = tagTexts.map(tag => `#${tag}`).join(' ');
                 const finalContent = tagsContent ? `${tagsContent}\n\n${content}` : content;
                 
-                // 使用标题作为文件名，如果没有使用日期
+                // 使用标题作为文件名如果没有使用日期
                 const fileName = title || new Date().toLocaleDateString('zh-CN', {
                     year: 'numeric',
                     month: '2-digit',
@@ -1078,7 +1078,7 @@ export class CardView extends ItemView {
                     this.loadNotes();
                     break;
                 case 'list':
-                    statusMessage = '切换到列表视图 - 按文件夹分组';
+                    statusMessage = '切换到列表视图 - 按文夹分组';
                     this.createListView();
                     break;
                 case 'timeline':
@@ -2969,7 +2969,7 @@ export class CardView extends ItemView {
             if (tagInput) tagInput.value = '';
         });
 
-        // 修改添加标���的方法
+        // 修改添加标的方法
         const addTag = (tagText: string) => {
             if (!tagText || tags.has(tagText)) return;
             
@@ -3607,7 +3607,7 @@ export class CardView extends ItemView {
         const showContentOption = this.createCheckboxOption(basicSettings, '显示笔记内容', currentSettings.showContent);
         showContentOption.addEventListener('change', (e) => {
             currentSettings.showContent = (e.target as HTMLInputElement).checked;
-            // 对所有视图统一处理笔记内容的显示/隐藏
+            // 对所有视图统一处理笔记内容显示/隐藏
             const contentElements = this.container.querySelectorAll('.note-content');
             contentElements.forEach(element => {
                 if (currentSettings.showContent) {
@@ -3618,7 +3618,7 @@ export class CardView extends ItemView {
             });
         });
 
-        // 添加布局置
+        // 添加布置
         const layoutSettings = settingsPanel.createDiv('settings-section');
         layoutSettings.createEl('h3', { text: '布局设置' });
 
@@ -3669,7 +3669,7 @@ export class CardView extends ItemView {
                 const repeatValue = value > maxColumns ? maxColumns : value;
                 this.container.style.gridTemplateColumns = `repeat(${repeatValue}, minmax(150px, 1fr))`;
             } else if (this.currentView === 'timeline') {
-                // 更新时间轴视图的卡片布局
+                // 更新���间轴视图的���片布局
                 const notesLists = this.container.querySelectorAll('.timeline-notes-list');
                 notesLists.forEach(list => {
                     if (list instanceof HTMLElement) {
@@ -4653,6 +4653,12 @@ export class CardView extends ItemView {
             case 'calendar':
                 await this.renderCalendarModule(container);
                 break;
+            case 'graph':
+                await this.renderGraphModule(container);
+                break;
+            case 'quicknote':
+                await this.renderQuickNoteModule(container);
+                break;
         }
     }
 
@@ -4852,6 +4858,175 @@ export class CardView extends ItemView {
         module.style.zIndex = '';
         module.style.opacity = '';
     }
+
+    // 将这两个方法移到类的内部
+    private async renderGraphModule(container: HTMLElement) {
+        // 创建图谱容器
+        const graphContainer = container.createDiv('graph-container');
+        
+        try {
+            // 获取 Obsidian 的图谱视图
+            const graphLeaves = this.app.workspace.getLeavesOfType('graph');
+            let graphLeaf;
+            
+            if (graphLeaves.length > 0) {
+                graphLeaf = graphLeaves[0];
+            } else {
+                // 如果没有图谱视图，创建一个临时的
+                graphLeaf = this.app.workspace.createLeafInParent(this.leaf.getRoot(), 0);
+                await graphLeaf.setViewState({ type: 'graph' });
+            }
+
+            // 将图谱视图的内容复制到我们的容器中
+            if (graphLeaf.view) {
+                const graphView = graphLeaf.view as any; // 使用 any 类型绕过类型检查
+                const graphEl = graphView.containerEl.querySelector('.graph-view-container');
+                if (graphEl) {
+                    const clonedGraph = graphEl.cloneNode(true);
+                    graphContainer.appendChild(clonedGraph);
+                }
+            }
+
+            // 如果是临时创建的图谱视图，移除它
+            if (graphLeaves.length === 0) {
+                graphLeaf.detach();
+            }
+
+        } catch (error) {
+            console.error('渲染图谱模块失败:', error);
+            graphContainer.setText('无法加载图谱视图');
+        }
+    }
+
+    private async renderQuickNoteModule(container: HTMLElement) {
+        const quickNoteContainer = container.createDiv('quicknote-module');
+        
+        // 创建输入容器
+        const inputContainer = quickNoteContainer.createDiv('quick-note-input-container');
+
+        // 创建标题输入框
+        const titleInput = inputContainer.createEl('input', {
+            cls: 'quick-note-title',
+            attr: {
+                placeholder: '输入笔记标题...',
+                type: 'text'
+            }
+        });
+
+        // 创建内容输入框
+        const noteInput = inputContainer.createEl('textarea', {
+            cls: 'quick-note-input',
+            attr: {
+                placeholder: '输入笔记内容，按 Enter 发送...'
+            }
+        });
+
+        // 创建标签容器和标签集
+        const tagsContainer = inputContainer.createDiv('tags-container');
+        const tags = new Set<string>();
+
+        // 创建标签输入框
+        const tagInput = tagsContainer.createEl('input', {
+            cls: 'tag-input',
+            attr: {
+                placeholder: '添加标签...'
+            }
+        });
+
+        // 创建工具栏
+        const quickNoteToolbar = inputContainer.createDiv('quick-note-toolbar');
+
+        // 添加代码按钮
+        const codeBtn = quickNoteToolbar.createEl('button', {
+            cls: 'quick-note-btn',
+            attr: { 'data-type': 'code' }
+        });
+        codeBtn.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+            代码
+        `;
+
+        // 添加图片按钮
+        const imageBtn = quickNoteToolbar.createEl('button', {
+            cls: 'quick-note-btn',
+            attr: { 'data-type': 'image' }
+        });
+        imageBtn.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+            图片
+        `;
+
+        // 添加灵感按钮
+        const ideaBtn = quickNoteToolbar.createEl('button', {
+            cls: 'quick-note-btn',
+            attr: { 'data-type': 'idea' }
+        });
+        ideaBtn.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+            灵感
+        `;
+
+        // 创建标签建议容器
+        const tagSuggestions = inputContainer.createDiv('tag-suggestions');
+
+        // 添加事件处理
+        this.setupQuickNoteEvents(noteInput, quickNoteToolbar, tagSuggestions);
+
+        // 添加发送按钮
+        const sendButton = inputContainer.createEl('button', {
+            cls: 'quick-note-send',
+            attr: {
+                'title': '发送笔记'
+            }
+        });
+        sendButton.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+        `;
+
+        // 发送按钮事件
+        sendButton.addEventListener('click', async (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const title = titleInput.value.trim();
+            const content = noteInput.value.trim();
+            
+            if (!content) {
+                new Notice('请输入笔记内容');
+                return;
+            }
+
+            try {
+                // 获取所有已添加的标签
+                const tagItems = tagsContainer.querySelectorAll('.tag-item');
+                const tagTexts = Array.from(tagItems).map(item => item.textContent?.replace('×', '').trim() ?? '');
+                
+                // 构建笔记内容包含标签
+                const tagsContent = tagTexts.map(tag => `#${tag}`).join(' ');
+                const finalContent = tagsContent ? `${tagsContent}\n\n${content}` : content;
+                
+                // 使用标题作为文件名，如果没有则使用日期
+                const fileName = title || new Date().toLocaleDateString('zh-CN', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit'
+                }).replace(/\//g, '-');
+
+                // 创建笔记
+                const file = await this.createQuickNote(finalContent, [], fileName);
+                
+                if (file) {
+                    // 清理输入状态
+                    this.clearQuickNoteInputs(titleInput, noteInput, tags, tagsContainer, tagInput);
+                    
+                    new Notice('笔记创建成功');
+                }
+            } catch (error) {
+                console.error('创建笔记失败:', error);
+                new Notice('创建笔记失败');
+            }
+        });
+    }
 }
 
 class ModuleManagerModal extends Modal {
@@ -4955,19 +5130,27 @@ export const DEFAULT_HOME_MODULES: HomeModule[] = [
         columns: 6
     },
     {
+        id: 'graph',
+        name: '关系图谱',
+        type: 'graph',
+        visible: true,
+        order: 1,
+        columns: 6
+    },
+    {
+        id: 'quicknote',
+        name: '快速笔记',
+        type: 'quicknote',
+        visible: true,
+        order: 2,
+        columns: 6
+    },
+    {
         id: 'weekly',
         name: '本周笔记',
         type: 'weekly',
         visible: true, 
-        order: 1,
-        columns: 3
-    },
-    {
-        id: 'recent',
-        name: '最近编辑',
-        type: 'recent',
-        visible: true,
-        order: 2,
+        order: 3,
         columns: 3
     },
     {
@@ -4975,7 +5158,7 @@ export const DEFAULT_HOME_MODULES: HomeModule[] = [
         name: '笔记统计',
         type: 'stats',
         visible: true,
-        order: 3,
+        order: 4,
         columns: 4
     },
     {
@@ -4983,7 +5166,7 @@ export const DEFAULT_HOME_MODULES: HomeModule[] = [
         name: '日历',
         type: 'calendar',
         visible: true,
-        order: 4,
+        order: 5,
         columns: 8
     }
 ];

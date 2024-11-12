@@ -113,7 +113,7 @@ var EnhancedFileSelectionModal = class extends import_obsidian.Modal {
     });
     cancelButton.addEventListener("click", () => this.close());
   }
-  // 获取文件夹层次结构
+  // 取文件夹层次结构
   getFoldersWithHierarchy() {
     const folders = [];
     const seen = /* @__PURE__ */ new Set();
@@ -752,7 +752,7 @@ ${content}` : content;
           this.loadNotes();
           break;
         case "list":
-          statusMessage = "\u5207\u6362\u5230\u5217\u8868\u89C6\u56FE - \u6309\u6587\u4EF6\u5939\u5206\u7EC4";
+          statusMessage = "\u5207\u6362\u5230\u5217\u8868\u89C6\u56FE - \u6309\u6587\u5939\u5206\u7EC4";
           this.createListView();
           break;
         case "timeline":
@@ -3311,6 +3311,12 @@ ${content}` : content;
       case "calendar":
         await this.renderCalendarModule(container);
         break;
+      case "graph":
+        await this.renderGraphModule(container);
+        break;
+      case "quicknote":
+        await this.renderQuickNoteModule(container);
+        break;
     }
   }
   // 添加模块编辑功能
@@ -3471,6 +3477,129 @@ ${content}` : content;
     module2.style.zIndex = "";
     module2.style.opacity = "";
   }
+  // 将这两个方法移到类的内部
+  async renderGraphModule(container) {
+    const graphContainer = container.createDiv("graph-container");
+    try {
+      const graphLeaves = this.app.workspace.getLeavesOfType("graph");
+      let graphLeaf;
+      if (graphLeaves.length > 0) {
+        graphLeaf = graphLeaves[0];
+      } else {
+        graphLeaf = this.app.workspace.createLeafInParent(this.leaf.getRoot(), 0);
+        await graphLeaf.setViewState({ type: "graph" });
+      }
+      if (graphLeaf.view) {
+        const graphView = graphLeaf.view;
+        const graphEl = graphView.containerEl.querySelector(".graph-view-container");
+        if (graphEl) {
+          const clonedGraph = graphEl.cloneNode(true);
+          graphContainer.appendChild(clonedGraph);
+        }
+      }
+      if (graphLeaves.length === 0) {
+        graphLeaf.detach();
+      }
+    } catch (error) {
+      console.error("\u6E32\u67D3\u56FE\u8C31\u6A21\u5757\u5931\u8D25:", error);
+      graphContainer.setText("\u65E0\u6CD5\u52A0\u8F7D\u56FE\u8C31\u89C6\u56FE");
+    }
+  }
+  async renderQuickNoteModule(container) {
+    const quickNoteContainer = container.createDiv("quicknote-module");
+    const inputContainer = quickNoteContainer.createDiv("quick-note-input-container");
+    const titleInput = inputContainer.createEl("input", {
+      cls: "quick-note-title",
+      attr: {
+        placeholder: "\u8F93\u5165\u7B14\u8BB0\u6807\u9898...",
+        type: "text"
+      }
+    });
+    const noteInput = inputContainer.createEl("textarea", {
+      cls: "quick-note-input",
+      attr: {
+        placeholder: "\u8F93\u5165\u7B14\u8BB0\u5185\u5BB9\uFF0C\u6309 Enter \u53D1\u9001..."
+      }
+    });
+    const tagsContainer = inputContainer.createDiv("tags-container");
+    const tags = /* @__PURE__ */ new Set();
+    const tagInput = tagsContainer.createEl("input", {
+      cls: "tag-input",
+      attr: {
+        placeholder: "\u6DFB\u52A0\u6807\u7B7E..."
+      }
+    });
+    const quickNoteToolbar = inputContainer.createDiv("quick-note-toolbar");
+    const codeBtn = quickNoteToolbar.createEl("button", {
+      cls: "quick-note-btn",
+      attr: { "data-type": "code" }
+    });
+    codeBtn.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+            \u4EE3\u7801
+        `;
+    const imageBtn = quickNoteToolbar.createEl("button", {
+      cls: "quick-note-btn",
+      attr: { "data-type": "image" }
+    });
+    imageBtn.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+            \u56FE\u7247
+        `;
+    const ideaBtn = quickNoteToolbar.createEl("button", {
+      cls: "quick-note-btn",
+      attr: { "data-type": "idea" }
+    });
+    ideaBtn.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+            \u7075\u611F
+        `;
+    const tagSuggestions = inputContainer.createDiv("tag-suggestions");
+    this.setupQuickNoteEvents(noteInput, quickNoteToolbar, tagSuggestions);
+    const sendButton = inputContainer.createEl("button", {
+      cls: "quick-note-send",
+      attr: {
+        "title": "\u53D1\u9001\u7B14\u8BB0"
+      }
+    });
+    sendButton.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+        `;
+    sendButton.addEventListener("click", async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const title = titleInput.value.trim();
+      const content = noteInput.value.trim();
+      if (!content) {
+        new import_obsidian.Notice("\u8BF7\u8F93\u5165\u7B14\u8BB0\u5185\u5BB9");
+        return;
+      }
+      try {
+        const tagItems = tagsContainer.querySelectorAll(".tag-item");
+        const tagTexts = Array.from(tagItems).map((item) => {
+          var _a, _b;
+          return (_b = (_a = item.textContent) == null ? void 0 : _a.replace("\xD7", "").trim()) != null ? _b : "";
+        });
+        const tagsContent = tagTexts.map((tag) => `#${tag}`).join(" ");
+        const finalContent = tagsContent ? `${tagsContent}
+
+${content}` : content;
+        const fileName = title || (/* @__PURE__ */ new Date()).toLocaleDateString("zh-CN", {
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit"
+        }).replace(/\//g, "-");
+        const file = await this.createQuickNote(finalContent, [], fileName);
+        if (file) {
+          this.clearQuickNoteInputs(titleInput, noteInput, tags, tagsContainer, tagInput);
+          new import_obsidian.Notice("\u7B14\u8BB0\u521B\u5EFA\u6210\u529F");
+        }
+      } catch (error) {
+        console.error("\u521B\u5EFA\u7B14\u8BB0\u5931\u8D25:", error);
+        new import_obsidian.Notice("\u521B\u5EFA\u7B14\u8BB0\u5931\u8D25");
+      }
+    });
+  }
 };
 var ModuleManagerModal = class extends import_obsidian.Modal {
   constructor(app, modules, onSave) {
@@ -3542,19 +3671,27 @@ var DEFAULT_HOME_MODULES = [
     columns: 6
   },
   {
+    id: "graph",
+    name: "\u5173\u7CFB\u56FE\u8C31",
+    type: "graph",
+    visible: true,
+    order: 1,
+    columns: 6
+  },
+  {
+    id: "quicknote",
+    name: "\u5FEB\u901F\u7B14\u8BB0",
+    type: "quicknote",
+    visible: true,
+    order: 2,
+    columns: 6
+  },
+  {
     id: "weekly",
     name: "\u672C\u5468\u7B14\u8BB0",
     type: "weekly",
     visible: true,
-    order: 1,
-    columns: 3
-  },
-  {
-    id: "recent",
-    name: "\u6700\u8FD1\u7F16\u8F91",
-    type: "recent",
-    visible: true,
-    order: 2,
+    order: 3,
     columns: 3
   },
   {
@@ -3562,7 +3699,7 @@ var DEFAULT_HOME_MODULES = [
     name: "\u7B14\u8BB0\u7EDF\u8BA1",
     type: "stats",
     visible: true,
-    order: 3,
+    order: 4,
     columns: 4
   },
   {
@@ -3570,7 +3707,7 @@ var DEFAULT_HOME_MODULES = [
     name: "\u65E5\u5386",
     type: "calendar",
     visible: true,
-    order: 4,
+    order: 5,
     columns: 8
   }
 ];
@@ -3687,6 +3824,20 @@ var CardViewPlugin = class extends import_obsidian2.Plugin {
     if (!this.settings.homeModules || this.settings.homeModules.length === 0) {
       this.settings.homeModules = DEFAULT_HOME_MODULES;
       await this.saveSettings();
+    } else {
+      const existingModuleIds = new Set(this.settings.homeModules.map((m) => m.id));
+      const newModules = DEFAULT_HOME_MODULES.filter((m) => !existingModuleIds.has(m.id));
+      if (newModules.length > 0) {
+        this.settings.homeModules = [
+          ...this.settings.homeModules,
+          ...newModules.map((m) => ({
+            ...m,
+            order: this.settings.homeModules.length + m.order
+            // 确保新模块排在最后
+          }))
+        ];
+        await this.saveSettings();
+      }
     }
   }
   async saveSettings() {

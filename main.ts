@@ -203,9 +203,28 @@ export default class CardViewPlugin extends Plugin {
 
     async loadSettings() {
         this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+        
+        // 检查是否需要更新默认模块配置
         if (!this.settings.homeModules || this.settings.homeModules.length === 0) {
+            // 使用完整的默认模块配置
             this.settings.homeModules = DEFAULT_HOME_MODULES;
             await this.saveSettings();
+        } else {
+            // 检查是否需要添加新模块
+            const existingModuleIds = new Set(this.settings.homeModules.map(m => m.id));
+            const newModules = DEFAULT_HOME_MODULES.filter(m => !existingModuleIds.has(m.id));
+            
+            if (newModules.length > 0) {
+                // 将新模块添加到现有配置中
+                this.settings.homeModules = [
+                    ...this.settings.homeModules,
+                    ...newModules.map(m => ({
+                        ...m,
+                        order: this.settings.homeModules.length + m.order // 确保新模块排在最后
+                    }))
+                ];
+                await this.saveSettings();
+            }
         }
     }
 

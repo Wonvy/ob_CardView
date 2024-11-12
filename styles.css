@@ -2585,4 +2585,69 @@
   padding: 20px;
 }
 
+.graph-container {
+  height: 300px;
+  width: 100%;
+  background: var(--background-secondary);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.graph-container .graph-view-container {
+  height: 100%;
+  width: 100%;
+}
+
+.quicknote-module {
+  padding: 16px;
+  background: var(--background-secondary);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.quicknote-module .quick-note-title {
+  width: 100%;
+  padding: 8px;
+  border: none;
+  background: transparent;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text-normal);
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+.quicknote-module .quick-note-title::placeholder {
+  color: var(--text-muted);
+  font-weight: normal;
+}
+.quicknote-module .quick-note-input {
+  width: 100%;
+  min-height: 100px;
+  padding: 8px;
+  border: none;
+  background: transparent;
+  resize: vertical;
+  color: var(--text-normal);
+  font-size: 14px;
+}
+.quicknote-module .quick-note-input::placeholder {
+  color: var(--text-muted);
+}
+.quicknote-module .tags-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-height: 32px;
+  padding: 4px 0;
+}
+.quicknote-module .quick-note-toolbar {
+  display: flex;
+  gap: 8px;
+  padding: 8px 0;
+  border-top: 1px solid var(--background-modifier-border);
+}
+.quicknote-module .quick-note-send {
+  align-self: flex-end;
+  margin-top: 8px;
+}
+
 /*# sourceMappingURL=styles.css.map */
