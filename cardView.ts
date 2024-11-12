@@ -36,6 +36,10 @@ export class CardView extends ItemView {
     private monthViewContainer: HTMLElement = createDiv();
     private isMonthViewVisible: boolean = false;
 
+    // 在 CardView 类中添加新的属性
+    private intersectionObserver: IntersectionObserver | undefined;
+    private loadedNotes: Set<string> = new Set();
+
     /**
      * 构造函数
      * @param leaf - 工作区叶子节点
@@ -45,6 +49,29 @@ export class CardView extends ItemView {
         super(leaf);
         this.plugin = plugin;
         this.currentView = plugin.settings.defaultView;
+        
+        // 在构造函数中初始化 intersectionObserver
+        this.intersectionObserver = new IntersectionObserver(
+            (entries) => {
+                entries.forEach(async (entry) => {
+                    if (entry.isIntersecting) {
+                        const noteContent = entry.target as HTMLElement;
+                        const filePath = noteContent.getAttribute('data-path');
+                        
+                        if (filePath && !this.loadedNotes.has(filePath)) {
+                            const file = this.app.vault.getAbstractFileByPath(filePath);
+                            if (file instanceof TFile) {
+                                await this.loadNoteContent(noteContent, file);
+                            }
+                        }
+                    }
+                });
+            },
+            {
+                rootMargin: '100px',
+                threshold: 0.1
+            }
+        );
     }
 
     /**
@@ -637,16 +664,32 @@ export class CardView extends ItemView {
                 );
             }
 
+            // 修改笔记内容容器的创建方式
+            noteContent.setAttribute('data-path', file.path);
+            
+            // 添加加载占位符
+            const loadingPlaceholder = noteContent.createDiv('content-placeholder');
+            loadingPlaceholder.setText('Loading...');
+
+            // 使用 Intersection Observer 监听卡片可见性
+            this.observeNoteContent(noteContent, file);
+
             // 鼠标悬停事件
             card.addEventListener('mouseenter', async () => {
-                openButton.style.opacity = '1';  // 显示打开按钮
+                openButton.style.opacity = '1';
                 title.style.opacity = '0';
-                title.style.display = 'none'; 
+                title.style.display = 'none';
                 noteContent.style.opacity = '1';
                 
-                // 在预览栏中显示完整容
+                // 确保内容已加载
+                if (!this.loadedNotes.has(file.path)) {
+                    await this.loadNoteContent(noteContent, file);
+                }
+                
+                // 在预览栏中显示完整内容
                 try {
                     this.previewContainer.empty();
+                    const content = await this.app.vault.read(file);
                     await MarkdownRenderer.render(
                         this.app,
                         content,
@@ -846,7 +889,7 @@ export class CardView extends ItemView {
         
         if (mainLayout instanceof HTMLElement && contentSection instanceof HTMLElement) {
             const totalWidth = mainLayout.offsetWidth;
-            const newContentWidth = totalWidth - previewWidth - 4; // 4px 是分隔线宽度
+            const newContentWidth = totalWidth - previewWidth - 4; // 4px 是分隔宽度
             contentSection.style.width = `${newContentWidth}px`;
             
             // 重新计算卡片列数
@@ -980,6 +1023,14 @@ export class CardView extends ItemView {
 
     // 刷新视图（用于搜索和过滤）
     private async refreshView() {
+        // 清理已加载的笔记记录
+        this.loadedNotes.clear();
+        
+        // 断开之前的观察器
+        if (this.intersectionObserver) {
+            this.intersectionObserver.disconnect();
+        }
+        
         const files = this.app.vault.getMarkdownFiles();
         this.container.empty();
 
@@ -1218,7 +1269,7 @@ export class CardView extends ItemView {
         }
     }
 
-    // 添加调整卡片高度的方法
+    // 添调整卡片高度的法
     private adjustCardHeight(delta: number) {
         const adjustment = delta > 0 ? -10 : 10;
         const newHeight = Math.max(
@@ -1610,7 +1661,7 @@ export class CardView extends ItemView {
     private createCommandButton(toolbar: HTMLElement) {
         const commandContainer = toolbar.createDiv('command-container');
         
-        // 创建命��按
+        // 创建命按
         const commandBtn = commandContainer.createEl('button', {
             cls: 'command-button',
         });
@@ -2683,6 +2734,57 @@ export class CardView extends ItemView {
         if (isRight && isBottom) return 'bottom-right';
         if (!isRight && isBottom) return 'bottom-left';
         return 'center';
+    }
+
+    // 添加观察笔记内容的方法
+    private observeNoteContent(element: HTMLElement, file: TFile) {
+        if (this.intersectionObserver) {
+            this.intersectionObserver.observe(element);
+        }
+    }
+
+    // 添加加载笔记内容的方法
+    private async loadNoteContent(container: HTMLElement, file: TFile) {
+        if (this.loadedNotes.has(file.path)) return;
+        
+        try {
+            container.empty(); // 清除加载占位符
+            
+            const content = await this.app.vault.read(file);
+            await MarkdownRenderer.render(
+                this.app,
+                content,
+                container,
+                file.path,
+                this
+            );
+            
+            // 如果有搜索词，处理高亮
+            if (this.currentSearchTerm) {
+                const contentElements = container.querySelectorAll('p, li, h1, h2, h3, h4, h5, h6');
+                contentElements.forEach(element => {
+                    const originalText = element.textContent || '';
+                    if (originalText.toLowerCase().includes(this.currentSearchTerm.toLowerCase())) {
+                        element.innerHTML = this.highlightText(originalText, this.currentSearchTerm);
+                    }
+                });
+            }
+            
+            this.loadedNotes.add(file.path);
+            console.log('加载笔记内容成功:', file.path);
+        } catch (error) {
+            console.error('加载笔记内容失败:', error);
+            container.setText('加载失败');
+        }
+    }
+
+    // 修改 onClose 方法
+    async onClose() {
+        if (this.intersectionObserver) {
+            this.intersectionObserver.disconnect();
+        }
+        this.loadedNotes.clear();
+        // ... 其他清理代码 ...
     }
 }
 

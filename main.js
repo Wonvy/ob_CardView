@@ -62,8 +62,29 @@ var CardView = class extends import_obsidian.ItemView {
     this.currentFilter = { type: "none" };
     this.monthViewContainer = createDiv();
     this.isMonthViewVisible = false;
+    this.loadedNotes = /* @__PURE__ */ new Set();
     this.plugin = plugin;
     this.currentView = plugin.settings.defaultView;
+    this.intersectionObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach(async (entry) => {
+          if (entry.isIntersecting) {
+            const noteContent = entry.target;
+            const filePath = noteContent.getAttribute("data-path");
+            if (filePath && !this.loadedNotes.has(filePath)) {
+              const file = this.app.vault.getAbstractFileByPath(filePath);
+              if (file instanceof import_obsidian.TFile) {
+                await this.loadNoteContent(noteContent, file);
+              }
+            }
+          }
+        });
+      },
+      {
+        rootMargin: "100px",
+        threshold: 0.1
+      }
+    );
   }
   /**
    * 获取视图类型
@@ -464,16 +485,24 @@ ${content}` : content;
           this
         );
       }
+      noteContent.setAttribute("data-path", file.path);
+      const loadingPlaceholder = noteContent.createDiv("content-placeholder");
+      loadingPlaceholder.setText("Loading...");
+      this.observeNoteContent(noteContent, file);
       card.addEventListener("mouseenter", async () => {
         openButton.style.opacity = "1";
         title.style.opacity = "0";
         title.style.display = "none";
         noteContent.style.opacity = "1";
+        if (!this.loadedNotes.has(file.path)) {
+          await this.loadNoteContent(noteContent, file);
+        }
         try {
           this.previewContainer.empty();
+          const content2 = await this.app.vault.read(file);
           await import_obsidian.MarkdownRenderer.render(
             this.app,
-            content,
+            content2,
             this.previewContainer,
             file.path,
             this
@@ -723,6 +752,10 @@ ${content}` : content;
   // 刷新视图（用于搜索和过滤）
   async refreshView() {
     var _a;
+    this.loadedNotes.clear();
+    if (this.intersectionObserver) {
+      this.intersectionObserver.disconnect();
+    }
     const files = this.app.vault.getMarkdownFiles();
     this.container.empty();
     const searchTerm = (_a = this.currentSearchTerm) == null ? void 0 : _a.trim().toLowerCase();
@@ -901,7 +934,7 @@ ${content}` : content;
       this.plugin.saveCardWidth(newSize);
     }
   }
-  // 添加调整卡片高度的方法
+  // 添调整卡片高度的法
   adjustCardHeight(delta) {
     var _a, _b;
     const adjustment = delta > 0 ? -10 : 10;
@@ -1935,6 +1968,48 @@ ${content}` : content;
     if (isRight && isBottom) return "bottom-right";
     if (!isRight && isBottom) return "bottom-left";
     return "center";
+  }
+  // 添加观察笔记内容的方法
+  observeNoteContent(element, file) {
+    if (this.intersectionObserver) {
+      this.intersectionObserver.observe(element);
+    }
+  }
+  // 添加加载笔记内容的方法
+  async loadNoteContent(container, file) {
+    if (this.loadedNotes.has(file.path)) return;
+    try {
+      container.empty();
+      const content = await this.app.vault.read(file);
+      await import_obsidian.MarkdownRenderer.render(
+        this.app,
+        content,
+        container,
+        file.path,
+        this
+      );
+      if (this.currentSearchTerm) {
+        const contentElements = container.querySelectorAll("p, li, h1, h2, h3, h4, h5, h6");
+        contentElements.forEach((element) => {
+          const originalText = element.textContent || "";
+          if (originalText.toLowerCase().includes(this.currentSearchTerm.toLowerCase())) {
+            element.innerHTML = this.highlightText(originalText, this.currentSearchTerm);
+          }
+        });
+      }
+      this.loadedNotes.add(file.path);
+      console.log("\u52A0\u8F7D\u7B14\u8BB0\u5185\u5BB9\u6210\u529F:", file.path);
+    } catch (error) {
+      console.error("\u52A0\u8F7D\u7B14\u8BB0\u5185\u5BB9\u5931\u8D25:", error);
+      container.setText("\u52A0\u8F7D\u5931\u8D25");
+    }
+  }
+  // 修改 onClose 方法
+  async onClose() {
+    if (this.intersectionObserver) {
+      this.intersectionObserver.disconnect();
+    }
+    this.loadedNotes.clear();
   }
 };
 var ConfirmModal = class extends import_obsidian.Modal {
