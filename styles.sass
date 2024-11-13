@@ -2913,3 +2913,26 @@
                 &:hover
                     color: var(--text-error)
                     background: var(--background-modifier-error)
+
+// 添加拖拽相关的样式
+.module-container
+    &.module-dragging
+        opacity: 0.8
+        pointer-events: none
+        z-index: 1000
+        transition: transform 0.1s ease
+        
+        // 添加拖拽时的视觉反馈
+        &::after
+            content: ''
+            position: absolute
+            top: 0
+            left: 0
+            right: 0
+            bottom: 0
+            border: 2px dashed var(--interactive-accent)
+            border-radius: 8px
+            pointer-events: none
+            
+    // 其他模块在拖拽时的过渡效果
+    transition: transform 0.2s ease, opacity 0.2s ease

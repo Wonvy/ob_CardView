@@ -2779,4 +2779,25 @@
   background: var(--background-modifier-error);
 }
 
+.module-container {
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+.module-container.module-dragging {
+  opacity: 0.8;
+  pointer-events: none;
+  z-index: 1000;
+  transition: transform 0.1s ease;
+}
+.module-container.module-dragging::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border: 2px dashed var(--interactive-accent);
+  border-radius: 8px;
+  pointer-events: none;
+}
+
 /*# sourceMappingURL=styles.css.map */

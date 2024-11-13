@@ -3349,6 +3349,12 @@ ${content}` : content;
       this.setupResizeHandle(handle, module2, position);
     });
     this.setupModuleDragging(module2);
+    module2.addEventListener("mousedown", () => {
+      module2.classList.add("module-dragging");
+    });
+    document.addEventListener("mouseup", () => {
+      module2.classList.remove("module-dragging");
+    });
   }
   setupResizeHandle(handle, module2, position) {
     let startX;
@@ -3562,7 +3568,7 @@ ${content}` : content;
     const sendButton = inputContainer.createEl("button", {
       cls: "quick-note-send",
       attr: {
-        "title": "\u53D1\u9001\u7B14\u8BB0"
+        "title": "\u9001\u7B14\u8BB0"
       }
     });
     sendButton.innerHTML = `

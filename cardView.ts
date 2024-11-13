@@ -3782,7 +3782,7 @@ export class CardView extends ItemView {
             const cardWidth = (containerWidth - totalGap) / columns;
             container.style.gridTemplateColumns = `repeat(${columns}, ${cardWidth}px)`;
         } else {
-            // 自动计算每行卡片数量（使用视图默认值）
+            // 自动计算每行卡片数量（使用视图��认值）
             const defaultColumns = this.cardSettings[this.currentView as keyof typeof this.cardSettings].cardsPerRow;
             const columns = Math.min(defaultColumns, maxPossibleCards);
             const totalGap = currentSettings.cardGap * (columns - 1);
@@ -4322,7 +4322,7 @@ export class CardView extends ItemView {
             }
         });
         
-        // 创建热力图表格
+        // 创建热图表格
         const heatmapGrid = heatmapContainer.createDiv('heatmap-grid');
         
         // 添加星期标签
@@ -4692,6 +4692,15 @@ export class CardView extends ItemView {
         
         // 设置拖拽
         this.setupModuleDragging(module);
+        
+        // 添加拖拽时的样式类
+        module.addEventListener('mousedown', () => {
+            module.classList.add('module-dragging');
+        });
+        
+        document.addEventListener('mouseup', () => {
+            module.classList.remove('module-dragging');
+        });
     }
 
     private setupResizeHandle(handle: HTMLElement, module: HTMLElement, position: string) {
@@ -4979,7 +4988,7 @@ export class CardView extends ItemView {
         const sendButton = inputContainer.createEl('button', {
             cls: 'quick-note-send',
             attr: {
-                'title': '发送笔记'
+                'title': '送笔记'
             }
         });
         sendButton.innerHTML = `
