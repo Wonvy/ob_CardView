@@ -2368,7 +2368,7 @@ export class CardView extends ItemView {
         return text.replace(regex, '<span class="search-highlight">$1</span>');
     }
 
-    // 搜索=文件内容
+    // 搜索=文件内��
     private async fileContentContainsSearch(file: TFile): Promise<boolean> {
         if (!this.currentSearchTerm || this.currentSearchTerm.trim() === '') {
             return true;
@@ -3752,7 +3752,7 @@ export class CardView extends ItemView {
         return checkbox;
     }
 
-    // 更新卡片布局
+    // 新卡片布局
     private updateCardLayout() {
         const container = this.container;
         if (!container) return;
@@ -3782,7 +3782,7 @@ export class CardView extends ItemView {
             const cardWidth = (containerWidth - totalGap) / columns;
             container.style.gridTemplateColumns = `repeat(${columns}, ${cardWidth}px)`;
         } else {
-            // 自动计算每行卡片数量（使用视图��认值）
+            // 自动计算每行卡片数量（使用视图认值）
             const defaultColumns = this.cardSettings[this.currentView as keyof typeof this.cardSettings].cardsPerRow;
             const columns = Math.min(defaultColumns, maxPossibleCards);
             const totalGap = currentSettings.cardGap * (columns - 1);
@@ -4776,6 +4776,7 @@ export class CardView extends ItemView {
             
             module.style.zIndex = '1000';
             module.style.opacity = '0.8';
+            module.classList.add('module-dragging'); // 添加拖拽样式类
             
             document.addEventListener('mousemove', drag);
             document.addEventListener('mouseup', stopDrag);
@@ -4797,9 +4798,7 @@ export class CardView extends ItemView {
             if (!isDragging) return;
             
             isDragging = false;
-            module.style.zIndex = '';
-            module.style.opacity = '';
-            module.style.transform = '';
+            this.cleanupModuleEditing(module); // 使用 cleanupModuleEditing 来清理所有样式
             
             document.removeEventListener('mousemove', drag);
             document.removeEventListener('mouseup', stopDrag);
@@ -4878,6 +4877,10 @@ export class CardView extends ItemView {
         module.style.transform = '';
         module.style.zIndex = '';
         module.style.opacity = '';
+        module.classList.remove('module-dragging'); // 添加这行，移除拖拽时的样式类
+        
+        // 移除虚线边框
+        module.style.border = '1px solid var(--background-modifier-border)'; // 恢复默认边框样式
     }
     
     // 模块-关系图谱

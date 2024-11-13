@@ -1695,7 +1695,7 @@ ${content}` : content;
     const regex = new RegExp(`(${escapedSearchTerm})`, "gi");
     return text.replace(regex, '<span class="search-highlight">$1</span>');
   }
-  // 搜索=文件内容
+  // 搜索=文件内��
   async fileContentContainsSearch(file) {
     if (!this.currentSearchTerm || this.currentSearchTerm.trim() === "") {
       return true;
@@ -2679,7 +2679,7 @@ ${content}` : content;
     settingItem.appendChild(labelEl);
     return checkbox;
   }
-  // 更新卡片布局
+  // 新卡片布局
   updateCardLayout() {
     const container = this.container;
     if (!container) return;
@@ -3416,6 +3416,7 @@ ${content}` : content;
       startOrder = Array.from(((_a = module2.parentElement) == null ? void 0 : _a.children) || []).indexOf(module2);
       module2.style.zIndex = "1000";
       module2.style.opacity = "0.8";
+      module2.classList.add("module-dragging");
       document.addEventListener("mousemove", drag);
       document.addEventListener("mouseup", stopDrag);
     };
@@ -3429,9 +3430,7 @@ ${content}` : content;
     const stopDrag = () => {
       if (!isDragging) return;
       isDragging = false;
-      module2.style.zIndex = "";
-      module2.style.opacity = "";
-      module2.style.transform = "";
+      this.cleanupModuleEditing(module2);
       document.removeEventListener("mousemove", drag);
       document.removeEventListener("mouseup", stopDrag);
       this.saveModuleSettings();
@@ -3494,6 +3493,8 @@ ${content}` : content;
     module2.style.transform = "";
     module2.style.zIndex = "";
     module2.style.opacity = "";
+    module2.classList.remove("module-dragging");
+    module2.style.border = "1px solid var(--background-modifier-border)";
   }
   // 模块-关系图谱
   async renderGraphModule(container) {
