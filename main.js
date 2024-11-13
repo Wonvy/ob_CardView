@@ -3178,7 +3178,7 @@ ${content}` : content;
     card.createDiv("stat-label").setText(label);
     card.createDiv("stat-value").setText(value.toString());
   }
-  // 渲染日历模块
+  // 模块-日历
   async renderCalendarModule(container) {
     const moduleContainer = container.createDiv("calendar-module");
     const calendarSection = moduleContainer.createDiv("calendar-section");
@@ -3262,20 +3262,21 @@ ${content}` : content;
       });
     }
   }
-  // 添加获取周开始和结束时间的方法
+  // 获取周开始时间
   getStartOfWeek() {
     const date = /* @__PURE__ */ new Date();
     const day = date.getDay();
     const diff = date.getDate() - day + (day === 0 ? -6 : 1);
     return new Date(date.setDate(diff));
   }
+  // 获取周结束时间
   getEndOfWeek() {
     const date = /* @__PURE__ */ new Date();
     const day = date.getDay();
     const diff = date.getDate() - day + (day === 0 ? 0 : 7);
     return new Date(date.setDate(diff));
   }
-  // 添加获取热力图数据的方法
+  // 获取热力图数据
   getHeatmapData() {
     const data = [];
     const files = this.app.vault.getMarkdownFiles();
@@ -3289,11 +3290,11 @@ ${content}` : content;
     });
     return data;
   }
-  // 添加保存模块设置的方法
+  // 保存模块设置
   async saveModuleSettings() {
     await this.plugin.saveHomeModules(this.homeModules);
   }
-  // 添加渲染模块内容的方法
+  // 渲染模块内容
   async renderModuleContent(container, module2) {
     switch (module2.type) {
       case "heatmap":
@@ -3322,7 +3323,7 @@ ${content}` : content;
         break;
     }
   }
-  // 添加模块编辑功能
+  // 切换模块编辑
   toggleModuleEditing(enable) {
     const modules = this.container.querySelectorAll(".module-container");
     modules.forEach((module2) => {
@@ -3333,6 +3334,7 @@ ${content}` : content;
       }
     });
   }
+  // 设置模块编辑
   setupModuleEditing(module2) {
     const handles = [
       "top",
@@ -3356,6 +3358,7 @@ ${content}` : content;
       module2.classList.remove("module-dragging");
     });
   }
+  // 设置调整大小手柄
   setupResizeHandle(handle, module2, position) {
     let startX;
     let startY;
@@ -3396,6 +3399,7 @@ ${content}` : content;
     };
     handle.addEventListener("mousedown", startResize);
   }
+  // 设置模块拖拽
   setupModuleDragging(module2) {
     let isDragging = false;
     let startX;
@@ -3434,6 +3438,7 @@ ${content}` : content;
     };
     module2.addEventListener("mousedown", startDrag);
   }
+  // 检查模块位置
   checkModulePosition(dragModule, x, y) {
     const modules = Array.from(this.container.querySelectorAll(".module-container"));
     const dragIndex = modules.indexOf(dragModule);
@@ -3451,6 +3456,7 @@ ${content}` : content;
       }
     });
   }
+  // 更新模块顺序
   updateModuleOrder() {
     const modules = Array.from(this.container.querySelectorAll(".module-container"));
     modules.forEach((module2, index) => {
@@ -3461,6 +3467,7 @@ ${content}` : content;
       }
     });
   }
+  // 显示网格对齐指示器
   showGridSnapIndicator(module2, width) {
     let indicator = this.container.querySelector(".grid-snap-indicator");
     if (!indicator) {
@@ -3474,19 +3481,21 @@ ${content}` : content;
       indicator.style.height = `${rect.height}px`;
     }
   }
+  // 隐藏网格对齐指示器
   hideGridSnapIndicator() {
     const indicator = this.container.querySelector(".grid-snap-indicator");
     if (indicator) {
       indicator.remove();
     }
   }
+  // 清理模块编辑
   cleanupModuleEditing(module2) {
     module2.querySelectorAll(".resize-handle").forEach((handle) => handle.remove());
     module2.style.transform = "";
     module2.style.zIndex = "";
     module2.style.opacity = "";
   }
-  // 将这两个方法移到类的内部
+  // 模块-关系图谱
   async renderGraphModule(container) {
     const graphContainer = container.createDiv("graph-container");
     try {
@@ -3514,6 +3523,7 @@ ${content}` : content;
       graphContainer.setText("\u65E0\u6CD5\u52A0\u8F7D\u56FE\u8C31\u89C6\u56FE");
     }
   }
+  // 模块-快速笔记
   async renderQuickNoteModule(container) {
     const quickNoteContainer = container.createDiv("quicknote-module");
     const inputContainer = quickNoteContainer.createDiv("quick-note-input-container");
@@ -3609,7 +3619,7 @@ ${content}` : content;
       }
     });
   }
-  // 添加待办事项模块的渲染方法
+  // 模块-待办事项
   async renderTodoModule(container) {
     const todoContainer = container.createDiv("todo-module");
     const inputArea = todoContainer.createDiv("todo-input-area");
@@ -3675,7 +3685,7 @@ ${content}` : content;
       this.renderTodoList(todoList, todos, "completed");
     });
   }
-  // 添加加载待办事项的方法
+  // 加载待办事项
   async loadTodos() {
     try {
       const data = await this.plugin.loadData();
@@ -3685,7 +3695,7 @@ ${content}` : content;
       return [];
     }
   }
-  // 添加保存待办事项的方法
+  // 保存待办事项
   async saveTodos(todos) {
     try {
       const data = await this.plugin.loadData() || {};
@@ -3695,7 +3705,7 @@ ${content}` : content;
       console.error("\u4FDD\u5B58\u5F85\u529E\u4E8B\u9879\u5931\u8D25:", error);
     }
   }
-  // 添加渲染待办事项列表的方法
+  // 渲染待办事项列表
   renderTodoList(container, todos, filter) {
     container.empty();
     const filteredTodos = todos.filter((todo) => {

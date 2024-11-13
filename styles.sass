@@ -2456,6 +2456,29 @@
                         color: var(--text-muted)
                         font-size: 0.9em
 
+
+// 日历模块样式优化
+.home-container .module-container
+  &.calendar-module
+    display: flex
+    height: 100%
+    gap: 15px
+    justify-content: space-between
+    align-content: stretch
+    flex-wrap: nowrap
+
+    .module-header
+      display: none
+    .module-resize
+      display: none
+    .module-content
+      width: 100%
+      padding: 0
+
+
+
+
+
 // 模块管理器模态框样式优化
 .module-manager-modal
     .module-list
@@ -2568,18 +2591,23 @@
                 &.level-4
                     background-color: #216e39
 
+
+
 // 日历模块样式
 .calendar-module
     display: flex
     height: 100%
     gap: 16px
-    
+
     // 日历部分
     .calendar-section
         flex: 1
         min-width: 280px
+
         
         .calendar-container
+            width: 50%
+            height: 100%
             background: var(--background-primary)
             border: 1px solid var(--background-modifier-border)
             border-radius: 8px
@@ -2616,23 +2644,23 @@
                         background: var(--background-modifier-hover)
                     
                     &.scrollable
-                        position: relative
-                        
-                        &::after
-                            content: ''
-                            position: absolute
-                            bottom: 2px
-                            left: 50%
-                            transform: translateX(-50%)
-                            width: 10px
-                            height: 2px
-                            background: var(--text-muted)
-                            border-radius: 1px
-                            opacity: 0
-                            transition: opacity 0.2s ease
-                        
-                        &:hover::after
-                            opacity: 0.5
+                      position: relative
+                      
+                      &::after
+                        content: ''
+                        position: absolute
+                        bottom: 2px
+                        left: 50%
+                        transform: translateX(-50%)
+                        width: 10px
+                        height: 2px
+                        background: var(--text-muted)
+                        border-radius: 1px
+                        opacity: 0
+                        transition: opacity 0.2s ease
+                    
+                      &:hover::after
+                        opacity: 0.5
             
             .calendar-weekdays
                 display: grid
@@ -2692,38 +2720,42 @@
     
     // 笔记列表部分
     .notes-section
-        flex: 1
-        min-width: 200px
-        border: 1px solid var(--background-modifier-border)
-        border-radius: 8px
-        padding: 16px
+      flex: 1
+      height: 100%
+      min-width: 200px
+      border: 1px solid var(--background-modifier-border)
+      border-radius: 8px
+      padding: 16px
+      overflow: hidden
+      
+      .date-title
+        font-weight: 500
+        color: var(--text-normal)
+        margin-bottom: 12px
+        padding-bottom: 3px
+        border-bottom: 1px solid var(--background-modifier-border)
+      
+      .notes-list
+        display: flex
+        height: 100%
+        overflow: auto
+        flex-direction: column
+        gap: 8px
         
-        .date-title
-            font-weight: 500
-            color: var(--text-normal)
-            margin-bottom: 12px
-            padding-bottom: 8px
-            border-bottom: 1px solid var(--background-modifier-border)
-        
-        .notes-list
-            display: flex
-            flex-direction: column
-            gap: 8px
-            
-            .note-item
-                padding: 8px
-                border-radius: 4px
-                cursor: pointer
-                transition: all 0.2s ease
-                
-                &:hover
-                    background: var(--background-modifier-hover)
-                    transform: translateX(4px)
-        
-        .empty-message
-            color: var(--text-muted)
-            text-align: center
-            padding: 20px
+        .note-item
+          padding: 8px
+          border-radius: 4px
+          cursor: pointer
+          transition: all 0.2s ease
+          
+          &:hover
+            background: var(--background-modifier-hover)
+            transform: translateX(4px)
+  
+      .empty-message
+        color: var(--text-muted)
+        text-align: center
+        padding: 20px
 
 // 关系图谱模块样式
 .graph-container
@@ -2916,23 +2948,23 @@
 
 // 添加拖拽相关的样式
 .module-container
-    &.module-dragging
-        opacity: 0.8
-        pointer-events: none
-        z-index: 1000
-        transition: transform 0.1s ease
-        
-        // 添加拖拽时的视觉反馈
-        &::after
-            content: ''
-            position: absolute
-            top: 0
-            left: 0
-            right: 0
-            bottom: 0
-            border: 2px dashed var(--interactive-accent)
-            border-radius: 8px
-            pointer-events: none
-            
-    // 其他模块在拖拽时的过渡效果
-    transition: transform 0.2s ease, opacity 0.2s ease
+  &.module-dragging
+    opacity: 0.8
+    pointer-events: none
+    z-index: 1000
+    transition: transform 0.1s ease
+    
+    // 添加拖拽时的视觉反馈
+    &::after
+      content: ''
+      position: absolute
+      top: 0
+      left: 0
+      right: 0
+      bottom: 0
+      border: 2px dashed var(--interactive-accent)
+      border-radius: 8px
+      pointer-events: none
+      
+  // 其他模块在拖拽时的过渡效果
+  transition: transform 0.2s ease, opacity 0.2s ease

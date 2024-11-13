@@ -4457,7 +4457,7 @@ export class CardView extends ItemView {
         card.createDiv('stat-value').setText(value.toString());
     }
 
-    // 渲染日历模块
+    // 模块-日历
     private async renderCalendarModule(container: HTMLElement) {
         const moduleContainer = container.createDiv('calendar-module');
         
@@ -4592,7 +4592,7 @@ export class CardView extends ItemView {
         }
     }
 
-    // 添加获取周开始和结束时间的方法
+    // 获取周开始时间
     private getStartOfWeek(): Date {
         const date = new Date();
         const day = date.getDay();
@@ -4600,6 +4600,7 @@ export class CardView extends ItemView {
         return new Date(date.setDate(diff));
     }
 
+    // 获取周结束时间
     private getEndOfWeek(): Date {
         const date = new Date();
         const day = date.getDay();
@@ -4607,7 +4608,7 @@ export class CardView extends ItemView {
         return new Date(date.setDate(diff));
     }
 
-    // 添加获取热力图数据的方法
+    // 获取热力图数据
     private getHeatmapData(): { date: string; count: number }[] {
         const data: { date: string; count: number }[] = [];
         const files = this.app.vault.getMarkdownFiles();
@@ -4629,13 +4630,13 @@ export class CardView extends ItemView {
         return data;
     }
 
-    // 添加保存模块设置的方法
+    // 保存模块设置
     private async saveModuleSettings() {
         // 保存到插件设置中
         await this.plugin.saveHomeModules(this.homeModules);
     }
 
-    // 添加渲染模块内容的方法
+    // 渲染模块内容
     private async renderModuleContent(container: HTMLElement, module: HomeModule) {
         switch (module.type) {
             case 'heatmap':
@@ -4665,7 +4666,7 @@ export class CardView extends ItemView {
         }
     }
 
-    // 添加模块编辑功能
+    // 切换模块编辑
     private toggleModuleEditing(enable: boolean) {
         const modules = this.container.querySelectorAll('.module-container');
         
@@ -4678,6 +4679,7 @@ export class CardView extends ItemView {
         });
     }
 
+    // 设置模块编辑
     private setupModuleEditing(module: HTMLElement) {
         // 添加调整大小的手柄
         const handles = [
@@ -4703,6 +4705,7 @@ export class CardView extends ItemView {
         });
     }
 
+    // 设置调整大小手柄
     private setupResizeHandle(handle: HTMLElement, module: HTMLElement, position: string) {
         let startX: number;
         let startY: number;
@@ -4754,6 +4757,7 @@ export class CardView extends ItemView {
         handle.addEventListener('mousedown', startResize);
     }
 
+    // 设置模块拖拽
     private setupModuleDragging(module: HTMLElement) {
         let isDragging = false;
         let startX: number;
@@ -4806,6 +4810,7 @@ export class CardView extends ItemView {
         module.addEventListener('mousedown', startDrag);
     }
 
+    // 检查模块位置
     private checkModulePosition(dragModule: HTMLElement, x: number, y: number) {
         const modules = Array.from(this.container.querySelectorAll('.module-container'));
         const dragIndex = modules.indexOf(dragModule);
@@ -4828,6 +4833,7 @@ export class CardView extends ItemView {
         });
     }
 
+    // 更新模块顺序
     private updateModuleOrder() {
         const modules = Array.from(this.container.querySelectorAll('.module-container'));
         modules.forEach((module, index) => {
@@ -4839,6 +4845,7 @@ export class CardView extends ItemView {
         });
     }
 
+    // 显示网格对齐指示器
     private showGridSnapIndicator(module: HTMLElement, width: number) {
         let indicator = this.container.querySelector('.grid-snap-indicator');
         if (!indicator) {
@@ -4854,6 +4861,7 @@ export class CardView extends ItemView {
         }
     }
 
+    // 隐藏网格对齐指示器
     private hideGridSnapIndicator() {
         const indicator = this.container.querySelector('.grid-snap-indicator');
         if (indicator) {
@@ -4861,6 +4869,7 @@ export class CardView extends ItemView {
         }
     }
 
+    // 清理模块编辑
     private cleanupModuleEditing(module: HTMLElement) {
         // 移除所有调整大小的手柄
         module.querySelectorAll('.resize-handle').forEach(handle => handle.remove());
@@ -4870,8 +4879,8 @@ export class CardView extends ItemView {
         module.style.zIndex = '';
         module.style.opacity = '';
     }
-
-    // 将这两个方法移到类的内部
+    
+    // 模块-关系图谱
     private async renderGraphModule(container: HTMLElement) {
         // 创建图谱容器
         const graphContainer = container.createDiv('graph-container');
@@ -4910,6 +4919,7 @@ export class CardView extends ItemView {
         }
     }
 
+    // 模块-快速笔记
     private async renderQuickNoteModule(container: HTMLElement) {
         const quickNoteContainer = container.createDiv('quicknote-module');
         
@@ -5040,7 +5050,7 @@ export class CardView extends ItemView {
         });
     }
 
-    // 添加待办事项模块的渲染方法
+    // 模块-待办事项
     private async renderTodoModule(container: HTMLElement) {
         const todoContainer = container.createDiv('todo-module');
         
@@ -5130,7 +5140,8 @@ export class CardView extends ItemView {
             this.renderTodoList(todoList, todos, 'completed');
         });
     }
-    // 添加加载待办事项的方法
+
+    // 加载待办事项
     private async loadTodos(): Promise<any[]> {
         try {
             const data = await this.plugin.loadData();
@@ -5140,7 +5151,8 @@ export class CardView extends ItemView {
             return [];
         }
     }
-    // 添加保存待办事项的方法
+
+    // 保存待办事项
     private async saveTodos(todos: any[]) {
         try {
             const data = await this.plugin.loadData() || {};
@@ -5150,7 +5162,8 @@ export class CardView extends ItemView {
             console.error('保存待办事项失败:', error);
         }
     }
-    // 添加渲染待办事项列表的方法
+
+    // 渲染待办事项列表
     private renderTodoList(container: HTMLElement, todos: any[], filter: 'all' | 'pending' | 'completed') {
         container.empty();
         
@@ -5213,6 +5226,7 @@ export class CardView extends ItemView {
     }
 }
 
+// 模块管理弹窗
 class ModuleManagerModal extends Modal {
     private modules: HomeModule[];
     private onSave: (modules: HomeModule[]) => void;
@@ -5303,7 +5317,7 @@ class ModuleManagerModal extends Modal {
     }
 }
 
-// 添加默认主页模块配置
+// 默认主页模块配置
 export const DEFAULT_HOME_MODULES: HomeModule[] = [
     {
         id: 'heatmap',
