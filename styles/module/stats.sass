@@ -1,18 +1,23 @@
 // 模块-统计
 .stats-module
+  
   .stats-container
     display: flex
     flex-direction: row
     justify-content: space-evenly
+
     .stat-card
-        text-align: center
-        padding: 8px
+      text-align: center
+      display: flex
+      gap: 5px
+      padding: 8px
+      flex-direction: column
 
-        .stat-label
-            color: var(--text-muted)
-            font-size: 0.8em
+      .stat-label
+        color: var(--text-muted)
+        font-size: 0.8em
 
-        .stat-value
-            font-size: 1.3em
-            font-weight: bold
-            color: var(--text-accent)
+      .stat-value
+        font-size: 1.3em
+        font-weight: bold
+        color: var(--text-accent)

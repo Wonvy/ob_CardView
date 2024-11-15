@@ -7,16 +7,18 @@
 @use "styles/components/search"
 @use "styles/components/card"
 
-@use "styles/views/week"
-@use "styles/views/timeline"
-@use "styles/views/list"
-@use "styles/views/month"
-
-
 @use "styles/module/tudo"
 @use "styles/module/weeklynotes"
 @use "styles/module/stats"
 @use "styles/module/heatmap"
+@use "styles/module/md_calendar"
+
+
+@use "styles/views/week"
+@use "styles/views/timeline"
+@use "styles/views/list"
+@use "styles/views/month"
+@use "styles/views/home"
 
   
 // 主容器布局   	
@@ -465,132 +467,6 @@
   to
     opacity: 1
 
-
-
-// 主页视图样式优化
-.home-container
+.card-container[data-view="home"]
   display: flex
-  width: 100%
-  .module-grid
-    display: flex
-    width: 100%
-    max-width: 1920px
-    gap: 0px
-    padding: 20px
-    justify-content: center
- 
-    // 左侧列
-    .left-column
-      flex: 25%  // 25% 的宽度
-      display: flex
-      flex-direction: column
-      gap: 20px
-      // min-width: 250px  // 设置最小宽度防止过小
-      border: 1px dashed var(--background-modifier-border)
-      padding: 10px
-      border-radius: 8px
-      
-    // 中间列
-    .center-column
-      flex: 50%  // 50% 的宽度
-      display: flex
-      flex-direction: column
-      gap: 20px
-      // min-width: 400px  // 设置最小宽度防止过小
-      border: 1px dashed var(--background-modifier-border)
-      padding: 10px
-      border-radius: 8px
-        
-    // 右侧列
-    .right-column
-      flex: 25%  // 25% 的宽度
-      display: flex
-      flex-direction: column
-      gap: 20px
-      // min-width: 250px  // 设置最小宽度防止过小
-      border: 1px dashed var(--background-modifier-border)
-      padding: 10px
-      border-radius: 8px
-
-
-// 模块容器样式
-.module-container
-  width: 100%
-  background: var(--background-secondary)
-  border-radius: 8px
-  border: 1px solid var(--background-modifier-border)
-  transition: transform 0.2s ease, box-shadow 0.2s ease
-  &.dragging
-    opacity: 0.7
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15)
-    z-index: 1000
-    cursor: grabbing
-    position: relative
-    pointer-events: none
-    
-    // 根据目标位置调整宽度
-    &[data-target-position="left"],
-    &[data-target-position="right"]
-        width: 25%  // 左右列宽度
-    
-    &[data-target-position="center"]
-      width: 50%  // 中间列宽度
-  &.drop-target // 放置目标样式
-    background: var(--background-modifier-hover)
-    border: 2px dashed var(--interactive-accent)
-    // 根据列位置显示不同的宽度指示
-    &[data-position="left"],
-    &[data-position="right"]
-      width: 25%
-    
-    &[data-position="center"]
-      width: 50%
-
-  .module-header
-    padding: 8px 10px
-    border-bottom: 1px solid var(--background-modifier-border)
-    display: flex
-    justify-content: space-between
-    align-items: center
-    
-    h3
-      margin: 0
-      font-size: 1.1em
-      color: var(--text-normal)
-
-  // 添加模块大小控制按钮
-  &:hover .module-resize
-    opacity: 1
-  .module-resize
-    position: absolute
-    top: 8px
-    right: 8px
-    display: flex
-    gap: 4px
-    opacity: 0
-    transition: opacity 0.2s ease
-    
-    button
-      background: var(--background-primary)
-      border: 1px solid var(--background-modifier-border)
-      border-radius: 4px
-      width: 24px
-      height: 24px
-      display: flex
-      align-items: center
-      justify-content: center
-      cursor: pointer
-      transition: all 0.2s ease
-      
-      &:hover
-        background: var(--background-modifier-hover)
-        border-color: var(--interactive-accent)
-      
-      svg
-        width: 14px
-        height: 14px
-        color: var(--text-muted)
-
-  .module-content
-    padding: 8px
-
+  padding: 0

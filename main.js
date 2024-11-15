@@ -87,6 +87,46 @@ function getWeekDates(year, week) {
   console.log("\u751F\u6210\u7684\u65E5\u671F\u8303\u56F4:", dates.map((d) => d.toISOString()));
   return dates;
 }
+function getEndOfWeek() {
+  const date = /* @__PURE__ */ new Date();
+  const day = date.getDay();
+  const diff = date.getDate() - day + (day === 0 ? 0 : 7);
+  return new Date(date.setDate(diff));
+}
+function getStartOfWeek() {
+  const date = /* @__PURE__ */ new Date();
+  const day = date.getDay();
+  const diff = date.getDate() - day + (day === 0 ? -6 : 1);
+  return new Date(date.setDate(diff));
+}
+
+// ts/models.ts
+async function renderStats(app, container) {
+  console.log("Rendering stats module...");
+  const statsContainer = container.createDiv("stats-container");
+  const createStatCard = (container2, label, value) => {
+    const card = container2.createDiv("stat-card");
+    card.createDiv("stat-label").setText(label);
+    card.createDiv("stat-value").setText(value.toString());
+  };
+  const files = app.vault.getMarkdownFiles();
+  const totalNotes = files.length;
+  let totalWords = 0;
+  for (const file of files) {
+    const content = await app.vault.read(file);
+    totalWords += content.split(/\s+/).length;
+  }
+  const allTags = /* @__PURE__ */ new Set();
+  files.forEach((file) => {
+    const cache = app.metadataCache.getFileCache(file);
+    if (cache == null ? void 0 : cache.tags) {
+      cache.tags.forEach((tag) => allTags.add(tag.tag));
+    }
+  });
+  createStatCard(statsContainer, "\u603B\u7B14\u8BB0\u6570", totalNotes);
+  createStatCard(statsContainer, "\u603B\u5B57\u6570", totalWords);
+  createStatCard(statsContainer, "\u4F7F\u7528\u6807\u7B7E\u6570", allTags.size);
+}
 
 // cardView.ts
 var VIEW_TYPE_CARD = "card-view";
@@ -319,8 +359,6 @@ var CardView = class extends import_obsidian2.ItemView {
         columns: 4
       }
     ];
-    // 添加相关的样式类型定义
-    this.gridSnapIndicator = null;
     this.plugin = plugin;
     this.currentView = "card";
     this.container = createDiv();
@@ -1175,6 +1213,14 @@ ${content}` : content;
       if (this.cardSettings.card.showContent) {
         const noteContent = cardContent.createDiv("note-content");
       }
+      card.addEventListener("contextmenu", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        this.showContextMenu(e, [file]);
+      });
+      card.addEventListener("click", (e) => {
+        this.handleCardSelection(file.path, e);
+      });
       return card;
     } catch (error) {
       console.error("\u7B14\u8BB0\u52A0\u8F7D\u5931\u8D25:", error);
@@ -1499,6 +1545,7 @@ ${content}` : content;
   }
   // 右键菜单
   showContextMenu(event, files) {
+    console.log("\u663E\u793A\u53F3\u952E\u83DC\u5355:", event, files);
     const menu = new import_obsidian2.Menu();
     if (files.length > 0) {
       menu.addItem((item) => {
@@ -1604,16 +1651,6 @@ ${content}` : content;
       }
     });
   }
-  //  按月份过滤
-  filterNotesByMonth(date) {
-    const year = date.getFullYear();
-    const month = date.getMonth();
-    this.currentFilter = {
-      type: "date",
-      value: `${year}-${(month + 1).toString().padStart(2, "0")}`
-    };
-    this.refreshView();
-  }
   // 日历-显示
   showCalendar() {
     if (!this.calendarContainer) return;
@@ -1664,6 +1701,7 @@ ${content}` : content;
     });
     this.renderCalendarContent(this.calendarContainer);
   }
+  // 日历-隐藏
   hideCalendar() {
     if (!this.calendarContainer) return;
     this.calendarContainer.style.display = "none";
@@ -1682,45 +1720,6 @@ ${content}` : content;
     );
     const notesSection = container.createDiv("notes-section");
     this.renderCalendarDays(grid, notesByDate, notesSection);
-  }
-  // 日-获取每日笔记数量
-  getNotesCountByDate(year, month) {
-    const counts = {};
-    const files = this.app.vault.getMarkdownFiles();
-    files.forEach((file) => {
-      const date = new Date(file.stat.mtime);
-      if (date.getFullYear() === year && date.getMonth() === month) {
-        const dateStr = date.toISOString().split("T")[0];
-        counts[dateStr] = (counts[dateStr] || 0) + 1;
-      }
-    });
-    return counts;
-  }
-  // 日历-根据日期过滤笔记
-  filterNotesByDate(dateStr) {
-    if (this.currentFilter.type === "date" && this.currentFilter.value === dateStr) {
-      this.clearDateFilter();
-      return;
-    }
-    this.calendarContainer.querySelectorAll(".calendar-day").forEach((day) => {
-      day.removeClass("selected");
-    });
-    this.currentFilter = { type: "date", value: dateStr };
-    const selectedDay = this.calendarContainer.querySelector(`.calendar-day[data-date="${dateStr}"]`);
-    if (selectedDay) {
-      selectedDay.addClass("selected");
-    }
-    this.refreshView();
-  }
-  // 日历-清除日期过滤
-  clearDateFilter() {
-    this.currentFilter = { type: "none" };
-    if (this.calendarContainer) {
-      this.calendarContainer.querySelectorAll(".calendar-day").forEach((day) => {
-        day.removeClass("selected");
-      });
-    }
-    this.refreshView();
   }
   // 高亮文本
   highlightText(text, searchTerm) {
@@ -2079,6 +2078,7 @@ ${emptyNotes.map((file) => file.basename).join("\n")}`
       await openInAppropriateLeaf(this.app, note);
     });
     noteItem.addEventListener("contextmenu", (e) => {
+      console.log("\u53F3\u83DC\u5355");
       e.preventDefault();
       this.showContextMenu(e, this.getSelectedFiles());
     });
@@ -2917,7 +2917,7 @@ ${content}` : content;
     this.currentWeek = this.getWeekNumber(today);
     this.createWeekView();
   }
-  // 修改获取指定日期的笔记方法，加日期范围检查
+  // 修改获取指定日期的笔记方法加日期范围查
   async getNotesForDate(date) {
     const files = this.app.vault.getMarkdownFiles();
     return files.filter((file) => {
@@ -3158,8 +3158,8 @@ ${content}` : content;
   async renderWeeklyNotes(container) {
     console.log("Rendering weekly notes module...");
     const weeklyContainer = container.createDiv("weekly-notes");
-    const weekStart = this.getStartOfWeek();
-    const weekEnd = this.getEndOfWeek();
+    const weekStart = getStartOfWeek();
+    const weekEnd = getEndOfWeek();
     const notes = this.app.vault.getMarkdownFiles().filter((file) => {
       const mtime = new Date(file.stat.mtime);
       return mtime >= weekStart && mtime <= weekEnd;
@@ -3176,51 +3176,6 @@ ${content}` : content;
       });
     }
   }
-  // 模块-最近编辑
-  async renderRecentNotes(container) {
-    console.log("Rendering recent notes module...");
-    const recentContainer = container.createDiv("recent-notes");
-    const notes = this.app.vault.getMarkdownFiles().sort((a, b) => b.stat.mtime - a.stat.mtime).slice(0, 10);
-    for (const note of notes) {
-      const noteItem = recentContainer.createDiv("note-item");
-      noteItem.createEl("span", { text: note.basename, cls: "note-title" });
-      noteItem.createEl("span", {
-        text: new Date(note.stat.mtime).toLocaleDateString(),
-        cls: "note-date"
-      });
-      noteItem.addEventListener("click", () => {
-        openInAppropriateLeaf(this.app, note);
-      });
-    }
-  }
-  // 模块-统计信息
-  async renderStats(container) {
-    console.log("Rendering stats module...");
-    const statsContainer = container.createDiv("stats-container");
-    const files = this.app.vault.getMarkdownFiles();
-    const totalNotes = files.length;
-    let totalWords = 0;
-    for (const file of files) {
-      const content = await this.app.vault.read(file);
-      totalWords += content.split(/\s+/).length;
-    }
-    const allTags = /* @__PURE__ */ new Set();
-    files.forEach((file) => {
-      const cache = this.app.metadataCache.getFileCache(file);
-      if (cache == null ? void 0 : cache.tags) {
-        cache.tags.forEach((tag) => allTags.add(tag.tag));
-      }
-    });
-    this.createStatCard(statsContainer, "\u603B\u7B14\u8BB0\u6570", totalNotes);
-    this.createStatCard(statsContainer, "\u603B\u5B57\u6570", totalWords);
-    this.createStatCard(statsContainer, "\u4F7F\u7528\u6807\u7B7E\u6570", allTags.size);
-  }
-  // 添加创建统计卡片的辅助方法
-  createStatCard(container, label, value) {
-    const card = container.createDiv("stat-card");
-    card.createDiv("stat-label").setText(label);
-    card.createDiv("stat-value").setText(value.toString());
-  }
   // 模块-日历
   async renderCalendarModule(container) {
     container.empty();
@@ -3235,6 +3190,20 @@ ${content}` : content;
     titleEl.setText(`${this.currentDate.getFullYear()}\u5E74${this.currentDate.getMonth() + 1}\u6708`);
     const nextBtn = header.createEl("button", { cls: "calendar-nav-btn" });
     nextBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>';
+    const todayBtn = header.createEl("button", { cls: "calendar-today-btn" });
+    todayBtn.innerText = "\u4ECA\u5929";
+    todayBtn.addEventListener("click", () => {
+      this.currentDate.setFullYear((/* @__PURE__ */ new Date()).getFullYear());
+      this.currentDate.setMonth((/* @__PURE__ */ new Date()).getMonth());
+      this.renderCalendarModule(container);
+      const today = (/* @__PURE__ */ new Date()).getDate();
+      const dayElements = document.querySelectorAll(".calendar-grid .day");
+      dayElements.forEach((day) => {
+        if (day.textContent === today.toString()) {
+          day.classList.add("today");
+        }
+      });
+    });
     titleEl.addEventListener("wheel", (e) => {
       e.preventDefault();
       if (e.deltaY < 0) {
@@ -3265,6 +3234,10 @@ ${content}` : content;
       this.currentDate.setMonth(this.currentDate.getMonth() + 1);
       this.renderCalendarModule(container);
     });
+    notesSection.addEventListener("mouseleave", (event) => {
+      console.log("mouseleave", event);
+      notesSection.classList.remove("active");
+    });
   }
   // 渲染日历天数
   renderCalendarDays(grid, notesByDate, notesSection) {
@@ -3287,15 +3260,16 @@ ${content}` : content;
       if (dayNotes.length > 0) {
         dateCell.createDiv("note-count").setText(dayNotes.length.toString());
       }
-      dateCell.addEventListener("mouseenter", () => {
+      const displayNotesForDate = (dateStr2, dayNotes2) => {
         notesSection.empty();
-        if (dayNotes.length > 0) {
+        if (dayNotes2.length > 0) {
           const dateTitle = notesSection.createDiv("date-title");
-          dateTitle.setText(`${dateStr} \u7684\u7B14\u8BB0`);
+          dateTitle.setText(`${dateStr2} \u7684\u7B14\u8BB0`);
           const notesList = notesSection.createDiv("notes-list");
-          dayNotes.forEach((note) => {
+          dayNotes2.forEach((note) => {
             const noteItem = notesList.createDiv("note-item");
-            noteItem.setText(note.basename);
+            noteItem.setText(`${note.basename}`);
+            noteItem.title = `${note.parent ? note.parent.path : "\u672A\u77E5\u8DEF\u5F84"}`;
             noteItem.addEventListener("click", () => {
               openInAppropriateLeaf(this.app, note);
             });
@@ -3303,22 +3277,27 @@ ${content}` : content;
         } else {
           notesSection.createDiv("empty-message").setText("\u5F53\u5929\u6CA1\u6709\u7B14\u8BB0");
         }
+      };
+      dateCell.addEventListener("mouseenter", () => {
+        if (!notesSection.classList.contains("active")) {
+          displayNotesForDate(dateStr, dayNotes);
+        }
+      });
+      dateCell.addEventListener("click", () => {
+        displayNotesForDate(dateStr, dayNotes);
+        if (dateCell.classList.contains("selected")) {
+          dateCell.classList.remove("selected");
+          notesSection.classList.remove("active");
+        } else {
+          document.querySelectorAll(".calendar-module .calendar-grid .calendar-day.selected").forEach((el) => {
+            el.classList.remove("selected");
+            notesSection.classList.remove("active");
+          });
+          dateCell.classList.add("selected");
+          notesSection.classList.add("active");
+        }
       });
     }
-  }
-  // 获取周开始时间
-  getStartOfWeek() {
-    const date = /* @__PURE__ */ new Date();
-    const day = date.getDay();
-    const diff = date.getDate() - day + (day === 0 ? -6 : 1);
-    return new Date(date.setDate(diff));
-  }
-  // 获取周结束时间
-  getEndOfWeek() {
-    const date = /* @__PURE__ */ new Date();
-    const day = date.getDay();
-    const diff = date.getDate() - day + (day === 0 ? 0 : 7);
-    return new Date(date.setDate(diff));
   }
   // 保存模块设置
   async saveModuleSettings() {
@@ -3336,7 +3315,7 @@ ${content}` : content;
           await this.renderWeeklyNotes(container);
           break;
         case "stats":
-          await this.renderStats(container);
+          await renderStats(this.app, container);
           break;
         case "calendar":
           await this.renderCalendarModule(container);
@@ -3357,7 +3336,7 @@ ${content}` : content;
       container.createDiv("module-error").setText(`Error loading ${module2.type} module: ${error.message}`);
     }
   }
-  // 切换模块编辑
+  // 切换模块
   toggleModuleEditing(enable) {
     const modules = this.container.querySelectorAll(".module-container");
     const columns = this.container.querySelectorAll(".left-column, .center-column, .right-column");
@@ -3524,35 +3503,6 @@ ${content}` : content;
     };
     module2.addEventListener("mousedown", startDrag);
   }
-  // 更新放置目标
-  updateDropTarget(x, y) {
-    const modules = Array.from(this.container.querySelectorAll(".module-container"));
-    modules.forEach((module2) => {
-      module2.removeClass("drop-target");
-      if (module2 instanceof HTMLElement) {
-        const rect = module2.getBoundingClientRect();
-        if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) {
-          module2.addClass("drop-target");
-        }
-      }
-    });
-  }
-  // 清除放置目标样式
-  clearDropTargets() {
-    this.container.querySelectorAll(".module-container").forEach((module2) => {
-      module2.removeClass("drop-target");
-    });
-  }
-  // 获取放置位置
-  getDropPosition(module2) {
-    const rect = module2.getBoundingClientRect();
-    const containerRect = this.container.getBoundingClientRect();
-    const relativeX = rect.left - containerRect.left;
-    const containerWidth = containerRect.width;
-    if (relativeX < containerWidth / 4) return "left";
-    if (relativeX > containerWidth * 3 / 4) return "right";
-    return "center";
-  }
   // 更新模块位置
   updateModulePosition(module2, newPosition) {
     const moduleId = module2.getAttribute("data-module-id");
@@ -3572,34 +3522,6 @@ ${content}` : content;
     module2.style.opacity = "";
     module2.classList.remove("module-dragging");
     module2.style.border = "1px solid var(--background-modifier-border)";
-  }
-  // 模块-关系图谱
-  async renderGraphModule(container) {
-    const graphContainer = container.createDiv("graph-container");
-    try {
-      const graphLeaves = this.app.workspace.getLeavesOfType("graph");
-      let graphLeaf;
-      if (graphLeaves.length > 0) {
-        graphLeaf = graphLeaves[0];
-      } else {
-        graphLeaf = this.app.workspace.createLeafInParent(this.leaf.getRoot(), 0);
-        await graphLeaf.setViewState({ type: "graph" });
-      }
-      if (graphLeaf.view) {
-        const graphView = graphLeaf.view;
-        const graphEl = graphView.containerEl.querySelector(".graph-view-container");
-        if (graphEl) {
-          const clonedGraph = graphEl.cloneNode(true);
-          graphContainer.appendChild(clonedGraph);
-        }
-      }
-      if (graphLeaves.length === 0) {
-        graphLeaf.detach();
-      }
-    } catch (error) {
-      console.error("\u6E32\u67D3\u56FE\u8C31\u6A21\u5757\u5931\u8D25:", error);
-      graphContainer.setText("\u65E0\u6CD5\u52A0\u8F7D\u56FE\u8C31\u89C6\u56FE");
-    }
   }
   // 模块-快速笔记
   async renderQuickNoteModule(container) {
@@ -3700,6 +3622,13 @@ ${content}` : content;
   // 模块-待办事项
   async renderTodoModule(container) {
     const todoContainer = container.createDiv("todo-module");
+    const tabs = todoContainer.createDiv("todo-tabs");
+    const allTab = tabs.createDiv("todo-tab active");
+    allTab.setText("\u5168\u90E8");
+    const pendingTab = tabs.createDiv("todo-tab");
+    pendingTab.setText("\u5F85\u5B8C\u6210");
+    const completedTab = tabs.createDiv("todo-tab");
+    completedTab.setText("\u5DF2\u5B8C\u6210");
     const inputArea = todoContainer.createDiv("todo-input-area");
     const input = inputArea.createEl("input", {
       type: "text",
@@ -3715,13 +3644,6 @@ ${content}` : content;
       cls: "todo-add-btn"
     });
     const todoList = todoContainer.createDiv("todo-list");
-    const tabs = todoContainer.createDiv("todo-tabs");
-    const allTab = tabs.createDiv("todo-tab active");
-    allTab.setText("\u5168\u90E8");
-    const pendingTab = tabs.createDiv("todo-tab");
-    pendingTab.setText("\u5F85\u5B8C\u6210");
-    const completedTab = tabs.createDiv("todo-tab");
-    completedTab.setText("\u5DF2\u5B8C\u6210");
     const todos = await this.loadTodos();
     this.renderTodoList(todoList, todos, "all");
     addButton.addEventListener("click", async () => {

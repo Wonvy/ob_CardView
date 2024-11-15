@@ -3,6 +3,14 @@ import {
     Notice,
 } from 'obsidian';
 
+interface FolderItem {
+    path: string;
+    name: string;
+    level: number;
+}
+
+
+
 // 打开文件
 export async function openInAppropriateLeaf(app: any, file: TFile, openFile: boolean = true) {
     const fileExplorer = app.workspace.getLeavesOfType('file-explorer')[0];
@@ -74,3 +82,44 @@ export function getWeekDates(year: number, week: number): Date[] {
 }
 
 
+// 创建文件夹树
+export function createFolderTree(container: HTMLElement, folders: FolderItem[], selectFolder: (element: HTMLElement, path: string) => void) {
+    folders.forEach(folder => {
+        const item = container.createDiv({
+            cls: 'folder-item'
+        });
+
+        // 添加缩进
+        item.style.paddingLeft = `${folder.level * 20 + 10}px`;
+
+        // 添加文件夹图标和名称
+        const icon = item.createSpan({
+            cls: 'folder-icon'
+        });
+        icon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>`;
+        const nameSpan = item.createSpan({
+            cls: 'folder-name'
+        });
+        nameSpan.textContent = folder.name;
+
+        item.addEventListener('click', () => selectFolder(item, folder.path));
+    });
+}
+
+
+// 获取周结束时间
+export function getEndOfWeek(): Date {
+    const date = new Date();
+    const day = date.getDay();
+    const diff = date.getDate() - day + (day === 0 ? 0 : 7); // 调整周日
+    return new Date(date.setDate(diff));
+}
+
+
+// 获取周开始时间
+export function  getStartOfWeek(): Date {
+    const date = new Date();
+    const day = date.getDay();
+    const diff = date.getDate() - day + (day === 0 ? -6 : 1); // 调整周日
+    return new Date(date.setDate(diff));
+}

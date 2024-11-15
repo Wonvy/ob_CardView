@@ -9,13 +9,20 @@ import {
     App,
     Notice,
 } from 'obsidian';
+
 import CardViewPlugin from './main';
 
 import { 
     openInAppropriateLeaf,
-    getWeekDates
+    getWeekDates,
+    getEndOfWeek,
+    getStartOfWeek,
+    createFolderTree
+ } from './ts/other'; 
 
- } from './ts/other'; // 导入新方法
+ import { 
+    renderStats,
+ } from './ts/models';
 
 export const VIEW_TYPE_CARD = 'card-view';
 export const VIEW_TYPE_HOME = 'home-view';
@@ -51,6 +58,7 @@ class ConfirmModal extends Modal {
             this.open();
         });
     }
+    
 
     onOpen() {
         const { contentEl } = this;
@@ -243,7 +251,7 @@ class EnhancedFileSelectionModal extends Modal {
     }
 }
 
-// 卡片视图
+// ���视图
 export class CardView extends ItemView {
     private plugin: CardViewPlugin;
     private currentView: 'home' | 'card' | 'list' | 'timeline' | 'month' | 'week';
@@ -1540,7 +1548,7 @@ export class CardView extends ItemView {
                 // 标离件
                 card.addEventListener('mouseleave', () => {
                     openButton.style.opacity = '0';
-                    // 根据设置决���是否隐藏内容
+                    // 根据设置决是否隐藏内容
                     if (!this.cardSettings.card.showContent) {
                         const noteContent = cardContent.querySelector('.note-content');
                         if (noteContent) {
@@ -1582,6 +1590,18 @@ export class CardView extends ItemView {
                 const noteContent = cardContent.createDiv('note-content');
                 // ... 内容加载逻辑 ...
             }
+
+            // 添加右键菜单事件监听
+            card.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.showContextMenu(e, [file]); // 传入当前文件
+            });
+
+            // 添加点击事件用于多选
+            card.addEventListener('click', (e) => {
+                this.handleCardSelection(file.path, e);
+            });
 
             return card;
 
@@ -2015,6 +2035,8 @@ export class CardView extends ItemView {
 
     // 右键菜单
     private showContextMenu(event: MouseEvent, files: TFile[]) {
+        console.log('显示右键菜单:', event, files); // 添加调试日志
+        
         const menu = new Menu();
 
         if (files.length > 0) {
@@ -2029,6 +2051,7 @@ export class CardView extends ItemView {
                     });
             });
 
+            // 文件列表中显示
             menu.addItem((item) => {
                 item
                     .setTitle(`文件列表中显示`)
@@ -2039,6 +2062,7 @@ export class CardView extends ItemView {
                     });
             });
 
+            // 移动文件
             menu.addItem((item) => {
                 item
                     .setTitle(`移动 ${files.length} 个文`)
@@ -2056,6 +2080,7 @@ export class CardView extends ItemView {
                     });
             });
 
+            // 删除文件
             menu.addItem((item) => {
                 item
                     .setTitle(`删除 ${files.length} 个文件`)
@@ -2154,19 +2179,8 @@ export class CardView extends ItemView {
         });
     }
 
-    //  按月份过滤
-    private filterNotesByMonth(date: Date) {
-        const year = date.getFullYear();
-        const month = date.getMonth();
-        this.currentFilter = { 
-            type: 'date', 
-            value: `${year}-${(month + 1).toString().padStart(2, '0')}` 
-        };
-        this.refreshView();
-    }
-
     // 日历-显示
-    private showCalendar() {    
+    private showCalendar() {
         if (!this.calendarContainer) return;
         
         this.calendarContainer.empty();
@@ -2250,6 +2264,7 @@ export class CardView extends ItemView {
         this.renderCalendarContent(this.calendarContainer);
     }
 
+    // 日历-隐藏
     private hideCalendar() {
         if (!this.calendarContainer) return;
         this.calendarContainer.style.display = 'none';
@@ -2280,59 +2295,6 @@ export class CardView extends ItemView {
         this.renderCalendarDays(grid, notesByDate, notesSection);
     }
 
-    // 日-获取每日笔记数量
-    private getNotesCountByDate(year: number, month: number): Record<string, number> {
-        const counts: Record<string, number> = {};
-        const files = this.app.vault.getMarkdownFiles();
-
-        files.forEach(file => {
-            const date = new Date(file.stat.mtime);
-            if (date.getFullYear() === year && date.getMonth() === month) {
-                const dateStr = date.toISOString().split('T')[0];
-                counts[dateStr] = (counts[dateStr] || 0) + 1;
-            }
-        });
-
-        return counts;
-    }
-
-    // 日历-根据日期过滤笔记
-    private filterNotesByDate(dateStr: string) {
-        // 如果已经选中了这个日期，则清除过滤
-        if (this.currentFilter.type === 'date' && this.currentFilter.value === dateStr) {
-            this.clearDateFilter();
-            return;
-        }
-
-        // 清除其他日期的选中状态
-        this.calendarContainer.querySelectorAll('.calendar-day').forEach(day => {
-            day.removeClass('selected');
-        });
-
-        // 设置的过滤条件
-        this.currentFilter = { type: 'date', value: dateStr };
-        
-        // 高亮中的期
-        const selectedDay = this.calendarContainer.querySelector(`.calendar-day[data-date="${dateStr}"]`);
-        if (selectedDay) {
-            selectedDay.addClass('selected');
-        }
-
-        this.refreshView();
-    }
-
-    // 日历-清除日期过滤
-    private clearDateFilter() {
-        this.currentFilter = { type: 'none' };
-        // 清除所有日期选中状态
-        if (this.calendarContainer) {
-            this.calendarContainer.querySelectorAll('.calendar-day').forEach(day => {
-                day.removeClass('selected');
-            });
-        }
-        // 刷新图显示所有笔记
-        this.refreshView();
-    }
 
     // 高亮文本
     private highlightText(text: string, searchTerm: string): string {
@@ -2843,6 +2805,7 @@ export class CardView extends ItemView {
 
         // 右菜单
         noteItem.addEventListener('contextmenu', (e) => {
+            console.log('右菜单');
             e.preventDefault();
             this.showContextMenu(e, this.getSelectedFiles());
         });
@@ -3037,7 +3000,7 @@ export class CardView extends ItemView {
                     day: '2-digit'
                 }).replace(/\//g, '-');
 
-                // 创建笔记
+                // 创建���记
                 const file = await this.createQuickNote(finalContent, [], fileName);
                 
                 if (file) {
@@ -3587,7 +3550,7 @@ export class CardView extends ItemView {
         const showContentOption = this.createCheckboxOption(basicSettings, '显示笔记内容', currentSettings.showContent);
         showContentOption.addEventListener('change', (e) => {
             currentSettings.showContent = (e.target as HTMLInputElement).checked;
-            // 所有视图统一处理笔���内容显示/隐藏
+            // 所有视图统一处理笔内容显示/隐藏
             const contentElements = this.container.querySelectorAll('.note-content');
             contentElements.forEach(element => {
                 if (currentSettings.showContent) {
@@ -4008,7 +3971,7 @@ export class CardView extends ItemView {
         this.createWeekView();
     }
 
-    // 修改获取指定日期的笔记方法，加日期范围检查
+    // 修改获取指定日期的笔记方法加日期范围查
     private async getNotesForDate(date: Date): Promise<TFile[]> {
         const files = this.app.vault.getMarkdownFiles();
         return files.filter(file => {
@@ -4024,7 +3987,7 @@ export class CardView extends ItemView {
                date1.getDate() === date2.getDate();
     }
 
-   
+
 
     // 创建周视图的笔记卡片
     private createWeekNoteCard(file: TFile): HTMLElement {
@@ -4359,8 +4322,8 @@ export class CardView extends ItemView {
     private async renderWeeklyNotes(container: HTMLElement) {
         console.log('Rendering weekly notes module...');
         const weeklyContainer = container.createDiv('weekly-notes');
-        const weekStart = this.getStartOfWeek();
-        const weekEnd = this.getEndOfWeek();
+        const weekStart = getStartOfWeek();
+        const weekEnd = getEndOfWeek();
         
         const notes = this.app.vault.getMarkdownFiles()
             .filter(file => {
@@ -4382,66 +4345,6 @@ export class CardView extends ItemView {
                 openInAppropriateLeaf(this.app,note);
             });
         }
-    }
-
-    // 模块-最近编辑
-    private async renderRecentNotes(container: HTMLElement) {
-        console.log('Rendering recent notes module...');
-        const recentContainer = container.createDiv('recent-notes');
-        
-        const notes = this.app.vault.getMarkdownFiles()
-            .sort((a, b) => b.stat.mtime - a.stat.mtime)
-            .slice(0, 10);
-
-        for (const note of notes) {
-            const noteItem = recentContainer.createDiv('note-item');
-            noteItem.createEl('span', { text: note.basename, cls: 'note-title' });
-            noteItem.createEl('span', { 
-                text: new Date(note.stat.mtime).toLocaleDateString(),
-                cls: 'note-date'
-            });
-            
-            noteItem.addEventListener('click', () => {
-                openInAppropriateLeaf(this.app,note);
-            });
-        }
-    }
-
-    // 模块-统计信息
-    private async renderStats(container: HTMLElement) {
-        console.log('Rendering stats module...');
-        const statsContainer = container.createDiv('stats-container');
-        
-        const files = this.app.vault.getMarkdownFiles();
-        const totalNotes = files.length;
-        
-        // 计算总字数
-        let totalWords = 0;
-        for (const file of files) {
-            const content = await this.app.vault.read(file);
-            totalWords += content.split(/\s+/).length;
-        }
-        
-        // 获取所有标签
-        const allTags = new Set<string>();
-        files.forEach(file => {
-            const cache = this.app.metadataCache.getFileCache(file);
-            if (cache?.tags) {
-                cache.tags.forEach(tag => allTags.add(tag.tag));
-            }
-        });
-        
-        // 创建统计卡片
-        this.createStatCard(statsContainer, '总笔记数', totalNotes);
-        this.createStatCard(statsContainer, '总字数', totalWords);
-        this.createStatCard(statsContainer, '使用标签数', allTags.size);
-    }
-
-    // 添加创建统计卡片的辅助方法
-    private createStatCard(container: HTMLElement, label: string, value: number) {
-        const card = container.createDiv('stat-card');
-        card.createDiv('stat-label').setText(label);
-        card.createDiv('stat-value').setText(value.toString());
     }
 
     // 模块-日历
@@ -4470,6 +4373,25 @@ export class CardView extends ItemView {
         // 下个月按钮
         const nextBtn = header.createEl('button', { cls: 'calendar-nav-btn' });
         nextBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>';
+
+        // 添加今天按钮
+        const todayBtn = header.createEl('button', { cls: 'calendar-today-btn' });
+        todayBtn.innerText = '今天';
+
+        // 点击今天按钮时跳转到今年的月份，并高亮今天的日期
+        todayBtn.addEventListener('click', () => {
+            this.currentDate.setFullYear(new Date().getFullYear());
+            this.currentDate.setMonth(new Date().getMonth());
+            this.renderCalendarModule(container);
+            const today = new Date().getDate();
+            const dayElements = document.querySelectorAll('.calendar-grid .day');
+            dayElements.forEach(day => {
+                if (day.textContent === today.toString()) {
+                    day.classList.add('today');
+                }
+            });
+        });
+
 
         // 添加滚轮事件到标题元素
         titleEl.addEventListener('wheel', (e) => {
@@ -4520,7 +4442,17 @@ export class CardView extends ItemView {
             this.currentDate.setMonth(this.currentDate.getMonth() + 1);
             this.renderCalendarModule(container);
         });
+
+        // 鼠标离开笔记区域时隐藏笔记区域
+        notesSection.addEventListener('mouseleave', (event) => {
+            console.log('mouseleave',event);
+            notesSection.classList.remove('active');
+        });
+
     }
+
+
+   
 
     // 渲染日历天数
     private renderCalendarDays(grid: HTMLElement, notesByDate: Record<string, TFile[]>, notesSection: HTMLElement) {
@@ -4550,15 +4482,14 @@ export class CardView extends ItemView {
             // 添加日期数字
             dateCell.createDiv('day-number').setText(String(day));
             
-            // 如果有笔记，添加标记
+            // 如果有笔，添加标记
             const dayNotes = notesByDate[dateStr] || [];
             if (dayNotes.length >0) {
                 dateCell.createDiv('note-count').setText(dayNotes.length.toString());
             }
             
-            // 添加鼠标事件
-            dateCell.addEventListener('mouseenter', () => {
-                // 清空并显示当天的笔记
+            // 显示当天的笔记和所在文件夹
+            const displayNotesForDate = (dateStr: string, dayNotes: TFile[]) => {
                 notesSection.empty();
                 if (dayNotes.length > 0) {
                     const dateTitle = notesSection.createDiv('date-title');
@@ -4567,35 +4498,54 @@ export class CardView extends ItemView {
                     const notesList = notesSection.createDiv('notes-list');
                     dayNotes.forEach(note => {
                         const noteItem = notesList.createDiv('note-item');
-                        noteItem.setText(note.basename);
+
+                        noteItem.setText(`${note.basename}`);
+                        noteItem.title = (`${note.parent ? note.parent.path : '未知路径'}`);
                         
                         noteItem.addEventListener('click', () => {
-                            openInAppropriateLeaf(this.app,note);
+                            openInAppropriateLeaf(this.app, note);
                         });
                     });
                 } else {
                     notesSection.createDiv('empty-message')
                         .setText('当天没有笔记');
                 }
+            };
+
+            // 添加鼠标事件
+            dateCell.addEventListener('mouseenter', () => {
+                if (!notesSection.classList.contains('active') ) {
+                   displayNotesForDate(dateStr, dayNotes);
+                } 
             });
+
+            // 添加鼠标点击事件
+            dateCell.addEventListener('click', () => {
+
+                // 显示当天的笔记
+                displayNotesForDate(dateStr, dayNotes);
+
+                // 如果点击的是同一个，则切换selected
+                if (dateCell.classList.contains('selected')) {
+                    dateCell.classList.remove('selected');
+                    notesSection.classList.remove('active');
+                } else {
+                    // 如果不是则移除其他的
+                    document.querySelectorAll('.calendar-module .calendar-grid .calendar-day.selected').forEach(el => {
+                        el.classList.remove('selected');
+                        notesSection.classList.remove('active');
+                    });
+                    // 给点击的添加selected
+                    dateCell.classList.add('selected');
+                    notesSection.classList.add('active');
+                }
+            });
+
         }
     }
 
-    // 获取周开始时间
-    private getStartOfWeek(): Date {
-        const date = new Date();
-        const day = date.getDay();
-        const diff = date.getDate() - day + (day === 0 ? -6 : 1); // 调整周日
-        return new Date(date.setDate(diff));
-    }
 
-    // 获取周结束时间
-    private getEndOfWeek(): Date {
-        const date = new Date();
-        const day = date.getDay();
-        const diff = date.getDate() - day + (day === 0 ? 0 : 7); // 调整周日
-        return new Date(date.setDate(diff));
-    }
+
 
 
     // 保存模块设置
@@ -4616,7 +4566,7 @@ export class CardView extends ItemView {
                 await this.renderWeeklyNotes(container);
                 break;
             case 'stats':
-                await this.renderStats(container);
+                await renderStats(this.app,container);
                 break;
             case 'calendar':
                 await this.renderCalendarModule(container);
@@ -4638,7 +4588,7 @@ export class CardView extends ItemView {
         }
     }
 
-    // 切换模块编辑
+    // 切换模块
     private toggleModuleEditing(enable: boolean) {
         const modules = this.container.querySelectorAll('.module-container');
         const columns = this.container.querySelectorAll('.left-column, .center-column, .right-column');
@@ -4863,41 +4813,6 @@ export class CardView extends ItemView {
         module.addEventListener('mousedown', startDrag);
     }
 
-    // 更新放置目标
-    private updateDropTarget(x: number, y: number) {
-        const modules = Array.from(this.container.querySelectorAll('.module-container'));
-        modules.forEach(module => {
-            module.removeClass('drop-target');
-            
-            if (module instanceof HTMLElement) {
-                const rect = module.getBoundingClientRect();
-                if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) {
-                    module.addClass('drop-target');
-                }
-            }
-        });
-    }
-
-    // 清除放置目标样式
-    private clearDropTargets() {
-        this.container.querySelectorAll('.module-container').forEach(module => {
-            module.removeClass('drop-target');
-        });
-    }
-
-    // 获取放置位置
-    private getDropPosition(module: HTMLElement): 'left' | 'center' | 'right' | undefined {
-        const rect = module.getBoundingClientRect();
-        const containerRect = this.container.getBoundingClientRect();
-        
-        const relativeX = rect.left - containerRect.left;
-        const containerWidth = containerRect.width;
-        
-        // 根据相对位置确定列
-        if (relativeX < containerWidth / 4) return 'left';
-        if (relativeX > (containerWidth * 3) / 4) return 'right';
-        return 'center';
-    }
 
     // 更新模块位置
     private updateModulePosition(module: HTMLElement, newPosition: 'left' | 'center' | 'right') {
@@ -4931,44 +4846,6 @@ export class CardView extends ItemView {
         module.style.border = '1px solid var(--background-modifier-border)'; // 恢复默认边框样式
     }
     
-    // 模块-关系图谱
-    private async renderGraphModule(container: HTMLElement) {
-        // 创建图谱容器
-        const graphContainer = container.createDiv('graph-container');
-        
-        try {
-            // 获取 Obsidian 的图谱视图
-            const graphLeaves = this.app.workspace.getLeavesOfType('graph');
-            let graphLeaf;
-            
-            if (graphLeaves.length > 0) {
-                graphLeaf = graphLeaves[0];
-            } else {
-                // 如果没有图谱视图，创建一个临时的
-                graphLeaf = this.app.workspace.createLeafInParent(this.leaf.getRoot(), 0);
-                await graphLeaf.setViewState({ type: 'graph' });
-            }
-
-            // 将图谱视图的内容复制到我们的容器中
-            if (graphLeaf.view) {
-                const graphView = graphLeaf.view as any; // 使用 any 类型绕过类型检查
-                const graphEl = graphView.containerEl.querySelector('.graph-view-container');
-                if (graphEl) {
-                    const clonedGraph = graphEl.cloneNode(true);
-                    graphContainer.appendChild(clonedGraph);
-                }
-            }
-
-            // 如果是临时创建的图谱视图，移除它
-            if (graphLeaves.length === 0) {
-                graphLeaf.detach();
-            }
-
-        } catch (error) {
-            console.error('渲染图谱模块失败:', error);
-            graphContainer.setText('无法加载图谱视图');
-        }
-    }
 
     // 模块-快速笔记
     private async renderQuickNoteModule(container: HTMLElement) {
@@ -5070,7 +4947,7 @@ export class CardView extends ItemView {
             }
 
             try {
-                // 获取所有已添加的标签
+                // 获取所有添加的标签
                 const tagItems = tagsContainer.querySelectorAll('.tag-item');
                 const tagTexts = Array.from(tagItems).map(item => item.textContent?.replace('×', '').trim() ?? '');
                 
@@ -5105,6 +4982,16 @@ export class CardView extends ItemView {
     private async renderTodoModule(container: HTMLElement) {
         const todoContainer = container.createDiv('todo-module');
         
+        // 创建分类标签
+        const tabs = todoContainer.createDiv('todo-tabs');
+        const allTab = tabs.createDiv('todo-tab active');
+        allTab.setText('全部');
+        const pendingTab = tabs.createDiv('todo-tab');
+        pendingTab.setText('待完成');
+        const completedTab = tabs.createDiv('todo-tab');
+        completedTab.setText('已完成');
+
+
         // 创建输入区域
         const inputArea = todoContainer.createDiv('todo-input-area');
         
@@ -5130,14 +5017,6 @@ export class CardView extends ItemView {
         // 创建待办事项列表容器
         const todoList = todoContainer.createDiv('todo-list');
         
-        // 创建分类标签
-        const tabs = todoContainer.createDiv('todo-tabs');
-        const allTab = tabs.createDiv('todo-tab active');
-        allTab.setText('全部');
-        const pendingTab = tabs.createDiv('todo-tab');
-        pendingTab.setText('待完成');
-        const completedTab = tabs.createDiv('todo-tab');
-        completedTab.setText('已完成');
 
         // 加载保存的待办事项
         const todos = await this.loadTodos();
@@ -5179,12 +5058,14 @@ export class CardView extends ItemView {
             this.renderTodoList(todoList, todos, 'all');
         });
 
+        // 待完成标签事件
         pendingTab.addEventListener('click', () => {
             tabs.querySelectorAll('.todo-tab').forEach(tab => tab.removeClass('active'));
             pendingTab.addClass('active');
             this.renderTodoList(todoList, todos, 'pending');
         });
 
+        // 完成标签事件
         completedTab.addEventListener('click', () => {
             tabs.querySelectorAll('.todo-tab').forEach(tab => tab.removeClass('active'));
             completedTab.addClass('active');
@@ -5303,8 +5184,7 @@ export class CardView extends ItemView {
         }
     }
 
-    // 添加相关的样式类型定义
-    private gridSnapIndicator: HTMLElement | null = null;
+
 }
 
 // 模块管理-弹窗
