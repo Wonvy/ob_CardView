@@ -11,6 +11,12 @@ import {
 } from 'obsidian';
 import CardViewPlugin from './main';
 
+import { 
+    openInAppropriateLeaf,
+    getWeekDates
+
+ } from './ts/other'; // 导入新方法
+
 export const VIEW_TYPE_CARD = 'card-view';
 export const VIEW_TYPE_HOME = 'home-view';
 
@@ -1546,7 +1552,7 @@ export class CardView extends ItemView {
                 // 改事件监听
                 openButton.addEventListener('click', async (e) => {
                     e.stopPropagation();
-                    await this.openInAppropriateLeaf(file);
+                    await openInAppropriateLeaf(this.app,file);
                     card.addClass('selected'); // 给该卡片添加selected类
                     // 移除其余卡片的selected类
                     this.container.querySelectorAll('.note-card').forEach(cardElement => {
@@ -1700,7 +1706,7 @@ export class CardView extends ItemView {
             const file = this.app.vault.getAbstractFileByPath(`${fileName}.md`);
             if (file instanceof TFile && file.stat.size === 0) {
                 // 如果记内容为空，则打开这个笔
-                await this.openInAppropriateLeaf(file);
+                await openInAppropriateLeaf(this.app,file,false);
                 return;
             } else {
                 fileName = date ? `${baseFileName} ${counter}` : `未命名 ${counter}`;
@@ -1717,7 +1723,7 @@ export class CardView extends ItemView {
 
             // 在新签中打开笔
             // const leaf = this.app.workspace.getLeaf('tab');
-            await this.openInAppropriateLeaf(file);
+            await openInAppropriateLeaf(this.app,file,false);
 
             // 刷新片视图
             this.loadNotes();
@@ -1729,7 +1735,7 @@ export class CardView extends ItemView {
     // 快速笔记-创建
     private async createQuickNote(content: string, types: string[], fileName: string): Promise<TFile | null> {
         try {
-            // 生成唯一的件���
+            // 生成唯一的件
             let finalFileName = fileName;
             let counter = 1;
             
@@ -2018,7 +2024,7 @@ export class CardView extends ItemView {
                     .setIcon("link")
                     .onClick(async () => {
                         for (const file of files) {
-                            await this.openInAppropriateLeaf(file);
+                            await openInAppropriateLeaf(this.app,file);
                         }
                     });
             });
@@ -2029,7 +2035,7 @@ export class CardView extends ItemView {
                     .setIcon("folder")
                     .onClick(async () => {
                         const file = files[0];  //示第一个选中文件的位置
-                        await this.openInAppropriateLeaf(file,false);
+                        await openInAppropriateLeaf(this.app,file,false);
                     });
             });
 
@@ -2148,45 +2154,6 @@ export class CardView extends ItemView {
         });
     }
 
-    // 日历-建按钮
-    private createCalendarButton(leftTools: HTMLElement) {
-        const calendarBtn = leftTools.createEl('button', {
-            cls: 'calendar-toggle-button',
-        });
-        calendarBtn.innerHTML = `
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-            <span>日</span>
-        `;
-        calendarBtn.addEventListener('click', () => {
-            this.toggleCalendar();
-            // 切换按钮高亮状态
-            calendarBtn.toggleClass('active', this.isCalendarVisible);
-        });
-    }
-
-    // 历-切
-    private toggleCalendar() {
-        console.log('切换日历显示状态, 当前状态:', this.isCalendarVisible);
-        
-        this.isCalendarVisible = !this.isCalendarVisible;
-        
-        if (this.isCalendarVisible) {
-            this.showCalendar();
-            // 显示当前月份的所有记
-            this.filterNotesByMonth(this.currentDate);
-        } else {
-            this.hideCalendar();
-            // 清除日期滤
-            this.clearDateFilter();
-        }
-        
-        // 更新按钮状态
-        const calendarBtn = this.containerEl.querySelector('.calendar-toggle-button');
-        if (calendarBtn) {
-            calendarBtn.toggleClass('active', this.isCalendarVisible);
-        }
-    }
-
     //  按月份过滤
     private filterNotesByMonth(date: Date) {
         const year = date.getFullYear();
@@ -2199,7 +2166,7 @@ export class CardView extends ItemView {
     }
 
     // 日历-显示
-    private showCalendar() {
+    private showCalendar() {    
         if (!this.calendarContainer) return;
         
         this.calendarContainer.empty();
@@ -2365,48 +2332,6 @@ export class CardView extends ItemView {
         }
         // 刷新图显示所有笔记
         this.refreshView();
-    }
-
-    // 打开文件
-    private async openInAppropriateLeaf(file: TFile, openFile: boolean = true) {
-        const fileExplorer = this.app.workspace.getLeavesOfType('file-explorer')[0];
-        if (fileExplorer) {
-            this.app.workspace.revealLeaf(fileExplorer);  // 如果文件浏览已经在，直接活它
-            try {
-                    if (openFile) {
-                        // 只有在要打开文件时才执行这些操作
-                        const leaves = this.app.workspace.getLeavesOfType('markdown');
-                        const currentRoot = this.leaf.getRoot();
-                        const otherLeaf = leaves.find(leaf => {
-                            const root = leaf.getRoot();
-                            return root !== currentRoot;
-                        });
-                        
-                        let targetLeaf;
-                        if (otherLeaf) {
-                            await otherLeaf.openFile(file);
-                            targetLeaf = otherLeaf;
-                        } else {
-                            targetLeaf = this.app.workspace.getLeaf('tab');
-                            await targetLeaf.openFile(file);
-                        }
-                        
-                        this.app.workspace.setActiveLeaf(targetLeaf);
-                    }
-                    
-                    // 无论是否打开文件，都在文件管理器中定位文件
-                    const fileExplorer = this.app.workspace.getLeavesOfType('file-explorer')[0];
-                    if (fileExplorer && fileExplorer.view) {
-                        await (fileExplorer.view as any).revealInFolder(file);
-                    }
-                    
-                } catch (error) {
-                    console.error('操作失败:', error);
-                    new Notice('操作失败');
-                }
-
-        }
-  
     }
 
     // 高亮文本
@@ -2732,7 +2657,7 @@ export class CardView extends ItemView {
                     // 添加点击事件
                     noteItem.addEventListener('click', async (e) => {
                         e.stopPropagation();
-                        await this.openInAppropriateLeaf(note);
+                        await openInAppropriateLeaf(this.app,note);
                     });
                     
                     // 添加预览功能
@@ -2913,7 +2838,7 @@ export class CardView extends ItemView {
 
         // 双击打开
         noteItem.addEventListener('dblclick', async () => {
-            await this.openInAppropriateLeaf(note);
+            await openInAppropriateLeaf(this.app,note);
         });
 
         // 右菜单
@@ -4027,7 +3952,7 @@ export class CardView extends ItemView {
             const weekContent = weekContainer.createDiv('week-content');
             
             // 获取本周的日期范围
-            const weekDates = this.getWeekDates(this.currentYear, this.currentWeek);
+            const weekDates = getWeekDates(this.currentYear, this.currentWeek);
             
             // 创建日期头部
             const daysHeader = weekContent.createDiv('week-days-header');
@@ -4099,35 +4024,7 @@ export class CardView extends ItemView {
                date1.getDate() === date2.getDate();
     }
 
-    // 获取指定周的日期范围
-    private getWeekDates(year: number, week: number): Date[] {
-        console.log('获取周日期范围 - 年份:', year, '周数:', week);
-        
-        // 获取该年第一天
-        const firstDayOfYear = new Date(year, 0, 1);
-        console.log('年初第一天:', firstDayOfYear.toISOString());
-        
-        // 调整到第一个周一
-        const daysToFirstMonday = (8 - firstDayOfYear.getDay()) % 7;
-        const firstMonday = new Date(year, 0, 1 + daysToFirstMonday);
-        console.log('第一个周一:', firstMonday.toISOString());
-        
-        // 计算目标周的周一
-        const weekStart = new Date(firstMonday);
-        weekStart.setDate(weekStart.getDate() + (week - 1) * 7);
-        console.log('目标周的周一:', weekStart.toISOString());
-        
-        // 生成该周的所有日期
-        const dates: Date[] = [];
-        for (let i = 0; i < 7; i++) {
-            const date = new Date(weekStart);
-            date.setDate(date.getDate() + i);
-            dates.push(date);
-        }
-        
-        console.log('生成的日期范围:', dates.map(d => d.toISOString()));
-        return dates;
-    }
+   
 
     // 创建周视图的笔记卡片
     private createWeekNoteCard(file: TFile): HTMLElement {
@@ -4146,7 +4043,7 @@ export class CardView extends ItemView {
         
         // 添加点击事件
         card.addEventListener('click', async () => {
-            await this.openInAppropriateLeaf(file);
+            await openInAppropriateLeaf(this.app,file);
         });
         
         // 添加预览功能
@@ -4220,7 +4117,7 @@ export class CardView extends ItemView {
             notesContainer.empty();
             
             // 获取新的日期范围
-            const weekDates = this.getWeekDates(this.currentYear, this.currentWeek);
+            const weekDates = getWeekDates(this.currentYear, this.currentWeek);
             
             // 调整日期顺序，将周日的笔记放到最后
             const reorderedDates = [
@@ -4245,7 +4142,7 @@ export class CardView extends ItemView {
     // 获取指定周所在的月份
     private getMonthForWeek(year: number, week: number): number {
         try {
-            const weekDates = this.getWeekDates(year, week);
+            const weekDates = getWeekDates(year, week);
             // 使用周中间的日期（周四）来确定月份
             const middleDate = weekDates[3];
             console.log('周中间日期:', middleDate);
@@ -4482,7 +4379,7 @@ export class CardView extends ItemView {
             });
             
             noteItem.addEventListener('click', () => {
-                this.openInAppropriateLeaf(note);
+                openInAppropriateLeaf(this.app,note);
             });
         }
     }
@@ -4505,7 +4402,7 @@ export class CardView extends ItemView {
             });
             
             noteItem.addEventListener('click', () => {
-                this.openInAppropriateLeaf(note);
+                openInAppropriateLeaf(this.app,note);
             });
         }
     }
@@ -4673,7 +4570,7 @@ export class CardView extends ItemView {
                         noteItem.setText(note.basename);
                         
                         noteItem.addEventListener('click', () => {
-                            this.openInAppropriateLeaf(note);
+                            openInAppropriateLeaf(this.app,note);
                         });
                     });
                 } else {

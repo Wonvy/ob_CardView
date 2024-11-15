@@ -28,12 +28,69 @@ __export(main_exports, {
   default: () => CardViewPlugin
 });
 module.exports = __toCommonJS(main_exports);
-var import_obsidian2 = require("obsidian");
+var import_obsidian3 = require("obsidian");
 
 // cardView.ts
+var import_obsidian2 = require("obsidian");
+
+// ts/other.ts
 var import_obsidian = require("obsidian");
+async function openInAppropriateLeaf(app, file, openFile = true) {
+  var _a;
+  const fileExplorer = app.workspace.getLeavesOfType("file-explorer")[0];
+  if (fileExplorer) {
+    app.workspace.revealLeaf(fileExplorer);
+    try {
+      if (openFile) {
+        const leaves = app.workspace.getLeavesOfType("markdown");
+        const currentRoot = (_a = app.leaf) == null ? void 0 : _a.getRoot();
+        const otherLeaf = leaves.find((leaf) => {
+          const root = leaf.getRoot();
+          return root !== currentRoot;
+        });
+        let targetLeaf;
+        if (otherLeaf) {
+          await otherLeaf.openFile(file);
+          targetLeaf = otherLeaf;
+        } else {
+          targetLeaf = app.workspace.getLeaf("tab");
+          await targetLeaf.openFile(file);
+        }
+        app.workspace.setActiveLeaf(targetLeaf);
+      }
+      const fileExplorer2 = app.workspace.getLeavesOfType("file-explorer")[0];
+      if (fileExplorer2 && fileExplorer2.view) {
+        await fileExplorer2.view.revealInFolder(file);
+      }
+    } catch (error) {
+      console.error("\u64CD\u4F5C\u5931\u8D25:", error);
+      new import_obsidian.Notice("\u64CD\u4F5C\u5931\u8D25");
+    }
+  }
+}
+function getWeekDates(year, week) {
+  console.log("\u83B7\u53D6\u5468\u65E5\u671F\u8303\u56F4 - \u5E74\u4EFD:", year, "\u5468\u6570:", week);
+  const firstDayOfYear = new Date(year, 0, 1);
+  console.log("\u5E74\u521D\u7B2C\u4E00\u5929:", firstDayOfYear.toISOString());
+  const daysToFirstMonday = (8 - firstDayOfYear.getDay()) % 7;
+  const firstMonday = new Date(year, 0, 1 + daysToFirstMonday);
+  console.log("\u7B2C\u4E00\u4E2A\u5468\u4E00:", firstMonday.toISOString());
+  const weekStart = new Date(firstMonday);
+  weekStart.setDate(weekStart.getDate() + (week - 1) * 7);
+  console.log("\u76EE\u6807\u5468\u7684\u5468\u4E00:", weekStart.toISOString());
+  const dates = [];
+  for (let i = 0; i < 7; i++) {
+    const date = new Date(weekStart);
+    date.setDate(date.getDate() + i);
+    dates.push(date);
+  }
+  console.log("\u751F\u6210\u7684\u65E5\u671F\u8303\u56F4:", dates.map((d) => d.toISOString()));
+  return dates;
+}
+
+// cardView.ts
 var VIEW_TYPE_CARD = "card-view";
-var ConfirmModal = class extends import_obsidian.Modal {
+var ConfirmModal = class extends import_obsidian2.Modal {
   constructor(app, title, message) {
     super(app);
     this.result = false;
@@ -70,7 +127,7 @@ var ConfirmModal = class extends import_obsidian.Modal {
     this.resolvePromise(this.result);
   }
 };
-var EnhancedFileSelectionModal = class extends import_obsidian.Modal {
+var EnhancedFileSelectionModal = class extends import_obsidian2.Modal {
   constructor(app, files, recentFolders, onFoldersUpdate) {
     super(app);
     this.selectedFolder = null;
@@ -118,7 +175,7 @@ var EnhancedFileSelectionModal = class extends import_obsidian.Modal {
     const folders = [];
     const seen = /* @__PURE__ */ new Set();
     this.app.vault.getAllLoadedFiles().forEach((file) => {
-      if (file instanceof import_obsidian.TFolder) {
+      if (file instanceof import_obsidian2.TFolder) {
         const parts = file.path.split("/");
         let currentPath = "";
         let level = 0;
@@ -184,7 +241,7 @@ var EnhancedFileSelectionModal = class extends import_obsidian.Modal {
     }
   }
 };
-var CardView = class extends import_obsidian.ItemView {
+var CardView = class extends import_obsidian2.ItemView {
   // 构造函数
   constructor(leaf, plugin) {
     super(leaf);
@@ -511,7 +568,7 @@ var CardView = class extends import_obsidian.ItemView {
       const title = (_a = titleInput == null ? void 0 : titleInput.value) == null ? void 0 : _a.trim();
       const content = noteInput.value.trim();
       if (!content) {
-        new import_obsidian.Notice("\u8BF7\u8F93\u5165\u7B14\u8BB0\u5BB9");
+        new import_obsidian2.Notice("\u8BF7\u8F93\u5165\u7B14\u8BB0\u5BB9");
         return;
       }
       try {
@@ -533,11 +590,11 @@ ${content}` : content;
         if (file) {
           this.clearQuickNoteInputs(titleInput != null ? titleInput : null, noteInput, tags, tagsContainer != null ? tagsContainer : null, tagInput != null ? tagInput : null);
           await this.refreshView();
-          new import_obsidian.Notice("\u7B14\u521B\u5EFA\u6210\u529F");
+          new import_obsidian2.Notice("\u7B14\u521B\u5EFA\u6210\u529F");
         }
       } catch (error) {
         console.error("\u521B\u5EFA\u7B14\u8BB0\u5931\u8D25:", error);
-        new import_obsidian.Notice("\u521B\u5EFA\u7B14\u8BB0\u5931\u8D25");
+        new import_obsidian2.Notice("\u521B\u5EFA\u7B14\u8BB0\u5931\u8D25");
       }
     });
     this.updateToolbarButtons();
@@ -857,7 +914,7 @@ ${content}` : content;
       console.log("\u7B14\u8BB0\u52A0\u8F7D\u5B8C\u6210");
     } catch (error) {
       console.error("loadNotes \u9519\u8BEF:", error);
-      new import_obsidian.Notice("\u52A0\u8F7D\u7B14\u8BB0\u5931\u8D25\uFF0C\u8BF7\u68C0\u67E5\u63A7\u5236\u53F0\u83B7\u53D6\u8BE6\u7EC6\u4FE1\u606F");
+      new import_obsidian2.Notice("\u52A0\u8F7D\u7B14\u8BB0\u5931\u8D25\uFF0C\u8BF7\u68C0\u67E5\u63A7\u5236\u53F0\u83B7\u53D6\u8BE6\u7EC6\u4FE1\u606F");
     } finally {
       if (this.currentLoadingView === "card") {
         this.currentLoadingView = null;
@@ -910,7 +967,7 @@ ${content}` : content;
     } catch (error) {
       console.error("loadNextPage \u9519\u8BEF:", error);
       this.updateLoadingStatus("\u52A0\u8F7D\u5931\u8D25");
-      new import_obsidian.Notice("\u52A0\u8F7D\u7B14\u8BB0\u5931\u8D25");
+      new import_obsidian2.Notice("\u52A0\u8F7D\u7B14\u8BB0\u5931\u8D25");
     } finally {
       this.isLoading = false;
       if (!this.hasMoreNotes) {
@@ -1030,7 +1087,7 @@ ${content}` : content;
           if (fileExplorer && fileExplorer.view) {
             this.app.workspace.revealLeaf(fileExplorer);
             const targetFolder = currentPath ? this.app.vault.getAbstractFileByPath(currentPath) : this.app.vault.getRoot();
-            if (targetFolder && (targetFolder instanceof import_obsidian.TFolder || !currentPath)) {
+            if (targetFolder && (targetFolder instanceof import_obsidian2.TFolder || !currentPath)) {
               await fileExplorer.view.revealInFolder(targetFolder);
             }
           }
@@ -1075,7 +1132,7 @@ ${content}` : content;
           try {
             this.previewContainer.empty();
             const content = await this.app.vault.read(file);
-            await import_obsidian.MarkdownRenderer.render(
+            await import_obsidian2.MarkdownRenderer.render(
               this.app,
               content,
               this.previewContainer,
@@ -1097,7 +1154,7 @@ ${content}` : content;
         });
         openButton.addEventListener("click", async (e) => {
           e.stopPropagation();
-          await this.openInAppropriateLeaf(file);
+          await openInAppropriateLeaf(this.app, file);
           card.addClass("selected");
           this.container.querySelectorAll(".note-card").forEach((cardElement) => {
             if (cardElement !== card) {
@@ -1214,8 +1271,8 @@ ${content}` : content;
     let counter = 1;
     while (this.app.vault.getAbstractFileByPath(`${fileName}.md`)) {
       const file = this.app.vault.getAbstractFileByPath(`${fileName}.md`);
-      if (file instanceof import_obsidian.TFile && file.stat.size === 0) {
-        await this.openInAppropriateLeaf(file);
+      if (file instanceof import_obsidian2.TFile && file.stat.size === 0) {
+        await openInAppropriateLeaf(this.app, file, false);
         return;
       } else {
         fileName = date ? `${baseFileName} ${counter}` : `\u672A\u547D\u540D ${counter}`;
@@ -1227,7 +1284,7 @@ ${content}` : content;
         `${fileName}.md`,
         ""
       );
-      await this.openInAppropriateLeaf(file);
+      await openInAppropriateLeaf(this.app, file, false);
       this.loadNotes();
     } catch (error) {
       console.error("\u521B\u5EFA\u7B14\u8BB0\u5931\u8D25:", error);
@@ -1252,7 +1309,7 @@ ${content}` : content;
       return null;
     } catch (error) {
       console.error("\u521B\u5EFA\u7B14\u8BB0\u5931\u8D25:", error);
-      new import_obsidian.Notice("\u521B\u5EFA\u7B14\u8BB0\u5931\u8D25");
+      new import_obsidian2.Notice("\u521B\u5EFA\u7B14\u8BB0\u5931\u8D25");
       return null;
     }
   }
@@ -1438,23 +1495,23 @@ ${content}` : content;
   }
   // 获取选中的文件
   getSelectedFiles() {
-    return Array.from(this.selectedNotes).map((path) => this.app.vault.getAbstractFileByPath(path)).filter((file) => file instanceof import_obsidian.TFile);
+    return Array.from(this.selectedNotes).map((path) => this.app.vault.getAbstractFileByPath(path)).filter((file) => file instanceof import_obsidian2.TFile);
   }
   // 右键菜单
   showContextMenu(event, files) {
-    const menu = new import_obsidian.Menu();
+    const menu = new import_obsidian2.Menu();
     if (files.length > 0) {
       menu.addItem((item) => {
         item.setTitle(`\u5728\u65B0\u6807\u7B7E\u9875\u6253\u5F00`).setIcon("link").onClick(async () => {
           for (const file of files) {
-            await this.openInAppropriateLeaf(file);
+            await openInAppropriateLeaf(this.app, file);
           }
         });
       });
       menu.addItem((item) => {
         item.setTitle(`\u6587\u4EF6\u5217\u8868\u4E2D\u663E\u793A`).setIcon("folder").onClick(async () => {
           const file = files[0];
-          await this.openInAppropriateLeaf(file, false);
+          await openInAppropriateLeaf(this.app, file, false);
         });
       });
       menu.addItem((item) => {
@@ -1546,36 +1603,6 @@ ${content}` : content;
         card.style.height = `${height}px`;
       }
     });
-  }
-  // 日历-建按钮
-  createCalendarButton(leftTools) {
-    const calendarBtn = leftTools.createEl("button", {
-      cls: "calendar-toggle-button"
-    });
-    calendarBtn.innerHTML = `
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-            <span>\u65E5</span>
-        `;
-    calendarBtn.addEventListener("click", () => {
-      this.toggleCalendar();
-      calendarBtn.toggleClass("active", this.isCalendarVisible);
-    });
-  }
-  // 历-切
-  toggleCalendar() {
-    console.log("\u5207\u6362\u65E5\u5386\u663E\u793A\u72B6\u6001, \u5F53\u524D\u72B6\u6001:", this.isCalendarVisible);
-    this.isCalendarVisible = !this.isCalendarVisible;
-    if (this.isCalendarVisible) {
-      this.showCalendar();
-      this.filterNotesByMonth(this.currentDate);
-    } else {
-      this.hideCalendar();
-      this.clearDateFilter();
-    }
-    const calendarBtn = this.containerEl.querySelector(".calendar-toggle-button");
-    if (calendarBtn) {
-      calendarBtn.toggleClass("active", this.isCalendarVisible);
-    }
   }
   //  按月份过滤
   filterNotesByMonth(date) {
@@ -1695,39 +1722,6 @@ ${content}` : content;
     }
     this.refreshView();
   }
-  // 打开文件
-  async openInAppropriateLeaf(file, openFile = true) {
-    const fileExplorer = this.app.workspace.getLeavesOfType("file-explorer")[0];
-    if (fileExplorer) {
-      this.app.workspace.revealLeaf(fileExplorer);
-      try {
-        if (openFile) {
-          const leaves = this.app.workspace.getLeavesOfType("markdown");
-          const currentRoot = this.leaf.getRoot();
-          const otherLeaf = leaves.find((leaf) => {
-            const root = leaf.getRoot();
-            return root !== currentRoot;
-          });
-          let targetLeaf;
-          if (otherLeaf) {
-            await otherLeaf.openFile(file);
-            targetLeaf = otherLeaf;
-          } else {
-            targetLeaf = this.app.workspace.getLeaf("tab");
-            await targetLeaf.openFile(file);
-          }
-          this.app.workspace.setActiveLeaf(targetLeaf);
-        }
-        const fileExplorer2 = this.app.workspace.getLeavesOfType("file-explorer")[0];
-        if (fileExplorer2 && fileExplorer2.view) {
-          await fileExplorer2.view.revealInFolder(file);
-        }
-      } catch (error) {
-        console.error("\u64CD\u4F5C\u5931\u8D25:", error);
-        new import_obsidian.Notice("\u64CD\u4F5C\u5931\u8D25");
-      }
-    }
-  }
   // 高亮文本
   highlightText(text, searchTerm) {
     if (!searchTerm || searchTerm.trim() === "") {
@@ -1807,7 +1801,7 @@ ${content}` : content;
   async deleteEmptyNotes() {
     const selectedFiles = this.getSelectedFiles();
     if (selectedFiles.length === 0) {
-      new import_obsidian.Notice("\u8BF7\u5148\u9009\u62E9\u68C0\u67E5\u7684\u7B14\u8BB0");
+      new import_obsidian2.Notice("\u8BF7\u5148\u9009\u62E9\u68C0\u67E5\u7684\u7B14\u8BB0");
       return;
     }
     const emptyNotes = [];
@@ -1818,7 +1812,7 @@ ${content}` : content;
       }
     }
     if (emptyNotes.length === 0) {
-      new import_obsidian.Notice("\u6240\u9009\u7B14\u8BB0\u4E2D\u6CA1\u6709\u7A7A\u767D\u7B14\u8BB0");
+      new import_obsidian2.Notice("\u6240\u9009\u7B14\u8BB0\u4E2D\u6CA1\u6709\u7A7A\u767D\u7B14\u8BB0");
       return;
     }
     const confirmModal = new ConfirmModal(
@@ -1832,7 +1826,7 @@ ${emptyNotes.map((file) => file.basename).join("\n")}`
         await this.app.vault.trash(file, true);
       }
       this.refreshView();
-      new import_obsidian.Notice(`\u5220\u9664 ${emptyNotes.length} \u4E2A\u7A7A\u767D\u7B14\u8BB0`);
+      new import_obsidian2.Notice(`\u5220\u9664 ${emptyNotes.length} \u4E2A\u7A7A\u767D\u7B14\u8BB0`);
     }
   }
   // 月历-创建月视图
@@ -1954,13 +1948,13 @@ ${emptyNotes.map((file) => file.basename).join("\n")}`
           noteItem.setText(note.basename);
           noteItem.addEventListener("click", async (e) => {
             e.stopPropagation();
-            await this.openInAppropriateLeaf(note);
+            await openInAppropriateLeaf(this.app, note);
           });
           noteItem.addEventListener("mouseenter", async () => {
             try {
               this.previewContainer.empty();
               const content = await this.app.vault.read(note);
-              await import_obsidian.MarkdownRenderer.render(
+              await import_obsidian2.MarkdownRenderer.render(
                 this.app,
                 content,
                 this.previewContainer,
@@ -2082,7 +2076,7 @@ ${emptyNotes.map((file) => file.basename).join("\n")}`
       this.handleCardSelection(note.path, e);
     });
     noteItem.addEventListener("dblclick", async () => {
-      await this.openInAppropriateLeaf(note);
+      await openInAppropriateLeaf(this.app, note);
     });
     noteItem.addEventListener("contextmenu", (e) => {
       e.preventDefault();
@@ -2092,7 +2086,7 @@ ${emptyNotes.map((file) => file.basename).join("\n")}`
       try {
         this.previewContainer.empty();
         const content = await this.app.vault.read(note);
-        await import_obsidian.MarkdownRenderer.render(
+        await import_obsidian2.MarkdownRenderer.render(
           this.app,
           content,
           this.previewContainer,
@@ -2205,7 +2199,7 @@ ${emptyNotes.map((file) => file.basename).join("\n")}`
       const title = (_a2 = titleInput == null ? void 0 : titleInput.value) == null ? void 0 : _a2.trim();
       const content = input.value.trim();
       if (!content) {
-        new import_obsidian.Notice("\u8BF7\u8F93\u5165\u7B14\u8BB0\u5185\u5BB9");
+        new import_obsidian2.Notice("\u8BF7\u8F93\u5165\u7B14\u8BB0\u5185\u5BB9");
         return;
       }
       try {
@@ -2231,11 +2225,11 @@ ${content}` : content;
             item.addClass("inactive");
           });
           await this.refreshView();
-          new import_obsidian.Notice("\u7B14\u521B\u5EFA\u6210\u529F");
+          new import_obsidian2.Notice("\u7B14\u521B\u5EFA\u6210\u529F");
         }
       } catch (error) {
         console.error("\u521B\u5EFA\u7B14\u8BB0\u5931\u8D25:", error);
-        new import_obsidian.Notice("\u521B\u5EFA\u7B14\u8BB0\u5931\u8D25");
+        new import_obsidian2.Notice("\u521B\u5EFA\u7B14\u8BB0\u5931\u8D25");
       }
     };
     const sendButton = (_c = input.parentElement) == null ? void 0 : _c.querySelector(".quick-note-send");
@@ -2489,7 +2483,7 @@ ${content}` : content;
     try {
       container.empty();
       const content = await this.app.vault.read(file);
-      await import_obsidian.MarkdownRenderer.render(
+      await import_obsidian2.MarkdownRenderer.render(
         this.app,
         content,
         container,
@@ -2564,7 +2558,7 @@ ${content}` : content;
       this.updateCardLayout();
     } catch (error) {
       console.error("\u521B\u5EFA\u65F6\u95F4\u8F74\u89C6\u56FE\u5931\u8D25:", error);
-      new import_obsidian.Notice("\u521B\u5EFA\u65F6\u95F4\u8F74\u89C6\u56FE\u5931\u8D25");
+      new import_obsidian2.Notice("\u521B\u5EFA\u65F6\u95F4\u8F74\u89C6\u56FE\u5931\u8D25");
       this.updateLoadingStatus("\u521B\u5EFA\u65F6\u95F4\u89C6\u56FE\u5931\u8D25");
     }
   }
@@ -2758,7 +2752,7 @@ ${content}` : content;
             const filePath = noteContent.getAttribute("data-path");
             if (filePath && !this.loadedNotes.has(filePath)) {
               const file = this.app.vault.getAbstractFileByPath(filePath);
-              if (file instanceof import_obsidian.TFile) {
+              if (file instanceof import_obsidian2.TFile) {
                 await this.loadNoteContent(noteContent, file);
               }
             }
@@ -2880,7 +2874,7 @@ ${content}` : content;
         this.navigateWeek(1);
       });
       const weekContent = weekContainer.createDiv("week-content");
-      const weekDates = this.getWeekDates(this.currentYear, this.currentWeek);
+      const weekDates = getWeekDates(this.currentYear, this.currentWeek);
       const daysHeader = weekContent.createDiv("week-days-header");
       const weekdays = ["\u5468\u4E00", "\u5468\u4E8C", "\u5468\u4E09", "\u5468\u56DB", "\u5468\u4E94", "\u5468\u516D", "\u5468\u65E5"];
       weekdays.forEach((day, index) => {
@@ -2909,7 +2903,7 @@ ${content}` : content;
       });
     } catch (error) {
       console.error("\u521B\u5EFA\u5468\u89C6\u56FE\u5931\u8D25:", error);
-      new import_obsidian.Notice("\u521B\u5EFA\u5468\u89C6\u56FE\u5931\u8D25");
+      new import_obsidian2.Notice("\u521B\u5EFA\u5468\u89C6\u56FE\u5931\u8D25");
     } finally {
       if (this.currentLoadingView === "week") {
         this.currentLoadingView = null;
@@ -2935,26 +2929,6 @@ ${content}` : content;
   isSameDay(date1, date2) {
     return date1.getFullYear() === date2.getFullYear() && date1.getMonth() === date2.getMonth() && date1.getDate() === date2.getDate();
   }
-  // 获取指定周的日期范围
-  getWeekDates(year, week) {
-    console.log("\u83B7\u53D6\u5468\u65E5\u671F\u8303\u56F4 - \u5E74\u4EFD:", year, "\u5468\u6570:", week);
-    const firstDayOfYear = new Date(year, 0, 1);
-    console.log("\u5E74\u521D\u7B2C\u4E00\u5929:", firstDayOfYear.toISOString());
-    const daysToFirstMonday = (8 - firstDayOfYear.getDay()) % 7;
-    const firstMonday = new Date(year, 0, 1 + daysToFirstMonday);
-    console.log("\u7B2C\u4E00\u4E2A\u5468\u4E00:", firstMonday.toISOString());
-    const weekStart = new Date(firstMonday);
-    weekStart.setDate(weekStart.getDate() + (week - 1) * 7);
-    console.log("\u76EE\u6807\u5468\u7684\u5468\u4E00:", weekStart.toISOString());
-    const dates = [];
-    for (let i = 0; i < 7; i++) {
-      const date = new Date(weekStart);
-      date.setDate(date.getDate() + i);
-      dates.push(date);
-    }
-    console.log("\u751F\u6210\u7684\u65E5\u671F\u8303\u56F4:", dates.map((d) => d.toISOString()));
-    return dates;
-  }
   // 创建周视图的笔记卡片
   createWeekNoteCard(file) {
     const card = createDiv("week-note-card");
@@ -2966,13 +2940,13 @@ ${content}` : content;
       minute: "2-digit"
     }));
     card.addEventListener("click", async () => {
-      await this.openInAppropriateLeaf(file);
+      await openInAppropriateLeaf(this.app, file);
     });
     card.addEventListener("mouseenter", async () => {
       try {
         this.previewContainer.empty();
         const content = await this.app.vault.read(file);
-        await import_obsidian.MarkdownRenderer.render(
+        await import_obsidian2.MarkdownRenderer.render(
           this.app,
           content,
           this.previewContainer,
@@ -3020,7 +2994,7 @@ ${content}` : content;
     const notesContainer = this.containerEl.querySelector(".week-notes-container");
     if (notesContainer) {
       notesContainer.empty();
-      const weekDates = this.getWeekDates(this.currentYear, this.currentWeek);
+      const weekDates = getWeekDates(this.currentYear, this.currentWeek);
       const reorderedDates = [
         ...weekDates.slice(1),
         // 周一到周六
@@ -3040,7 +3014,7 @@ ${content}` : content;
   // 获取指定周所在的月份
   getMonthForWeek(year, week) {
     try {
-      const weekDates = this.getWeekDates(year, week);
+      const weekDates = getWeekDates(year, week);
       const middleDate = weekDates[3];
       console.log("\u5468\u4E2D\u95F4\u65E5\u671F:", middleDate);
       return middleDate.getMonth() + 1;
@@ -3097,7 +3071,7 @@ ${content}` : content;
     } catch (error) {
       console.error("\u521B\u5EFA\u4E3B\u9875\u89C6\u56FE\u5931\u8D25:", error);
       console.error(error.stack);
-      new import_obsidian.Notice("\u521B\u5EFA\u4E3B\u9875\u89C6\u56FE\u5931\u8D25");
+      new import_obsidian2.Notice("\u521B\u5EFA\u4E3B\u9875\u89C6\u56FE\u5931\u8D25");
     }
   }
   // 创建单个模块
@@ -3198,7 +3172,7 @@ ${content}` : content;
         cls: "note-date"
       });
       noteItem.addEventListener("click", () => {
-        this.openInAppropriateLeaf(note);
+        openInAppropriateLeaf(this.app, note);
       });
     }
   }
@@ -3215,7 +3189,7 @@ ${content}` : content;
         cls: "note-date"
       });
       noteItem.addEventListener("click", () => {
-        this.openInAppropriateLeaf(note);
+        openInAppropriateLeaf(this.app, note);
       });
     }
   }
@@ -3323,7 +3297,7 @@ ${content}` : content;
             const noteItem = notesList.createDiv("note-item");
             noteItem.setText(note.basename);
             noteItem.addEventListener("click", () => {
-              this.openInAppropriateLeaf(note);
+              openInAppropriateLeaf(this.app, note);
             });
           });
         } else {
@@ -3694,7 +3668,7 @@ ${content}` : content;
       const title = titleInput.value.trim();
       const content = noteInput.value.trim();
       if (!content) {
-        new import_obsidian.Notice("\u8BF7\u8F93\u5165\u7B14\u8BB0\u5185\u5BB9");
+        new import_obsidian2.Notice("\u8BF7\u8F93\u5165\u7B14\u8BB0\u5185\u5BB9");
         return;
       }
       try {
@@ -3715,11 +3689,11 @@ ${content}` : content;
         const file = await this.createQuickNote(finalContent, [], fileName);
         if (file) {
           this.clearQuickNoteInputs(titleInput, noteInput, tags, tagsContainer, tagInput);
-          new import_obsidian.Notice("\u7B14\u8BB0\u521B\u5EFA\u6210\u529F");
+          new import_obsidian2.Notice("\u7B14\u8BB0\u521B\u5EFA\u6210\u529F");
         }
       } catch (error) {
         console.error("\u521B\u5EFA\u7B14\u8BB0\u5931\u8D25:", error);
-        new import_obsidian.Notice("\u521B\u5EFA\u7B14\u8BB0\u5931\u8D25");
+        new import_obsidian2.Notice("\u521B\u5EFA\u7B14\u8BB0\u5931\u8D25");
       }
     });
   }
@@ -3879,7 +3853,7 @@ ${content}` : content;
     }
   }
 };
-var ModuleManagerModal = class extends import_obsidian.Modal {
+var ModuleManagerModal = class extends import_obsidian2.Modal {
   constructor(app, modules, onSave) {
     super(app);
     this.modules = [...modules];
@@ -4009,7 +3983,7 @@ var DEFAULT_SETTINGS = {
   maxCardHeight: 800,
   homeModules: []
 };
-var CardViewSettingTab = class extends import_obsidian2.PluginSettingTab {
+var CardViewSettingTab = class extends import_obsidian3.PluginSettingTab {
   constructor(app, plugin) {
     super(app, plugin);
     this.plugin = plugin;
@@ -4017,7 +3991,7 @@ var CardViewSettingTab = class extends import_obsidian2.PluginSettingTab {
   display() {
     const { containerEl } = this;
     containerEl.empty();
-    new import_obsidian2.Setting(containerEl).setName("\u9ED8\u8BA4\u89C6\u56FE").setDesc("\u9009\u62E9\u9ED8\u8BA4\u7684\u89C6\u56FE\u6A21\u5F0F").addDropdown((dropdown) => {
+    new import_obsidian3.Setting(containerEl).setName("\u9ED8\u8BA4\u89C6\u56FE").setDesc("\u9009\u62E9\u9ED8\u8BA4\u7684\u89C6\u56FE\u6A21\u5F0F").addDropdown((dropdown) => {
       dropdown.addOption("home", "\u4E3B\u9875\u89C6\u56FE").addOption("card", "\u5361\u7247\u89C6\u56FE").addOption("list", "\u5217\u8868\u89C6\u56FE").addOption("timeline", "\u65F6\u95F4\u8F74\u89C6\u56FE").addOption("month", "\u6708\u89C6\u56FE").addOption("week", "\u5468\u89C6\u56FE").setValue(this.plugin.settings.defaultView);
       dropdown.onChange(async (value) => {
         if (value === "home" || value === "card" || value === "list" || value === "timeline" || value === "month" || value === "week") {
@@ -4026,7 +4000,7 @@ var CardViewSettingTab = class extends import_obsidian2.PluginSettingTab {
         }
       });
     });
-    new import_obsidian2.Setting(containerEl).setName("\u5361\u7247\u5BBD\u5EA6").setDesc("\u8BBE\u7F6E\u5361\u7247\u7684\u5BBD\u5EA6\uFF08280-600\u50CF\u7D20\uFF09").addText((text) => text.setPlaceholder("280").setValue(this.plugin.settings.cardWidth.toString()).onChange(async (value) => {
+    new import_obsidian3.Setting(containerEl).setName("\u5361\u7247\u5BBD\u5EA6").setDesc("\u8BBE\u7F6E\u5361\u7247\u7684\u5BBD\u5EA6\uFF08280-600\u50CF\u7D20\uFF09").addText((text) => text.setPlaceholder("280").setValue(this.plugin.settings.cardWidth.toString()).onChange(async (value) => {
       const width = Number(value);
       if (!isNaN(width) && width >= 280 && width <= 600) {
         this.plugin.settings.cardWidth = width;
@@ -4034,26 +4008,26 @@ var CardViewSettingTab = class extends import_obsidian2.PluginSettingTab {
         this.plugin.updateAllCardViews();
       }
     }));
-    new import_obsidian2.Setting(containerEl).setName("\u6700\u5C0F\u5BBD\u5EA6").setDesc("\u8BBE\u7F6E\u5361\u7247\u7684\u6700\u5C0F\u5BBD\u5EA6\uFF08\u50CF\u7D20\uFF09").addText((text) => text.setPlaceholder("280").setValue(this.plugin.settings.minCardWidth.toString()).onChange(async (value) => {
+    new import_obsidian3.Setting(containerEl).setName("\u6700\u5C0F\u5BBD\u5EA6").setDesc("\u8BBE\u7F6E\u5361\u7247\u7684\u6700\u5C0F\u5BBD\u5EA6\uFF08\u50CF\u7D20\uFF09").addText((text) => text.setPlaceholder("280").setValue(this.plugin.settings.minCardWidth.toString()).onChange(async (value) => {
       const width = Number(value);
       if (!isNaN(width) && width >= 200) {
         this.plugin.settings.minCardWidth = width;
         await this.plugin.saveSettings();
       }
     }));
-    new import_obsidian2.Setting(containerEl).setName("\u6700\u5927\u5BBD\u5EA6").setDesc("\u8BBE\u7F6E\u5361\u7247\u7684\u6700\u5927\u5BBD\u5EA6\uFF08\u50CF\u7D20\uFF09").addText((text) => text.setPlaceholder("600").setValue(this.plugin.settings.maxCardWidth.toString()).onChange(async (value) => {
+    new import_obsidian3.Setting(containerEl).setName("\u6700\u5927\u5BBD\u5EA6").setDesc("\u8BBE\u7F6E\u5361\u7247\u7684\u6700\u5927\u5BBD\u5EA6\uFF08\u50CF\u7D20\uFF09").addText((text) => text.setPlaceholder("600").setValue(this.plugin.settings.maxCardWidth.toString()).onChange(async (value) => {
       const width = Number(value);
       if (!isNaN(width) && width <= 800) {
         this.plugin.settings.maxCardWidth = width;
         await this.plugin.saveSettings();
       }
     }));
-    new import_obsidian2.Setting(containerEl).setName("\u663E\u793A\u6807\u7B7E\u5F15\u7528\u6570\u91CF").setDesc("\u5728\u6807\u7B7E\u540E\u663E\u793A\u4F7F\u7528\u8BE5\u6807\u7B7E\u7684\u7B14\u8BB0\u6570\u91CF").addToggle((toggle) => toggle.setValue(this.plugin.settings.showTagCount).onChange(async (value) => {
+    new import_obsidian3.Setting(containerEl).setName("\u663E\u793A\u6807\u7B7E\u5F15\u7528\u6570\u91CF").setDesc("\u5728\u6807\u7B7E\u540E\u663E\u793A\u4F7F\u7528\u8BE5\u6807\u7B7E\u7684\u7B14\u8BB0\u6570\u91CF").addToggle((toggle) => toggle.setValue(this.plugin.settings.showTagCount).onChange(async (value) => {
       this.plugin.settings.showTagCount = value;
       await this.plugin.saveSettings();
       this.plugin.refreshAllTags();
     }));
-    new import_obsidian2.Setting(containerEl).setName("\u5361\u7247\u9AD8\u5EA6").setDesc("\u8BBE\u7F6E\u5361\u7247\u7684\u9AD8\u5EA6\uFF08200-800\u50CF\u7D20\uFF09").addText((text) => text.setPlaceholder("280").setValue(this.plugin.settings.cardHeight.toString()).onChange(async (value) => {
+    new import_obsidian3.Setting(containerEl).setName("\u5361\u7247\u9AD8\u5EA6").setDesc("\u8BBE\u7F6E\u5361\u7247\u7684\u9AD8\u5EA6\uFF08200-800\u50CF\u7D20\uFF09").addText((text) => text.setPlaceholder("280").setValue(this.plugin.settings.cardHeight.toString()).onChange(async (value) => {
       const height = Number(value);
       if (!isNaN(height) && height >= 200 && height <= 800) {
         this.plugin.settings.cardHeight = height;
@@ -4061,14 +4035,14 @@ var CardViewSettingTab = class extends import_obsidian2.PluginSettingTab {
         this.plugin.updateAllCardViews();
       }
     }));
-    new import_obsidian2.Setting(containerEl).setName("\u6700\u5C0F\u9AD8\u5EA6").setDesc("\u8BBE\u7F6E\u5361\u7247\u7684\u6700\u5C0F\u9AD8\u5EA6\uFF08\u50CF\u7D20\uFF09").addText((text) => text.setPlaceholder("200").setValue(this.plugin.settings.minCardHeight.toString()).onChange(async (value) => {
+    new import_obsidian3.Setting(containerEl).setName("\u6700\u5C0F\u9AD8\u5EA6").setDesc("\u8BBE\u7F6E\u5361\u7247\u7684\u6700\u5C0F\u9AD8\u5EA6\uFF08\u50CF\u7D20\uFF09").addText((text) => text.setPlaceholder("200").setValue(this.plugin.settings.minCardHeight.toString()).onChange(async (value) => {
       const height = Number(value);
       if (!isNaN(height) && height >= 200) {
         this.plugin.settings.minCardHeight = height;
         await this.plugin.saveSettings();
       }
     }));
-    new import_obsidian2.Setting(containerEl).setName("\u6700\u5927\u9AD8\u5EA6").setDesc("\u8BBE\u7F6E\u5361\u7247\u7684\u6700\u5927\u9AD8\u5EA6\uFF08\u50CF\u7D20\uFF09").addText((text) => text.setPlaceholder("800").setValue(this.plugin.settings.maxCardHeight.toString()).onChange(async (value) => {
+    new import_obsidian3.Setting(containerEl).setName("\u6700\u5927\u9AD8\u5EA6").setDesc("\u8BBE\u7F6E\u5361\u7247\u7684\u6700\u5927\u9AD8\u5EA6\uFF08\u50CF\u7D20\uFF09").addText((text) => text.setPlaceholder("800").setValue(this.plugin.settings.maxCardHeight.toString()).onChange(async (value) => {
       const height = Number(value);
       if (!isNaN(height) && height <= 800) {
         this.plugin.settings.maxCardHeight = height;
@@ -4077,7 +4051,7 @@ var CardViewSettingTab = class extends import_obsidian2.PluginSettingTab {
     }));
   }
 };
-var CardViewPlugin = class extends import_obsidian2.Plugin {
+var CardViewPlugin = class extends import_obsidian3.Plugin {
   constructor(app, manifest) {
     super(app, manifest);
     this.settings = DEFAULT_SETTINGS;
