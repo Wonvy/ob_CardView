@@ -1,0 +1,142 @@
+
+// 日历-筛选工具栏
+.calendar-toggle-button.toolbar-button
+  position: relative
+  .calendar-container 
+    position: absolute
+    top: 30px
+    left: 0
+
+
+// 日历显示时调整内容区域的边距   
+.main-layout.with-calendar .content-section 
+  margin-left: 0
+
+// 修改日历下拉菜单样式
+.card-view-toolbar
+  .calendar-dropdown-container
+    position: relative
+    margin-right: 12px  // 添加右边距，与标签下拉列表保持间距
+    
+    .calendar-toggle-button
+      position: relative  
+      display: flex
+      align-items: center
+      gap: 6px
+      background: transparent
+      border: 1px solid var(--background-modifier-border)
+      color: var(--text-muted)
+      padding: 6px 12px
+      cursor: pointer
+      border-radius: 4px
+      font-size: 14px
+      transition: all 0.2s ease
+      
+      &:hover
+        color: var(--text-normal)
+        background-color: var(--background-modifier-hover)
+        border-color: var(--interactive-accent)
+      
+      svg
+        width: 16px
+        height: 16px
+
+
+
+// 日历-通用样式
+.calendar-container 
+  // position: absolute
+  width: 280px
+  background-color: var(--background-primary)
+  border-right: 1px solid var(--background-modifier-border)
+  padding: 16px
+  z-index: 1000
+  box-shadow: 2px 0 4px rgba(0, 0, 0, 0.1)
+
+  // 日历头部样式   
+  .calendar-header 
+    display: flex
+    justify-content: space-between
+    align-items: center
+    margin-bottom: 16px
+    padding: 8px 0
+
+    // 导航按钮样式   
+    .calendar-nav-btn 
+      background: transparent
+      border: 1px solid var(--background-modifier-border)
+      border-radius: 4px
+      padding: 4px 8px
+      color: var(--text-muted)
+      cursor: pointer
+      transition: all 0.2s ease
+      &:hover 
+        background-color: var(--background-modifier-hover)
+        color: var(--text-normal)
+        border-color: var(--interactive-accent)
+
+
+    .calendar-title 
+      font-size: 1.1em
+      font-weight: bold
+      color: var(--text-normal)
+
+  // 日历网格样式   
+  .calendar-weekdays 
+    display: grid
+    grid-template-columns: repeat(7, 1fr)
+    gap: 4px
+    margin-bottom: 8px
+    height: calc(100% / 6)
+    padding: 8px 0
+    border-bottom: 1px solid var(--background-modifier-border)
+
+    .weekday 
+      text-align: center
+      font-size: 0.9em
+      color: var(--text-muted)
+      font-weight: 500
+
+  .calendar-grid 
+    display: grid
+    grid-template-columns: repeat(7, 1fr)
+    gap: 4px
+
+    .calendar-day 
+      position: relative
+      aspect-ratio: 1
+      display: flex
+      align-items: center
+      justify-content: center
+      border-radius: 4px
+      cursor: pointer
+      background-color: var(--background-secondary)
+      font-size: 0.9em
+      transition: all 0.2s ease
+      &.empty 
+        background-color: transparent
+        cursor: default
+      &.selected 
+        background-color: var(--interactive-accent)
+        color: var(--text-on-accent)
+        transform: translateY(-1px)
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1)
+        .note-count 
+          background-color: var(--text-on-accent)
+          color: var(--interactive-accent)
+      &:hover 
+        background-color: var(--background-modifier-hover)
+        transform: translateY(-1px)
+
+      // 笔记数量样式   
+      .note-count 
+        position: absolute
+        bottom: 2px
+        right: 2px
+        font-size: 0.7em
+        background-color: var(--interactive-accent)
+        color: var(--text-on-accent)
+        padding: 1px 4px
+        border-radius: 8px
+        min-width: 16px
+        text-align: center

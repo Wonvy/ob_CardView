@@ -1,0 +1,211 @@
+
+// 选中标签样式
+.selected-tag
+  display: inline-flex
+  align-items: center
+  gap: 6px
+  padding: 3px 10px
+  background: var(--interactive-accent)
+  color: var(--text-on-accent)
+  border-radius: 12px
+  font-size: 12px
+  border: 1px solid var(--background-modifier-border)
+  transition: all 0.2s ease
+  white-space: nowrap  // 确保标签文本不换行
+  height: 24px  // 固定高度
+  
+  &:hover
+      background-color: var(--background-modifier-hover-plus)
+      border-color: var(--text-muted)
+  
+  .tag-text
+      max-width: 150px  // 限制标签文本最大宽度
+      overflow: hidden
+      text-overflow: ellipsis
+  
+  .remove-tag
+            cursor: pointer
+            font-size: 14px
+            width: 14px
+            height: 14px
+            display: flex
+            align-items: center
+            justify-content: center
+            border-radius: 50%
+            color: var(--text-muted)
+            transition: all 0.2s ease
+            padding-bottom: 2px  // 微调 × 的位置
+            
+            &:hover
+                color: var(--text-normal)
+                background-color: var(--background-modifier-border)
+
+// 添加提示框样式
+.note-tooltip 
+  position: fixed
+  z-index: 9999
+  background-color: var(--background-primary)
+  border: 1px solid var(--background-modifier-border)
+  border-radius: 4px
+  padding: 8px 12px
+  font-size: 14px
+  color: var(--text-normal)
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15)
+  pointer-events: none
+  max-width: 300px
+  word-wrap: break-word
+  animation: tooltip-fade-in 0.2s ease
+
+  .tooltip-note-item 
+      padding: 4px 0
+      &:not(:last-child)
+          border-bottom: 1px solid var(--background-modifier-border)
+@keyframes tooltip-fade-in 
+    from 
+        opacity: 0
+        transform: translateY(5px)
+    to 
+        opacity: 1
+        transform: translateY(0)
+
+
+// 笔记文件夹
+.note-folder
+  display: flex
+  align-items: center
+  flex-wrap: wrap
+  gap: 2px
+
+// 文件夹部分
+.folder-part
+  position: relative
+  cursor: pointer
+  padding: 2px 0
+
+// 文件夹分隔符
+.folder-separator
+  opacity: 0.5
+  margin: 0 2px
+
+// 文件夹下划线
+.folder-underline
+  position: absolute
+  bottom: 0
+  left: 0
+  width: 100%
+  height: 1px
+  background-color: var(--text-normal)
+  transform: scaleX(0)
+  transition: transform 0.2s ease
+
+// 文件夹悬停效果
+.folder-part:hover .folder-underline,
+.folder-underline.active
+    transform: scaleX(1)
+
+
+// 元素-卡片标签
+.note-tag 
+  color: var(--text-muted)
+  border: 1px solid var(--background-modifier-border)
+  background-color: transparent
+  padding: 2px 6px
+  border-radius: 4px
+  font-size: 0.8em 
+	
+
+
+// 元素-标签按钮
+.tag-btn 
+  background-color: transparent
+  color: var(--text-muted)
+  border: 1px solid var(--background-modifier-border)
+  border-radius: 4px
+  padding: 2px 8px
+  font-size: 0.85em
+  cursor: pointer
+  transition: all 0.2s ease
+  height: 24px
+  line-height: 20px
+  display: inline-flex
+  align-items: center
+  gap: 4px
+  
+  &:hover 
+    background-color: var(--background-modifier-hover)
+    color: var(--text-normal)
+    .tag-count
+      color: var(--interactive-accent)
+  
+  &.active 
+    background-color: var(--interactive-accent)
+    color: var(--text-on-accent)
+    border-color: var(--interactive-accent)
+    .tag-count
+      color: var(--text-on-accent)
+  
+  // 标签数量样式
+  .tag-count
+    color: var(--interactive-accent)
+    font-weight: 600
+    font-size: 0.9em
+    transition: color 0.2s ease
+
+  // 添加高亮样式
+  &.highlighted 
+    background-color: var(--interactive-accent)
+    color: var(--text-on-accent)
+    border-color: var(--interactive-accent)
+    animation: tag-highlight 0.3s ease
+    
+    .tag-count
+      color: var(--text-on-accent)
+@keyframes tag-highlight 
+  0% 
+    transform: scale(1)
+  50% 
+    transform: scale(1.1)
+  100% 
+    transform: scale(1)
+
+
+
+// 修改标签输入框样式
+.tag-input 
+  border: none
+  background: transparent
+  padding: 2px 8px
+  font-size: 13px
+  color: var(--text-normal)
+  min-width: 80px
+  
+  &:focus 
+    outline: none
+    border-bottom: 1px solid var(--interactive-accent)
+  
+  &::placeholder 
+    color: var(--text-muted)
+
+/* 隐藏卡片内容中的标题 */
+.note-content 
+  h1:first-child,
+  h2:first-child,
+  h3:first-child,
+  h4:first-child,
+  h5:first-child,
+  h6:first-child 
+    display: none
+
+/* 统一卡片内所有文本样式 */
+.note-content
+  p, li, blockquote, h1, h2, h3, h4, h5, h6,tr,td,code,pre,span
+    font-size: 12px !important
+    line-height: 1.5
+    margin: 0.5em 0
+
+
+
+/* 统一卡内所有文本样式 */
+.note-content
+  h1
+    color:#f00

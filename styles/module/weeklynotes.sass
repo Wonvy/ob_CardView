@@ -1,0 +1,26 @@
+// 模块-本周笔记
+.weekly-notes
+  display: flex
+  flex-direction: column
+  gap: 8px
+  .note-item
+    display: flex
+    justify-content: space-between
+    padding: 8px
+    border-bottom: 1px solid var(--background-modifier-border)
+    cursor: pointer
+    &:hover
+      color: var(--text-normal)
+      background-color: var(--background-modifier-hover)
+    .note-title
+      width: 70%
+      font-size: 0.85em
+      color: var(--text-normal)
+      white-space: nowrap
+      overflow: hidden
+      text-overflow: ellipsis
+    .note-date
+      font-size: 0.85em
+      white-space: nowrap
+      color: var(--text-muted)
+    

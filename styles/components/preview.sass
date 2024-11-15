@@ -1,0 +1,86 @@
+/* 预览栏内保留标题 */
+.preview-container
+  h1, h2, h3, h4, h5, h6
+    margin: 1em 0 0.5em
+    line-height: 1.3
+
+
+
+
+// 添容器相式   
+.preview-wrapper 
+  position: relative
+  display: flex
+  height: 100%
+  transition: all 0.2s ease
+  width: 300px
+  
+  &.collapsed
+    width: 0
+    
+    .preview-resizer
+      opacity: 0
+      pointer-events: none
+    
+    .preview-controls
+      opacity: 1
+      pointer-events: auto
+      
+      .preview-toggle svg
+        transform: rotate(0deg)  // 折叠时箭头朝右
+  
+  .preview-controls 
+    position: absolute
+    left: -26px
+    top: 50%
+    transform: translateY(-50%)
+    z-index: 11
+    transition: all 0.2s ease
+
+    .preview-toggle 
+      background: var(--background-secondary)
+      border-radius: 5px 0 0 5px
+      border: 1px solid var(--background-modifier-border)
+      border-right: none
+      width: 30px
+      height: 30px
+      box-sizing: border-box
+      padding: 4px
+      cursor: pointer
+      transition: all 0.2s ease
+      
+      &:hover 
+        background: var(--background-modifier-hover)
+      
+      svg
+        transition: transform 0.2s ease
+        transform: rotate(180deg)  // 默认箭头朝左
+  
+  .preview-resizer 
+    width: 4px
+    background-color: transparent
+    cursor: col-resize
+    position: relative
+    z-index: 10
+    transition: all 0.2s ease
+    
+    &:hover,
+    &.resizing 
+        background-color: var(--interactive-accent)
+  
+  .preview-container 
+    width: 100%
+    height: 100%
+    background-color: var(--background-primary)
+    border-left: 1px solid var(--background-modifier-border)
+    padding: 1rem
+    overflow-y: auto
+    transition: all 0.2s ease
+    
+    &.collapsed 
+        width: 0 !important
+        padding: 0
+        border-left: none
+        margin-left: 0
+        opacity: 0
+        visibility: hidden

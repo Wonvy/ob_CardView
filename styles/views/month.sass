@@ -1,0 +1,185 @@
+// 月视图
+.month-view 
+    display: flex
+    flex-direction: column
+    width: 100%
+    height: 80%
+    padding: 20px
+    box-sizing: border-box
+    background-color: var(--background-primary)
+
+    // 月视图头部
+    .month-header 
+        display: flex
+        justify-content: space-between
+        align-items: center
+        padding: 16px 24px
+        // background: var(--background-secondary)
+        // border-bottom: 1px solid var(--background-modifier-border)
+        // box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05)
+
+        // 年份组
+        .year-group
+            display: flex
+            align-items: center
+            gap: 12px
+            padding: 4px
+            background: var(--background-primary)
+            border-radius: 6px
+            border: 1px solid var(--background-modifier-border)
+            
+            .year-nav-btn
+                display: flex
+                align-items: center
+                justify-content: center
+                width: 28px
+                height: 28px
+                border: none
+                background: transparent
+                color: var(--text-muted)
+                cursor: pointer
+                border-radius: 4px
+                transition: all 0.2s ease
+                
+                &:hover
+                    background: var(--background-modifier-hover)
+                    color: var(--text-normal)
+            
+            .year-display
+                font-size: 1.1em
+                font-weight: 500
+                color: var(--text-normal)
+                padding: 0 8px
+                min-width: 80px
+                text-align: center
+
+        // 月份择器
+        .month-selector
+            display: flex
+            gap: 4px
+            padding: 4px
+            background: var(--background-primary)
+            border-radius: 6px
+            border: 1px solid var(--background-modifier-border)
+            
+            .month-btn
+                width: 32px
+                height: 28px
+                display: flex
+                align-items: center
+                justify-content: center
+                border-radius: 4px
+                cursor: pointer
+                font-size: 0.9em
+                color: var(--text-muted)
+                transition: all 0.2s ease
+                
+                &:hover
+                    background: var(--background-modifier-hover)
+                    color: var(--text-normal)
+                
+                &.active
+                    background: var(--interactive-accent)
+                    color: var(--text-on-accent)
+
+        // 今天按钮
+        .today-btn
+            background: var(--interactive-accent)
+            color: var(--text-on-accent)
+            border: none
+            border-radius: 4px
+            padding: 6px 16px
+            cursor: pointer
+            font-size: 0.9em
+            font-weight: 500
+            transition: all 0.2s ease
+            display: flex
+            align-items: center
+            gap: 6px
+            
+            &:hover
+                opacity: 0.9
+                transform: translateY(-1px)
+            
+            svg
+                width: 16px
+                height: 16px
+
+    // 星期头部
+    .month-weekdays 
+        display: grid
+        grid-template-columns: repeat(7, 1fr)
+        // border-bottom: 1px solid var(--background-modifier-border)
+        // margin-bottom: 1px
+
+        .weekday 
+            padding: 8px
+            text-align: center
+            font-size: 0.9em
+            color: var(--text-muted)
+            font-weight: 500
+
+    // 日历网格
+    .month-grid 
+        display: grid
+        height: 100%
+        grid-template-columns: repeat(7, 1fr)
+        gap: 1px
+        flex: 1
+        background-color: var(--background-modifier-border)
+        border: 1px solid var(--background-modifier-border)
+
+        // 日期格子
+        .month-day 
+            background-color: var(--background-primary)
+            padding: 8px
+            overflow: auto
+            display: flex
+            flex-direction: column
+
+            &.empty 
+                // background-color: var(--background-primary-alt)
+
+            &.today 
+                background-color: var(--background-modifier-hover)
+                
+                .day-number 
+                    color: var(--interactive-accent)
+                    font-weight: bold
+
+            // 日期数字
+            .day-number 
+                font-size: 0.9em
+                color: var(--text-muted)
+                margin-bottom: 4px
+
+            // 笔列表
+            .day-notes 
+                flex: 1
+                overflow-y: auto
+                
+                &::-webkit-scrollbar 
+                    width: 4px
+                
+                &::-webkit-scrollbar-thumb 
+                    background-color: var(--background-modifier-border)
+                    border-radius: 2px
+
+                // 笔记项
+                .day-note-item 
+                    padding: 2px 4px
+                    margin-bottom: 2px
+                    font-size: 0.85em
+                    color: var(--text-muted)
+                    cursor: pointer
+                    white-space: nowrap
+                    overflow: hidden
+                    text-overflow: ellipsis
+                    border-radius: 2px
+                    
+                    &:hover 
+                        background-color: var(--background-modifier-hover)
+                        color: var(--text-normal)
+
+
+
