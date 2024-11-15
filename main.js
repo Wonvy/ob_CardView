@@ -441,7 +441,6 @@ var CardView = class extends import_obsidian.ItemView {
     const contentArea = contentSection.createDiv("card-view-content");
     this.container = contentArea.createDiv("card-container");
     this.cardSize = this.plugin.settings.cardWidth;
-    this.container.style.gridTemplateColumns = `repeat(auto-fill, ${this.cardSize}px`;
     this.container.addEventListener("wheel", (e) => {
       if (e.ctrlKey || e.shiftKey) {
         e.preventDefault();
@@ -1147,7 +1146,6 @@ ${content}` : content;
         previewWrapper.style.width = width;
       }
       this.previewContainer.style.width = width;
-      this.adjustContentWidth();
     }
     const toggleButton = this.containerEl.querySelector(".preview-toggle svg");
     if (toggleButton instanceof SVGElement) {
@@ -1539,7 +1537,6 @@ ${content}` : content;
         card.style.width = `${width}px`;
       }
     });
-    this.container.style.gridTemplateColumns = `repeat(auto-fill, ${width}px)`;
   }
   // 卡片-更新高度
   updateCardHeight(height) {
@@ -1806,7 +1803,7 @@ ${content}` : content;
       }
     });
   }
-  // 命-删除空白笔记
+  // 命令-删除空白笔记
   async deleteEmptyNotes() {
     const selectedFiles = this.getSelectedFiles();
     if (selectedFiles.length === 0) {
@@ -3252,6 +3249,7 @@ ${content}` : content;
   }
   // 模块-日历
   async renderCalendarModule(container) {
+    container.empty();
     const moduleContainer = container.createDiv("calendar-module");
     const calendarSection = moduleContainer.createDiv("calendar-section");
     const notesSection = moduleContainer.createDiv("notes-section");

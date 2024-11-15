@@ -639,7 +639,7 @@ export class CardView extends ItemView {
         // 使用保存的宽度和高度初始化卡片容器
         this.cardSize = this.plugin.settings.cardWidth;
         // 删除读取高度的代码，因为cardHeight属性不存
-        this.container.style.gridTemplateColumns = `repeat(auto-fill, ${this.cardSize}px`;
+        // this.container.style.gridTemplateColumns = `repeat(auto-fill, ${this.cardSize}px`;
         
         // 添加滚轮事件监听
         this.container.addEventListener('wheel', (e: WheelEvent) => {
@@ -1611,7 +1611,7 @@ export class CardView extends ItemView {
             }
             this.previewContainer.style.width = width;
             // 调整内区域
-            this.adjustContentWidth();
+            // this.adjustContentWidth();
         }
 
         // 更新折叠按图标方向
@@ -2134,7 +2134,7 @@ export class CardView extends ItemView {
             }
         });
         // 更新容器的网格列宽度
-        this.container.style.gridTemplateColumns = `repeat(auto-fill, ${width}px)`;
+        // this.container.style.gridTemplateColumns = `repeat(auto-fill, ${width}px)`;
     }
 
     // 卡片-更新高度
@@ -2511,7 +2511,7 @@ export class CardView extends ItemView {
         });
     }
 
-    // 命-删除空白笔记
+    // 命令-删除空白笔记
     private async deleteEmptyNotes() {
         const selectedFiles = this.getSelectedFiles();
         if (selectedFiles.length === 0) {
@@ -4549,6 +4549,7 @@ export class CardView extends ItemView {
 
     // 模块-日历
     private async renderCalendarModule(container: HTMLElement) {
+        container.empty(); // 清空容器
         const moduleContainer = container.createDiv('calendar-module');
         
         // 创建左右布局
@@ -4617,6 +4618,7 @@ export class CardView extends ItemView {
             this.renderCalendarModule(container);
         });
         
+        // 下个月按钮
         nextBtn.addEventListener('click', () => {
             this.currentDate.setMonth(this.currentDate.getMonth() + 1);
             this.renderCalendarModule(container);
@@ -5557,3 +5559,4 @@ export const DEFAULT_HOME_MODULES: HomeModule[] = [
         position: 'right'
     }
 ];
+

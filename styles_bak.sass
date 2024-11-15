@@ -56,6 +56,9 @@
         width: 16px
         height: 16px
 
+    // 日历按钮	
+    .calendar-toggle-button 
+      display: none
 
     // 视图切换器样式 	
     .view-switcher
@@ -98,31 +101,52 @@
 
     // 修改日历下拉菜单样式
     .calendar-dropdown-container
-      position: relative
-      margin-right: 12px  // 添加右边距，与标签下拉列表保持间距
-      
-      .calendar-toggle-button
-        position: relative  
-        display: flex
-        align-items: center
-        gap: 6px
-        background: transparent
-        border: 1px solid var(--background-modifier-border)
-        color: var(--text-muted)
-        padding: 6px 12px
-        cursor: pointer
-        border-radius: 4px
-        font-size: 14px
-        transition: all 0.2s ease
+        position: relative
+        margin-right: 12px  // 添加右边距，与标签下拉列表保持间距
         
-        &:hover
-          color: var(--text-normal)
-          background-color: var(--background-modifier-hover)
-          border-color: var(--interactive-accent)
+        .calendar-toggle-button
+            display: flex
+            align-items: center
+            gap: 6px
+            background: transparent
+            border: 1px solid var(--background-modifier-border)
+            color: var(--text-muted)
+            padding: 6px 12px
+            cursor: pointer
+            border-radius: 4px
+            font-size: 14px
+            transition: all 0.2s ease
+            
+            &:hover
+                color: var(--text-normal)
+                background-color: var(--background-modifier-hover)
+                border-color: var(--interactive-accent)
+            
+            svg
+                width: 16px
+                height: 16px
         
-        svg
-          width: 16px
-          height: 16px
+        .calendar-container
+            position: absolute
+            top: 100%
+            left: 0
+            margin-top: 4px
+            background: var(--background-primary)
+            border: 1px solid var(--background-modifier-border)
+            border-radius: 8px
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1)
+            z-index: 1000
+            width: 280px
+            padding: 16px
+            
+            // 日历内容样式保持不变
+            .calendar-header
+                display: flex
+                justify-content: space-between
+                align-items: center
+                margin-bottom: 16px
+                // ... 其他日历样式保持不变 ...
+
 
   // 搜索容器
   .search-container
@@ -185,6 +209,67 @@
     .search-input 
       flex: 1
 
+
+// 过滤工具栏样式优化   
+.filter-toolbar
+    display: flex
+    padding: 12px 16px
+    border-bottom: 1px solid var(--background-modifier-border)
+    background-color: var(--background-primary)
+    justify-content: space-between
+    align-items: center
+
+    // 添加左侧区域样式
+    .filter-toolbar-left
+        display: flex
+        gap: 12px
+        align-items: center
+        flex: 1  // 让左侧区域占据剩余空间
+
+    // 添加右侧区域样式
+    .filter-toolbar-right
+        display: flex
+        align-items: center
+        gap: 12px
+        margin-left: 16px  // 与左侧保持一定距离
+
+    // 修改卡片设置容器样式
+    .card-settings-container
+        position: relative
+        
+        .card-settings-button
+            display: flex
+            align-items: center
+            gap: 6px
+            padding: 6px 12px
+            background: transparent
+            border: 1px solid var(--background-modifier-border)
+            border-radius: 4px
+            color: var(--text-muted)
+            cursor: pointer
+            font-size: 13px
+            transition: all 0.2s ease
+            
+            &:hover
+                background: var(--background-modifier-hover)
+                color: var(--text-normal)
+                border-color: var(--interactive-accent)
+            
+            svg
+                width: 14px
+                height: 14px
+                opacity: 0.8
+            
+            span
+                font-size: 13px
+
+        // 设置面板样式调整
+        .card-settings-panel
+            top: calc(100% + 8px)  // 调整面板位置
+            right: 0
+            // ... 其他面板样式保持不变 ...
+
+    // ... 其他现有样式保持不变 ...
 
 .selected-tag
   display: inline-flex
@@ -376,6 +461,105 @@
 
 
 
+// 日历容器样式   
+.calendar-container 
+  position: absolute
+  width: 280px
+  background-color: var(--background-primary)
+  border-right: 1px solid var(--background-modifier-border)
+  padding: 16px
+  z-index: 1000
+  box-shadow: 2px 0 4px rgba(0, 0, 0, 0.1)
+
+  // 日历头部样式   
+  .calendar-header 
+    display: flex
+    justify-content: space-between
+    align-items: center
+    margin-bottom: 16px
+    padding: 8px 0
+
+    // 导航按钮样式   
+    .calendar-nav-btn 
+      background: transparent
+      border: 1px solid var(--background-modifier-border)
+      border-radius: 4px
+      padding: 4px 8px
+      color: var(--text-muted)
+      cursor: pointer
+      transition: all 0.2s ease
+      &:hover 
+        background-color: var(--background-modifier-hover)
+        color: var(--text-normal)
+        border-color: var(--interactive-accent)
+
+
+    .calendar-title 
+      font-size: 1.1em
+      font-weight: bold
+      color: var(--text-normal)
+
+  // 日历网格样式   
+  .calendar-weekdays 
+    display: grid
+    grid-template-columns: repeat(7, 1fr)
+    gap: 4px
+    margin-bottom: 8px
+    height: calc(100% / 6)
+    padding: 8px 0
+    border-bottom: 1px solid var(--background-modifier-border)
+
+    .weekday 
+      text-align: center
+      font-size: 0.9em
+      color: var(--text-muted)
+      font-weight: 500
+
+  .calendar-grid 
+    display: grid
+    grid-template-columns: repeat(7, 1fr)
+    gap: 4px
+
+    .calendar-day 
+      position: relative
+      aspect-ratio: 1
+      display: flex
+      align-items: center
+      justify-content: center
+      border-radius: 4px
+      cursor: pointer
+      background-color: var(--background-secondary)
+      font-size: 0.9em
+      transition: all 0.2s ease
+      &.empty 
+        background-color: transparent
+        cursor: default
+      &.selected 
+        background-color: var(--interactive-accent)
+        color: var(--text-on-accent)
+        transform: translateY(-1px)
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1)
+        .note-count 
+          background-color: var(--text-on-accent)
+          color: var(--interactive-accent)
+      &:hover 
+        background-color: var(--background-modifier-hover)
+        transform: translateY(-1px)
+
+      // 笔记数量样式   
+      .note-count 
+        position: absolute
+        bottom: 2px
+        right: 2px
+        font-size: 0.7em
+        background-color: var(--interactive-accent)
+        color: var(--text-on-accent)
+        padding: 1px 4px
+        border-radius: 8px
+        min-width: 16px
+        text-align: center
+
+
 
 // 文件选择模态框
 .folder-list 
@@ -505,7 +689,9 @@
   display: flex
   flex-direction: column
 
-
+// 当显示日历时的布局调整   
+.main-layout.with-calendar .calendar-container 
+  display: block
 
 
 // 日历显示时调整内容区域的边距   
@@ -1768,6 +1954,116 @@
 .card-settings-container
   position: relative
 
+// 修改下拉面板样式
+.filter-toolbar
+    // ... 其他样式保持不变 ...
+
+    // 下拉列表容器样式优化
+    .tag-dropdown-container
+        position: relative
+        min-width: 120px  // 设置最小宽度
+
+        .tag-dropdown
+            width: 100%
+            padding: 6px 18px
+            border: 1px solid var(--background-modifier-border)
+            border-radius: 4px
+            z-index: 1001
+            color: var(--text-muted)
+            font-size: 13px
+            cursor: pointer
+            transition: all 0.2s ease
+            display: flex
+            align-items: center
+            gap: 6px
+            
+            &::before
+                content: ''
+                display: inline-block
+                width: 16px
+                height: 16px
+                background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>')
+                background-repeat: no-repeat
+                background-position: center
+                opacity: 0.5
+
+        // 修改下拉面板样式
+        .dropdown-panel
+            position: absolute
+            top: calc(100% + 4px)
+            left: 0
+            background: var(--background-primary)
+            border: 1px solid var(--background-modifier-border)
+            border-radius: 4px
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1)
+            z-index: 1000
+            width: 480px  // 固定宽度
+            padding: 8px
+            display: none  // 默认隐藏
+            
+            // 使用网格布局固定为3列
+            display: grid
+            grid-template-columns: repeat(3, 1fr)  // 三列等宽
+            gap: 4px  // 设置间距
+            max-height: 300px
+            overflow-y: auto
+            
+            // 选项样式
+            .dropdown-option
+                padding: 6px 8px
+                cursor: pointer
+                color: var(--text-muted)
+                font-size: 13px
+                border-radius: 4px
+                display: flex
+                align-items: center
+                justify-content: space-between
+                transition: all 0.2s ease
+                
+                &::before
+                    content: ''
+                    display: inline-block
+                    width: 16px
+                    height: 16px
+                    margin-right: 6px
+                    background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>')
+                    background-repeat: no-repeat
+                    background-position: center
+                    opacity: 0.5
+                    transition: opacity 0.2s ease
+
+                &:hover
+                    background-color: var(--background-modifier-hover)
+                    color: var(--text-normal)
+                    
+                    &::before
+                        opacity: 1
+
+                // 标签计数样式
+                .tag-count
+                    background: var(--background-modifier-border)
+                    color: var(--text-muted)
+                    padding: 2px 6px
+                    border-radius: 10px
+                    font-size: 12px
+                    min-width: 24px
+                    text-align: center
+
+        // 悬停时显示面板
+        &:hover
+            .tag-dropdown
+                border-bottom-left-radius: 0
+                border-bottom-right-radius: 0
+                border-bottom-color: transparent
+                background: var(--background-primary)
+                color: var(--text-normal)
+
+            .dropdown-panel
+                display: grid  // 显示网格布局
+                border-top-left-radius: 0
+                border-top-right-radius: 0
+                margin-top: -1px  // 与下框对齐
+
 // 周视图样式优化
 .week-view
     display: flex
@@ -1912,57 +2208,926 @@
 
 // 适配周视图的容器样式
 .main-layout .content-section.view-week
-  .card-view-content
-    padding: 0
-    height: 100%
-    overflow: hidden
-    
-    .card-container
-      display: block  // 覆盖原有的 grid 布局
-      height: 100%
-      padding: 0
-      margin: 0
-      gap: 0
-      grid-template-columns: none  // 移除网格列设置
-      justify-content: initial  // 移除原有的居中对齐
-      
-      // 移除原有的片间距和对齐方式
-      &.grid-view
-        display: block
-        gap: 0
-        grid-template-columns: none
-
-        // 列容器样式
-        .left-column,
-        .center-column,
-        .right-column
-            border: 1px solid transparent  // 默认透明边框
-            transition: all 0.3s ease
+    .card-view-content
+        padding: 0
+        height: 100%
+        overflow: hidden
+        
+        .card-container
+            display: block  // 覆盖原有的 grid 布局
+            height: 100%
+            padding: 0
+            margin: 0
+            gap: 0
+            grid-template-columns: none  // 移除网格列设置
+            justify-content: initial  // 移除原有的居中对齐
             
-            // 编辑模式时显示边框
-            &.editable
-                border: 1px dashed var(--background-modifier-border)
-                
-                &.drop-target
-                    border: 2px dashed var(--interactive-accent)
-                    background: var(--background-modifier-hover)
+            // 移除原有的片间距和对齐方式
+            &.grid-view
+                display: block
+                gap: 0
+                grid-template-columns: none
+
+// 主页视图下的容器样式覆盖
+.main-layout .content-section.view-home
+    .card-view-content
+        padding: 0
+        height: 100%
+        overflow: hidden
+        
+        .card-container
+            display: block  // 覆盖原有的 grid 布局
+            height: 100%
+            padding: 0
+            margin: 0
+            gap: 0
+            grid-template-columns: none  // 移除网格列设置
+            justify-content: initial  // 移除原有的居中对齐
+            
+            // 移除原有的卡片间距和对齐方式
+            &.grid-view
+                display: block
+                gap: 0
+                grid-template-columns: none
+
+// 主页视图样式优化
+.home-container
+    .module-grid
+        display: flex
+        width: 100%
+        max-width: 1920px
+        gap: 0px
+        padding: 20px
+        justify-content: center
+        
+        // 左侧列
+        .left-column
+            flex: 25%  // 25% 的宽度
+            display: flex
+            flex-direction: column
+            gap: 20px
+            min-width: 250px  // 设置最小宽度防止过小
+            border: 1px dashed var(--background-modifier-border)
+            padding: 10px
+            border-radius: 8px
+            
+        // 中间列
+        .center-column
+            flex: 50%  // 50% 的宽度
+            display: flex
+            flex-direction: column
+            gap: 20px
+            min-width: 400px  // 设置最小宽度防止过小
+            border: 1px dashed var(--background-modifier-border)
+            padding: 10px
+            border-radius: 8px
+            
+        // 右侧列
+        .right-column
+            flex: 25%  // 25% 的宽度
+            display: flex
+            flex-direction: column
+            gap: 20px
+            min-width: 250px  // 设置最小宽度防止过小
+            border: 1px dashed var(--background-modifier-border)
+            padding: 10px
+            border-radius: 8px
 
         // 模块容器样式
         .module-container
-          cursor: pointer  // 默认可点击
+            width: 100%
+            background: var(--background-secondary)
+            border-radius: 8px
+            border: 1px solid var(--background-modifier-border)
+            transition: transform 0.2s ease, box-shadow 0.2s ease
+            // min-height: 200px
+            
+            &.dragging
+                opacity: 0.7
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15)
+                z-index: 1000
+                cursor: grabbing
+                position: relative
+                pointer-events: none
+                
+                // 根据目标位置调整宽度
+                &[data-target-position="left"],
+                &[data-target-position="right"]
+                    width: 25%  // 左右列宽度
+                
+                &[data-target-position="center"]
+                    width: 50%  // 中间列宽度
+            
+            // 放置目标样式
+            &.drop-target
+                background: var(--background-modifier-hover)
+                border: 2px dashed var(--interactive-accent)
+                
+                // 根据列位置显示不同的宽度指示
+                &[data-position="left"],
+                &[data-position="right"]
+                    width: 25%
+                
+                &[data-position="center"]
+                    width: 50%
+    
+    .module-manager
+        display: flex
+        gap: 8px
+        justify-content: flex-end
+        margin-bottom: 16px
+        
+        .module-manage-btn,
+        .module-edit-btn
+            background: var(--interactive-accent)
+            color: var(--text-on-accent)
+            padding: 8px 16px
+            border-radius: 4px
+            cursor: pointer
+            transition: all 0.2s ease
+            display: flex
+            align-items: center
+            gap: 6px
+            
+            &:hover
+                opacity: 0.9
+                transform: translateY(-1px)
+            
+            svg
+                width: 16px
+                height: 16px
+    
+    // 编辑模式样式
+    &.edit-mode
+        .module-container
+            cursor: move
+            border: 2px dashed var(--interactive-accent)
+            
+            // 调整大小的手柄
+            .resize-handle
+                position: absolute
+                background: var(--interactive-accent)
+                opacity: 0.5
+                transition: opacity 0.2s ease
+                
+                &:hover
+                    opacity: 1
+                
+                &.top, &.bottom
+                    left: 50%
+                    transform: translateX(-50%)
+                    width: 40px
+                    height: 4px
+                    cursor: ns-resize
+                
+                &.left, &.right
+                    top: 50%
+                    transform: translateY(-50%)
+                    width: 4px
+                    height: 40px
+                    cursor: ew-resize
+                
+                &.top
+                    top: -2px
+                
+                &.bottom
+                    bottom: -2px
+                
+                &.left
+                    left: -2px
+                
+                &.right
+                    right: -2px
+                
+                &.top-left, &.top-right,
+                &.bottom-left, &.bottom-right
+                    width: 10px
+                    height: 10px
+                    background: var(--interactive-accent)
+                    border-radius: 50%
+                
+                &.top-left
+                    top: -5px
+                    left: -5px
+                    cursor: nw-resize
+                
+                &.top-right
+                    top: -5px
+                    right: -5px
+                    cursor: ne-resize
+                
+                &.bottom-left
+                    bottom: -5px
+                    left: -5px
+                    cursor: sw-resize
+                
+                &.bottom-right
+                    bottom: -5px
+                    right: -5px
+                    cursor: se-resize
+            
+            // 网格吸附指示器
+            .grid-snap-indicator
+                position: absolute
+                background: rgba(var(--interactive-accent-rgb), 0.2)
+                pointer-events: none
+                z-index: 1000
+    
+    .module-grid
+
+        
+      .module-container
+          background: var(--background-secondary)
+          border-radius: 8px
+          border: 1px solid var(--background-modifier-border)
+          overflow: hidden
           transition: all 0.3s ease
+          grid-column: span 4 // 默认占4列
+          position: relative
           
-          // 编辑模式样式
-          &.editable
-            cursor: move  // 可拖动光标
+          &:hover
+              transform: translateY(-2px)
+              box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1)
+          
+          // 添加模块大小控制按钮
+          .module-resize
+              position: absolute
+              top: 8px
+              right: 8px
+              display: flex
+              gap: 4px
+              opacity: 0
+              transition: opacity 0.2s ease
+              
+              button
+                  background: var(--background-primary)
+                  border: 1px solid var(--background-modifier-border)
+                  border-radius: 4px
+                  width: 24px
+                  height: 24px
+                  display: flex
+                  align-items: center
+                  justify-content: center
+                  cursor: pointer
+                  transition: all 0.2s ease
+                  
+                  &:hover
+                      background: var(--background-modifier-hover)
+                      border-color: var(--interactive-accent)
+                  
+                  svg
+                      width: 14px
+                      height: 14px
+                      color: var(--text-muted)
+          
+          &:hover .module-resize
+              opacity: 1
+          
+
+              
+              // 热力图模块样式
+              &.heatmap-module
+                  height: 200px
+              
+              // 笔记列表模块样式
+              .note-item
+                  display: flex
+                  justify-content: space-between
+                  padding: 8px 0
+                  border-bottom: 1px solid var(--background-modifier-border)
+                  cursor: pointer
+                  
+                  &:hover
+                      background: var(--background-modifier-hover)
+              
+
+
+// 日历模块样式优化
+.home-container .module-container
+  &.calendar-module
+    display: flex
+    height: auto
+    gap: 15px
+    justify-content: space-between
+    align-content: stretch
+    flex-wrap: nowrap
+
+    .module-header
+      display: none
+    .module-resize
+      display: none
+    .module-content
+      width: 100%
+      padding: 0
+
+
+
+
+
+// 模块管理器模态框样式优化
+.module-manager-modal
+    width: 80vw
+    max-width: 800px
+    
+    // 标题样式
+    h2
+        margin: 0 0 20px
+        padding-bottom: 12px
+        border-bottom: 1px solid var(--background-modifier-border)
+        color: var(--text-normal)
+        font-size: 1.4em
+    
+    // 预览区域样式
+    .preview-container
+        margin: 20px 0
+        padding: 16px
+        background: var(--background-secondary)
+        border-radius: 8px
+        border: 1px solid var(--background-modifier-border)
+        
+        .module-grid
+
+            .module-preview
+                background: var(--background-primary)
+                border-radius: 6px
+                padding: 12px
+                border: 1px solid var(--background-modifier-border)
+                transition: all 0.2s ease
+                
+                &:hover
+                    transform: translateY(-2px)
+                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1)
+                
+                h4
+                    margin: 0
+                    font-size: 1em
+                    color: var(--text-normal)
+    
+    // 模块列表样式优化
+    .module-list
+        display: grid
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr))
+        gap: 16px
+        margin: 20px 0
+        max-height: 400px
+        overflow-y: auto
+        padding-right: 8px
+        
+        // 滚动条样式
+        &::-webkit-scrollbar
+            width: 8px
+        
+        &::-webkit-scrollbar-track
+            background: var(--background-secondary)
+            border-radius: 4px
+        
+        &::-webkit-scrollbar-thumb
+            background: var(--background-modifier-border)
+            border-radius: 4px
+            
+            &:hover
+                background: var(--text-muted)
+        
+        .module-item
+            display: flex
+            align-items: center
+            gap: 12px
+            padding: 12px
+            background: var(--background-secondary)
+            border: 1px solid var(--background-modifier-border)
+            border-radius: 8px
+            transition: all 0.2s ease
             
             &:hover
                 transform: translateY(-2px)
-                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1)
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1)
+                border-color: var(--interactive-accent)
+            
+            // 拖动手柄样式
+            .drag-handle
+                color: var(--text-muted)
+                cursor: move
+                padding: 4px 8px
+                border-radius: 4px
+                
+                &:hover
+                    background: var(--background-modifier-hover)
+                    color: var(--text-normal)
+            
+            // 可见性切换样式
+            input[type="checkbox"]
+                width: 16px
+                height: 16px
+                border: 2px solid var(--background-modifier-border)
+                border-radius: 4px
+                cursor: pointer
+                transition: all 0.2s ease
+                
+                &:checked
+                    background: var(--interactive-accent)
+                    border-color: var(--interactive-accent)
+            
+            // 模块名称样式
+            span
+                flex: 1
+                font-size: 0.95em
+                color: var(--text-normal)
+            
+            // 上下移动按钮样式
+            button
+                padding: 4px 8px
+                background: transparent
+                border: 1px solid var(--background-modifier-border)
+                border-radius: 4px
+                color: var(--text-muted)
+                cursor: pointer
+                transition: all 0.2s ease
+                
+                &:hover
+                    background: var(--background-modifier-hover)
+                    color: var(--text-normal)
+                    border-color: var(--interactive-accent)
+    
+    // 保存按钮样式
+    button.mod-cta
+        width: 100%
+        padding: 12px
+        background: var(--interactive-accent)
+        color: var(--text-on-accent)
+        border: none
+        border-radius: 6px
+        font-size: 1em
+        font-weight: 500
+        cursor: pointer
+        transition: all 0.2s ease
+        
+        &:hover
+            opacity: 0.9
+            transform: translateY(-1px)
+            box-shadow: 0 2px 8px rgba(var(--interactive-accent-rgb), 0.2)
+
+// 拖拽时的占位样式
+.module-placeholder
+    background: var(--background-modifier-hover)
+    border: 2px dashed var(--interactive-accent)
+    border-radius: 8px
+    height: 60px
+    animation: pulse 1.5s infinite
+
+@keyframes pulse
+    0%
+        opacity: 0.6
+    50% 
+        opacity: 0.8
+    100%
+        opacity: 0.6
+
+// 热力图样式
+.heatmap-container
+    padding: 16px
+    
+    .heatmap-grid
+        display: flex
+        flex-direction: column
+        gap: 4px
+        
+        .month-labels
+            display: flex
+            padding-left: 20px
+            margin-bottom: 4px
+            
+            .month-label
+                flex: 1
+                text-align: center
+                color: var(--text-muted)
+                font-size: 0.8em
+        
+        .week-labels
+            position: absolute
+            display: flex
+            flex-direction: column
+            gap: 12px
+            padding-top: 4px
+            
+            .week-label
+                height: 10px
+                color: var(--text-muted)
+                font-size: 0.8em
+        
+        .days-container
+            padding-left: 20px
+            display: grid
+            grid-template-columns: repeat(53, 1fr)
+            gap: 2px
+            
+            .day-cell
+                width: 10px
+                height: 10px
+                border-radius: 2px
+                transition: all 0.2s ease
+                cursor: pointer
+                
+                &:hover
+                    transform: scale(1.2)
+                
+                &.level-0
+                    background-color: var(--background-modifier-border)
+                
+                &.level-1
+                    background-color: #9be9a8
+                
+                &.level-2
+                    background-color: #40c463
+                
+                &.level-3
+                    background-color: #30a14e
+                
+                &.level-4
+                    background-color: #216e39
+
+
+
+// 日历模块样式
+.calendar-module
+    display: flex
+    height: 100%
+    gap: 16px
+
+    // 日历部分
+    .calendar-section
+        flex: 1
+        min-width: 280px
+
+        
+        .calendar-container
+            width: 50%
+            height: 100%
+            background: var(--background-primary)
+            border: 1px solid var(--background-modifier-border)
+            border-radius: 8px
+            padding: 16px
+            
+            .calendar-header
+                display: flex
+                justify-content: space-between
+                align-items: center
+                margin-bottom: 16px
+                
+                .calendar-nav-btn
+                    background: transparent
+                    border: 1px solid var(--background-modifier-border)
+                    border-radius: 4px
+                    padding: 4px 8px
+                    color: var(--text-muted)
+                    cursor: pointer
+                    transition: all 0.2s ease
+                    
+                    &:hover
+                        background: var(--background-modifier-hover)
+                        color: var(--text-normal)
+                
+                .calendar-title
+                    font-weight: 500
+                    color: var(--text-normal)
+                    cursor: ns-resize  // 添加滚动指示光标
+                    padding: 4px 8px   // 添加内边距使区域更大
+                    border-radius: 4px
+                    transition: all 0.2s ease
+                    
+                    &:hover
+                        background: var(--background-modifier-hover)
+                    
+                    &.scrollable
+                      position: relative
+                      
+                      &::after
+                        content: ''
+                        position: absolute
+                        bottom: 2px
+                        left: 50%
+                        transform: translateX(-50%)
+                        width: 10px
+                        height: 2px
+                        background: var(--text-muted)
+                        border-radius: 1px
+                        opacity: 0
+                        transition: opacity 0.2s ease
+                    
+                      &:hover::after
+                        opacity: 0.5
+            
+            .calendar-weekdays
+                display: grid
+                grid-template-columns: repeat(7, 1fr)
+                gap: 4px
+                margin-bottom: 8px
+                
+                .weekday
+                    text-align: center
+                    color: var(--text-muted)
+                    font-size: 0.9em
+            
+            .calendar-grid
+                display: grid
+                grid-template-columns: repeat(7, 1fr)
+                gap: 4px
+                
+                .calendar-day
+                    aspect-ratio: 1
+                    padding: 4px
+                    border-radius: 4px
+                    cursor: pointer
+                    position: relative
+                    transition: all 0.2s ease
+                    
+                    &:hover
+                        background: var(--background-modifier-hover)
+                        transform: translateY(-1px)
+                    
+                    &.today
+                        background: var(--background-modifier-hover)
+                        .day-number
+                            color: var(--text-accent)
+                            font-weight: bold
+                    
+                    &.empty
+                        background: none
+                        cursor: default
+                    
+                    .day-number
+                        font-size: 0.9em
+                        color: var(--text-normal)
+                    
+                    .note-count
+                        position: absolute
+                        bottom: 2px
+                        right: 2px
+                        min-width: 18px
+                        height: 18px
+                        background: var(--interactive-accent)
+                        color: var(--text-on-accent)
+                        border-radius: 9px
+                        font-size: 0.8em
+                        display: flex
+                        align-items: center
+                        justify-content: center
+    
+    // 笔记列表部分
+    .notes-section
+      flex: 1
+      height: 100%
+      min-width: 200px
+      border: 1px solid var(--background-modifier-border)
+      border-radius: 8px
+      padding: 16px
+      overflow: hidden
+      
+      .date-title
+        font-weight: 500
+        color: var(--text-normal)
+        margin-bottom: 12px
+        padding-bottom: 3px
+        border-bottom: 1px solid var(--background-modifier-border)
+      
+      .notes-list
+        display: flex
+        height: 100%
+        overflow: auto
+        flex-direction: column
+        gap: 8px
+        
+        .note-item
+          padding: 8px
+          border-radius: 4px
+          cursor: pointer
+          transition: all 0.2s ease
+          
+          &:hover
+            background: var(--background-modifier-hover)
+            transform: translateX(4px)
+  
+      .empty-message
+        color: var(--text-muted)
+        text-align: center
+        padding: 20px
+
+// 关系图谱模块样式
+.graph-container
+    height: 300px
+    width: 100%
+    background: var(--background-secondary)
+    border-radius: 8px
+    overflow: hidden
+    
+    .graph-view-container
+        height: 100%
+        width: 100%
+
+// 快速笔记模块样式
+.quicknote-module
+    padding: 16px
+    background: var(--background-secondary)
+    border-radius: 8px
+    display: flex
+    flex-direction: column
+    gap: 12px
+    
+    .quick-note-title
+        width: 100%
+        padding: 8px
+        border: none
+        background: transparent
+        font-size: 16px
+        font-weight: 500
+        color: var(--text-normal)
+        border-bottom: 1px solid var(--background-modifier-border)
+        
+        &::placeholder
+            color: var(--text-muted)
+            font-weight: normal
+    
+    .quick-note-input
+        width: 100%
+        min-height: 100px
+        padding: 8px
+        border: none
+        background: transparent
+        resize: vertical
+        color: var(--text-normal)
+        font-size: 14px
+        
+        &::placeholder
+            color: var(--text-muted)
+    
+    .tags-container
+        display: flex
+        flex-wrap: wrap
+        gap: 6px
+        min-height: 32px
+        padding: 4px 0
+    
+    .quick-note-toolbar
+        display: flex
+        gap: 8px
+        padding: 8px 0
+        border-top: 1px solid var(--background-modifier-border)
+    
+    .quick-note-send
+        align-self: flex-end
+        margin-top: 8px
+
+// 添加拖拽相关的样式
+.module-container
+  &.module-dragging
+    opacity: 0.8
+    pointer-events: none
+    z-index: 1000
+    transition: transform 0.1s ease
+    
+    // 添加拖拽时的视觉反馈
+    &::after
+      content: ''
+      position: absolute
+      top: 0
+      left: 0
+      right: 0
+      bottom: 0
+      border: 2px dashed var(--interactive-accent)
+      border-radius: 8px
+      pointer-events: none
+      
+  // 其他模块在拖拽时的过渡效果
+  transition: transform 0.2s ease, opacity 0.2s ease
+
+// 工具栏按钮组样式
+.filter-toolbar
+    .filter-toolbar-buttons
+        display: flex
+        gap: 12px
+        align-items: center
+
+        // 通用按钮组样式
+        .card-view-buttons,
+        .home-view-buttons
+            display: flex
+            gap: 8px
+            align-items: center
+            padding: 0 12px
+            height: 32px
+            
+            // 分隔线
+            &:not(:first-child)
+                border-left: 1px solid var(--background-modifier-border)
+        
+        // 通用按钮基础样式
+        .toolbar-button
+            display: flex
+            align-items: center
+            gap: 6px
+            padding: 6px 12px
+            background: transparent
+            border: 1px solid var(--background-modifier-border)
+            border-radius: 4px
+            color: var(--text-muted)
+            font-size: 13px
+            cursor: pointer
+            transition: all 0.2s ease
+            height: 32px
+            
+            svg
+                width: 16px
+                height: 16px
+                opacity: 0.8
+                transition: all 0.2s ease
+            
+            span
+                white-space: nowrap
+            
+            &:hover
+                background: var(--background-modifier-hover)
+                color: var(--text-normal)
+                border-color: var(--interactive-accent)
+                
+                svg
+                    opacity: 1
+            
+            &.active
+                background: var(--interactive-accent)
+                color: var(--text-on-accent)
+                border-color: var(--interactive-accent)
+                
+                svg
+                    opacity: 1
+                    color: var(--text-on-accent)
+        
+        // 日历按钮
+        .calendar-toggle-button
+            @extend .toolbar-button
+        
+        // 卡片设置按钮
+        .card-settings-button
+            @extend .toolbar-button
+        
+        // 模块管理按钮
+        .module-manage-btn
+            @extend .toolbar-button
+            background: var(--interactive-accent)
+            color: var(--text-on-accent)
+            
+            &:hover
+                opacity: 0.9
+                transform: translateY(-1px)
+        
+        // 编辑布局按钮
+        .module-edit-btn
+            @extend .toolbar-button
+
+// 工具栏按钮组显示/隐藏样式
+.filter-toolbar
+    .filter-toolbar-buttons
+        > div[data-views]
+            display: none  // 默认隐藏所有按钮组
+            
+            &[style*="display: ''"],
+            &[style*="display:''"]
+                display: flex  // 当显示时使用 flex 布局
+                
+        // 确保按钮组内的按钮正确显示
+        .home-view-buttons,
+        .card-view-buttons,
+        .tag-view-buttons
+            &:not([style*="display: none"])
+                display: flex
+                align-items: center
+                gap: 8px
+
+// 网格对齐指示器样式
+.grid-snap-indicator
+    position: absolute
+    background: rgba(var(--interactive-accent-rgb), 0.1)
+    border: 2px dashed var(--interactive-accent)
+    border-radius: 8px
+    pointer-events: none
+    z-index: 1000
+    transition: all 0.2s ease
+    display: none
+
+// 主页视图样式优化
+.home-container
+    .module-grid
+        
+        // 模块容器样式
+        .module-container
+            width: 100%
+            background: var(--background-secondary)
+            border-radius: 8px
+            border: 1px solid var(--background-modifier-border)
+            transition: all 0.3s ease
             
             // 拖拽时的样式
             &.dragging
-                opacity: 0.7
+                position: fixed  // 改为固定定位
+                opacity: 0.9
                 box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15)
                 z-index: 1000
                 pointer-events: none
@@ -1970,283 +3135,60 @@
                 // 根据目标位置调整宽度
                 &[data-target-position="left"],
                 &[data-target-position="right"]
-                    width: 25%
+                    width: 300px  // 左右列宽度
                 
                 &[data-target-position="center"]
-                    width: 50%
+                    width: 600px  // 中间列宽度
+            
+            // 放置目标样式
+            &.drop-target
+                background: var(--background-modifier-hover)
+                border: 2px dashed var(--interactive-accent)
+                
+                // 根据列位置显示不同的宽度指示
+                &[data-position="left"],
+                &[data-position="right"]
+                    width: 300px
+                
+                &[data-position="center"]
+                    width: 600px
+
+// 拖拽克隆样式
+.module-drag-clone
+    position: fixed
+    pointer-events: none
+    z-index: 1000
+    opacity: 0.9
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15)
+    transition: none  // 移除过渡效果以避免延迟
+
+// 修改模块容器拖拽样式
+.module-container
+    transition: all 0.3s ease
+    
+    &.dragging
+        position: fixed
+        opacity: 0.7
+        z-index: 1000
+        pointer-events: none
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15)
         
-          // 非编辑模式下的样式
-          &:not(.editable)
-              &:hover
-                transform: translateY(-2px)  // 保留悬停效果
-                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1)
-
-
-
-// 筛选工具栏
-.filter-toolbar
-  display: flex
-  padding: 12px 16px
-  border-bottom: 1px solid var(--background-modifier-border)
-  background-color: var(--background-primary)
-  justify-content: space-between
-  align-items: center
-
-  .filter-toolbar-left,
-  .filter-toolbar-right
-    display: flex
-    gap: 12px
-    align-items: center
-    flex: 1
-
-  .filter-toolbar-left
-    .filter-toolbar-buttons
-      display: flex
-      gap: 10px
-      flex-direction: row
-
-  .filter-toolbar-right
-    margin-left: 16px
-
-  .card-settings-container
-    position: relative
-
-    .card-settings-button
-      display: flex
-      align-items: center
-      gap: 6px
-      padding: 6px 12px
-      background: transparent
-      border: 1px solid var(--background-modifier-border)
-      border-radius: 4px
-      color: var(--text-muted)
-      cursor: pointer
-      font-size: 13px
-      transition: all 0.2s ease
-      
-      &:hover
+        // 根据目置调整宽度
+        &[data-target-position="left"],
+        &[data-target-position="right"]
+            width: 25%  // 左右列宽度
+        
+        &[data-target-position="center"]
+            width: 50%  // 中间列宽度
+    
+    // 放置目标样式
+    &.drop-target
         background: var(--background-modifier-hover)
-        color: var(--text-normal)
-        border-color: var(--interactive-accent)
-      
-      svg
-        width: 14px
-        height: 14px
-        opacity: 0.8
-      
-      span
-        font-size: 13px
-
-    .card-settings-panel
-      top: calc(100% + 8px)
-      right: 0
-
-  .tag-dropdown-container
-    position: relative
-    min-width: 120px
-
-    .tag-dropdown
-      width: 100%
-      padding: 6px 18px
-      border: 1px solid var(--background-modifier-border)
-      border-radius: 4px
-      z-index: 1001
-      color: var(--text-muted)
-      font-size: 13px
-      cursor: pointer
-      transition: all 0.2s ease
-      display: flex
-      align-items: center
-      gap: 6px
-
-      &::before
-        content: ''
-        display: inline-block
-        width: 16px
-        height: 16px
-        background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>')
-        background-repeat: no-repeat
-        background-position: center
-        opacity: 0.5
-
-    &:hover
-      .tag-dropdown
-        border-bottom-left-radius: 0
-        border-bottom-right-radius: 0
-        border-bottom-color: transparent
-        background: var(--background-primary)
-        color: var(--text-normal)
-
-      .dropdown-panel
-        display: grid
-        border-top-left-radius: 0
-        border-top-right-radius: 0
-        margin-top: -1px
-
-    .dropdown-panel
-      position: absolute
-      top: calc(100% + 4px)
-      left: 0
-      background: var(--background-primary)
-      border: 1px solid var(--background-modifier-border)
-      border-radius: 4px
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1)
-      z-index: 1000
-      width: 480px
-      padding: 8px
-      display: none
-      grid-template-columns: repeat(3, 1fr)
-      gap: 4px
-      max-height: 300px
-      overflow-y: auto
-
-      .dropdown-option
-        padding: 6px 8px
-        cursor: pointer
-        color: var(--text-muted)
-        font-size: 13px
-        border-radius: 4px
-        display: flex
-        align-items: center
-        justify-content: space-between
-        transition: all 0.2s ease
-
-        &::before
-          content: ''
-          display: inline-block
-          width: 16px
-          height: 16px
-          margin-right: 6px
-          background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>')
-          background-repeat: no-repeat
-          background-position: center
-          opacity: 0.5
-          transition: opacity 0.2s ease
-
-        &:hover
-          background-color: var(--background-modifier-hover)
-          color: var(--text-normal)
-
-          &::before
-            opacity: 1
-
-        .tag-count
-          background: var(--background-modifier-border)
-          color: var(--text-muted)
-          padding: 2px 6px
-          border-radius: 10px
-          font-size: 12px
-          min-width: 24px
-          text-align: center
+        border: 2px dashed var(--interactive-accent)
 
 
-// 日历-筛选工具栏
-.calendar-toggle-button.toolbar-button
-  position: relative
-  .calendar-container 
-    position: absolute
-    top: 30px
-    left: 0
 
-// 日历-通用样式
-.calendar-container 
-  // position: absolute
-  width: 280px
-  background-color: var(--background-primary)
-  border-right: 1px solid var(--background-modifier-border)
-  padding: 16px
-  z-index: 1000
-  box-shadow: 2px 0 4px rgba(0, 0, 0, 0.1)
-
-  // 日历头部样式   
-  .calendar-header 
-    display: flex
-    justify-content: space-between
-    align-items: center
-    margin-bottom: 16px
-    padding: 8px 0
-
-    // 导航按钮样式   
-    .calendar-nav-btn 
-      background: transparent
-      border: 1px solid var(--background-modifier-border)
-      border-radius: 4px
-      padding: 4px 8px
-      color: var(--text-muted)
-      cursor: pointer
-      transition: all 0.2s ease
-      &:hover 
-        background-color: var(--background-modifier-hover)
-        color: var(--text-normal)
-        border-color: var(--interactive-accent)
-
-
-    .calendar-title 
-      font-size: 1.1em
-      font-weight: bold
-      color: var(--text-normal)
-
-  // 日历网格样式   
-  .calendar-weekdays 
-    display: grid
-    grid-template-columns: repeat(7, 1fr)
-    gap: 4px
-    margin-bottom: 8px
-    height: calc(100% / 6)
-    padding: 8px 0
-    border-bottom: 1px solid var(--background-modifier-border)
-
-    .weekday 
-      text-align: center
-      font-size: 0.9em
-      color: var(--text-muted)
-      font-weight: 500
-
-  .calendar-grid 
-    display: grid
-    grid-template-columns: repeat(7, 1fr)
-    gap: 4px
-
-    .calendar-day 
-      position: relative
-      aspect-ratio: 1
-      display: flex
-      align-items: center
-      justify-content: center
-      border-radius: 4px
-      cursor: pointer
-      background-color: var(--background-secondary)
-      font-size: 0.9em
-      transition: all 0.2s ease
-      &.empty 
-        background-color: transparent
-        cursor: default
-      &.selected 
-        background-color: var(--interactive-accent)
-        color: var(--text-on-accent)
-        transform: translateY(-1px)
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1)
-        .note-count 
-          background-color: var(--text-on-accent)
-          color: var(--interactive-accent)
-      &:hover 
-        background-color: var(--background-modifier-hover)
-        transform: translateY(-1px)
-
-      // 笔记数量样式   
-      .note-count 
-        position: absolute
-        bottom: 2px
-        right: 2px
-        font-size: 0.7em
-        background-color: var(--interactive-accent)
-        color: var(--text-on-accent)
-        padding: 1px 4px
-        border-radius: 8px
-        min-width: 16px
-        text-align: center
-
-// 模块-统计
+// 统计卡片样式
 .stats-module
   .stats-container
     display: flex
@@ -2264,343 +3206,67 @@
             font-size: 1.3em
             font-weight: bold
             color: var(--text-accent)
+      
 
 
-// 模块-热力图
-.heatmap-container
-  padding: 16px
-  .heatmap-grid
-    display: flex
-    flex-direction: column
-    gap: 4px
-    position: relative
-    .month-labels
-      display: flex
-      padding-left: 20px
-      margin-bottom: 4px
-      
-      .month-label
-        flex: 1
-        text-align: center
-        color: var(--text-muted)
-        font-size: 0.8em
-  
-    .week-labels
-      position: absolute
-      display: flex
-      flex-direction: column
-      gap: 12px
-      padding-top: 4px
-      
-      .week-label
-        height: 10px
-        color: var(--text-muted)
-        font-size: 0.8em
-  
-    .days-container
-      padding-left: 20px
-      display: grid
-      grid-template-columns: repeat(53, 1fr)
-      gap: 2px
-      
-      .day-cell
-        width: 10px
-        height: 10px
-        border-radius: 2px
-        transition: all 0.2s ease
-        cursor: pointer
-        
-        &:hover
-            transform: scale(1.2)
-        
-        &.level-0
-            background-color: var(--background-modifier-border)
-        
-        &.level-1
-            background-color: #9be9a8
-        
-        &.level-2
-            background-color: #40c463
-        
-        &.level-3
-            background-color: #30a14e
-        
-        &.level-4
-            background-color: #216e39
-
-// 模块-本周笔记
-.weekly-notes
-  display: flex
-  flex-direction: column
-  gap: 8px
-  .note-item
-    display: flex
-    justify-content: space-between
-    padding: 8px
-    border-bottom: 1px solid var(--background-modifier-border)
-    cursor: pointer
-    &:hover
-      color: var(--text-normal)
-      background-color: var(--background-modifier-hover)
-    .note-title
-      width: 70%
-      font-size: 0.85em
-      color: var(--text-normal)
-      white-space: nowrap
-      overflow: hidden
-      text-overflow: ellipsis
-    .note-date
-      font-size: 0.85em
-      white-space: nowrap
-      color: var(--text-muted)
-    
-// 模块-待办事项
-.todo-module
-  display: flex
-  flex-direction: column
-  gap: 10px
-  height: auto
-  
-  .todo-input-area
-    display: flex
-    gap: 8px
-    
-    .todo-input
-      flex: 1
-      padding: 8px 12px
-      border: 1px solid var(--background-modifier-border)
-      border-radius: 4px
-      background: var(--background-primary)
-      
-      &:focus
-        border-color: var(--interactive-accent)
-        outline: none
-    
-    .todo-date-input
-      width: 130px
-      padding: 8px 12px
-      border: 1px solid var(--background-modifier-border)
-      border-radius: 4px
-      background: var(--background-primary)
-      cursor: pointer
-      &:focus
-        border-color: var(--interactive-accent)
-        outline: none
-    
-    .todo-add-btn
-      padding: 8px 16px
-      background: var(--interactive-accent)
-      color: var(--text-on-accent)
-      border: none
-      border-radius: 4px
-      cursor: pointer
-      transition: all 0.2s ease
-      &:hover
-        opacity: 0.9
-        transform: translateY(-1px)
-
-  .todo-tabs
-    display: flex
-    gap: 8px
-    border-bottom: 1px solid var(--background-modifier-border)
-    padding-bottom: 8px
-    
-    .todo-tab
-      padding: 4px 12px
-      border-radius: 4px
-      cursor: pointer
-      color: var(--text-muted)
-      transition: all 0.2s ease
-      
-      &:hover
-        background: var(--background-modifier-hover)
-        color: var(--text-normal)
-      &.active
-        background: var(--interactive-accent)
-        color: var(--text-on-accent)
-
-  .todo-list
-      flex: 1
-      overflow-y: auto
-      display: flex
-      flex-direction: column
-      gap: 8px
-      
-      .todo-item
-        display: flex
-        align-items: center
-        gap: 8px
-        padding: 8px 12px
-        background: var(--background-primary)
-        border: 1px solid var(--background-modifier-border)
-        border-radius: 4px
-        transition: all 0.2s ease
-        &:hover
-          transform: translateX(4px)
-          border-color: var(--interactive-accent)
-      
-        .todo-checkbox
-          width: 16px
-          height: 16px
-          cursor: pointer
-      
-        .todo-content
-          flex: 1
-          color: var(--text-normal)
-          &.completed
-            text-decoration: line-through
-            color: var(--text-muted)
-        
-        .todo-due-date
-          font-size: 0.9em
-          color: var(--text-muted)
-          padding: 2px 6px
-          border-radius: 4px
-          background: var(--background-modifier-border)
-          &.overdue
-            color: var(--text-error)
-            background: var(--background-modifier-error)
-        
-        .todo-delete-btn
-          color: var(--text-muted)
-          cursor: pointer
-          padding: 4px
-          border-radius: 4px
-        &:hover
-          color: var(--text-error)
-          background: var(--background-modifier-error)
-
-
-
-// 主页视图样式优化
-.home-container
-  display: flex
-  width: 100%
-  .module-grid
-    display: flex
-    width: 100%
-    max-width: 1920px
-    gap: 0px
-    padding: 20px
-    justify-content: center
- 
-    // 左侧列
-    .left-column
-      flex: 25%  // 25% 的宽度
-      display: flex
-      flex-direction: column
-      gap: 20px
-      // min-width: 250px  // 设置最小宽度防止过小
-      border: 1px dashed var(--background-modifier-border)
-      padding: 10px
-      border-radius: 8px
-      
-    // 中间列
-    .center-column
-      flex: 50%  // 50% 的宽度
-      display: flex
-      flex-direction: column
-      gap: 20px
-      // min-width: 400px  // 设置最小宽度防止过小
-      border: 1px dashed var(--background-modifier-border)
-      padding: 10px
-      border-radius: 8px
-        
-    // 右侧列
+// 列容器的放置目标样式
+.module-grid
+    .left-column,
+    .center-column,
     .right-column
-      flex: 25%  // 25% 的宽度
-      display: flex
-      flex-direction: column
-      gap: 20px
-      // min-width: 250px  // 设置最小宽度防止过小
-      border: 1px dashed var(--background-modifier-border)
-      padding: 10px
-      border-radius: 8px
+        &.drop-target
+            background: var(--background-modifier-hover-plus)
+            border: 2px dashed var(--interactive-accent)
+            border-radius: 8px
 
- 
+// 主页容器样式
+.home-container
+    .module-grid
+        // 列容器样式
+        .left-column,
+        .center-column,
+        .right-column
+            border: 1px solid transparent  // 默认透明边框
+            transition: all 0.3s ease
+            
+            // 编辑模式时显示边框
+            &.editable
+                border: 1px dashed var(--background-modifier-border)
+                
+                &.drop-target
+                    border: 2px dashed var(--interactive-accent)
+                    background: var(--background-modifier-hover)
 
-// 模块容器样式
-.module-container
-  width: 100%
-  background: var(--background-secondary)
-  border-radius: 8px
-  border: 1px solid var(--background-modifier-border)
-  transition: transform 0.2s ease, box-shadow 0.2s ease
-  &.dragging
-    opacity: 0.7
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15)
-    z-index: 1000
-    cursor: grabbing
-    position: relative
-    pointer-events: none
-    
-    // 根据目标位置调整宽度
-    &[data-target-position="left"],
-    &[data-target-position="right"]
-        width: 25%  // 左右列宽度
-    
-    &[data-target-position="center"]
-      width: 50%  // 中间列宽度
-  &.drop-target // 放置目标样式
-    background: var(--background-modifier-hover)
-    border: 2px dashed var(--interactive-accent)
-    // 根据列位置显示不同的宽度指示
-    &[data-position="left"],
-    &[data-position="right"]
-      width: 25%
-    
-    &[data-position="center"]
-      width: 50%
-
-  .module-header
-    padding: 8px 10px
-    border-bottom: 1px solid var(--background-modifier-border)
-    display: flex
-    justify-content: space-between
-    align-items: center
-    
-    h3
-      margin: 0
-      font-size: 1.1em
-      color: var(--text-normal)
-
-  // 添加模块大小控制按钮
-  &:hover .module-resize
-    opacity: 1
-  .module-resize
-    position: absolute
-    top: 8px
-    right: 8px
-    display: flex
-    gap: 4px
-    opacity: 0
-    transition: opacity 0.2s ease
-    
-    button
-      background: var(--background-primary)
-      border: 1px solid var(--background-modifier-border)
-      border-radius: 4px
-      width: 24px
-      height: 24px
-      display: flex
-      align-items: center
-      justify-content: center
-      cursor: pointer
-      transition: all 0.2s ease
-      
-      &:hover
-        background: var(--background-modifier-hover)
-        border-color: var(--interactive-accent)
-      
-      svg
-        width: 14px
-        height: 14px
-        color: var(--text-muted)
-
-
-  
-
-
-  .module-content
-    padding: 8px
-
+        // 模块容器样式
+        .module-container
+            cursor: pointer  // 默认可点击
+            transition: all 0.3s ease
+            
+            // 编辑模式样式
+            &.editable
+                cursor: move  // 可拖动光标
+                
+                &:hover
+                    transform: translateY(-2px)
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1)
+                
+                // 拖拽时的样式
+                &.dragging
+                    opacity: 0.7
+                    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15)
+                    z-index: 1000
+                    pointer-events: none
+                    
+                    // 根据目标位置调整宽度
+                    &[data-target-position="left"],
+                    &[data-target-position="right"]
+                        width: 25%
+                    
+                    &[data-target-position="center"]
+                        width: 50%
+            
+            // 非编辑模式下的样式
+            &:not(.editable)
+                &:hover
+                    transform: translateY(-2px)  // 保留悬停效果
+                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1)
