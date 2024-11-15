@@ -501,7 +501,7 @@ export class CardView extends ItemView {
         
         this.searchInput = searchContainer.createEl('input', {
             type: 'text',
-            placeholder: '搜索笔记...',
+            placeholder: '搜索记...',
             cls: 'search-input'
         });
 
@@ -619,7 +619,7 @@ export class CardView extends ItemView {
             灵感
         `;
 
-        // 创建标签建议容器
+        // 创建标签建容器
         const tagSuggestions = inputContainer.createDiv('tag-suggestions');
 
         // 添事件处理
@@ -761,7 +761,7 @@ export class CardView extends ItemView {
                 const tagsContent = tagTexts.map(tag => `#${tag}`).join(' ');
                 const finalContent = tagsContent ? `${tagsContent}\n\n${content}` : content;
                 
-                // 使用标题作为文件名如果没有使用日期
+                // 使用标题作为文件如果没有使用日期
                 const fileName = title || new Date().toLocaleDateString('zh-CN', {
                     year: 'numeric',
                     month: '2-digit',
@@ -1534,7 +1534,7 @@ export class CardView extends ItemView {
                 // 标离件
                 card.addEventListener('mouseleave', () => {
                     openButton.style.opacity = '0';
-                    // 根据设置决定是否隐藏内容
+                    // 根据设置决���是否隐藏内容
                     if (!this.cardSettings.card.showContent) {
                         const noteContent = cardContent.querySelector('.note-content');
                         if (noteContent) {
@@ -1555,34 +1555,6 @@ export class CardView extends ItemView {
                         }
                     });
                 });
-
-                // 单击选择
-                card.addEventListener('click', (e) => {
-                    this.handleCardSelection(file.path, e);
-                });
-
-                // 双击打
-                card.addEventListener('dblclick', async () => {
-                    await this.openInAppropriateLeaf(file);
-                });
-
-                // 右键菜单
-                card.addEventListener('contextmenu', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    
-                    if (!card.hasClass('selected')) {
-                        if (!e.ctrlKey) {
-                            this.clearSelection();
-                        }
-                        this.selectedNotes.add(file.path);
-                        card.addClass('selected');
-                        this.lastSelectedNote = file.path;
-                    }
-                    
-                    this.showContextMenu(e, this.getSelectedFiles());
-                });
-
             } catch (error) {
                 console.error('笔记加载失败:', error);
                 throw error; // 重新抛出错误以便上层处理
@@ -1757,7 +1729,7 @@ export class CardView extends ItemView {
     // 快速笔记-创建
     private async createQuickNote(content: string, types: string[], fileName: string): Promise<TFile | null> {
         try {
-            // 生成唯一的文件名
+            // 生成唯一的件���
             let finalFileName = fileName;
             let counter = 1;
             
@@ -1870,7 +1842,7 @@ export class CardView extends ItemView {
                                 const card = await this.createNoteCard(file);
                                 if (card instanceof HTMLElement) {
                                     card.style.width = '100%';
-                                    // 只有在当前视图仍然是时间轴时才替换占位符
+                                    // 只有在当前视图仍然是时间轴时才替换占符
                                     if (this.currentView === 'timeline') {
                                         notesList.replaceChild(card, placeholder);
                                     }
@@ -2192,7 +2164,7 @@ export class CardView extends ItemView {
         });
     }
 
-    // 历-切换
+    // 历-切
     private toggleCalendar() {
         console.log('切换日历显示状态, 当前状态:', this.isCalendarVisible);
         
@@ -2402,7 +2374,7 @@ export class CardView extends ItemView {
             this.app.workspace.revealLeaf(fileExplorer);  // 如果文件浏览已经在，直接活它
             try {
                     if (openFile) {
-                        // 只有在���要打开文件时才执行这些操作
+                        // 只有在要打开文件时才执行这些操作
                         const leaves = this.app.workspace.getLeavesOfType('markdown');
                         const currentRoot = this.leaf.getRoot();
                         const otherLeaf = leaves.find(leaf => {
@@ -3690,7 +3662,7 @@ export class CardView extends ItemView {
         const showContentOption = this.createCheckboxOption(basicSettings, '显示笔记内容', currentSettings.showContent);
         showContentOption.addEventListener('change', (e) => {
             currentSettings.showContent = (e.target as HTMLInputElement).checked;
-            // ��所有视图统一处理笔记内容显示/隐藏
+            // 所有视图统一处理笔���内容显示/隐藏
             const contentElements = this.container.querySelectorAll('.note-content');
             contentElements.forEach(element => {
                 if (currentSettings.showContent) {
@@ -3720,7 +3692,7 @@ export class CardView extends ItemView {
         this.createSliderOption(layoutSettings, '卡片间距', currentSettings.cardGap, 0, 40, 4, (value) => {
             currentSettings.cardGap = value;
             if (this.currentView === 'card') {
-                // 卡片视图更新间距
+                // 卡片视图新间距
                 this.container.style.gap = `${value}px`;
             } else if (this.currentView === 'timeline') {
                 // 时间轴视图更新笔记列表的间距
@@ -3740,7 +3712,7 @@ export class CardView extends ItemView {
             currentSettings.cardsPerRow = value; // 更新设置
             
             if (this.currentView === 'card') {
-                // 只更新网格布局
+                // 只更新网布局
                 const containerWidth = this.container.offsetWidth;
                 const totalGap = value >= 0 ? currentSettings.cardGap : 0; // 确保不小于0
                 // 大列数
@@ -3945,7 +3917,7 @@ export class CardView extends ItemView {
             onChange(value);
         };
 
-        // 添加按钮事件
+        // 添按钮事件
         decreaseBtn.addEventListener('click', () => {
             const currentValue = parseInt(numberInput.value) || defaultValue;
             updateValue(currentValue - step);
@@ -4770,16 +4742,43 @@ export class CardView extends ItemView {
     // 切换模块编辑
     private toggleModuleEditing(enable: boolean) {
         const modules = this.container.querySelectorAll('.module-container');
+        const columns = this.container.querySelectorAll('.left-column, .center-column, .right-column');
         
-         modules.forEach(module => {
-             if (enable) {
-                 this.setupModuleEditing(module as HTMLElement);
-                 module.classList.add('highlight'); // 添加高亮样式
-             } else {
-                 this.cleanupModuleEditing(module as HTMLElement);
-                 module.classList.remove('highlight'); // 移除高亮样式
-             }
-         });
+        modules.forEach(module => {
+            if (enable) {
+                // 启用编辑模式
+                this.setupModuleEditing(module as HTMLElement);
+                module.classList.add('editable');
+                // 添加拖拽事件
+                const dragHandler = (e: Event) => {
+                    if (e instanceof MouseEvent && module instanceof HTMLElement) {
+                        this.setupModuleDragging(module);
+                    }
+                };
+                module.addEventListener('mousedown', dragHandler as EventListener);
+                // 存储事件处理函数以便后续移除
+                (module as any)._dragHandler = dragHandler;
+            } else {
+                // 禁用编辑模式
+                this.cleanupModuleEditing(module as HTMLElement);
+                module.classList.remove('editable');
+                // 移除拖拽事件
+                if ((module as any)._dragHandler) {
+                    module.removeEventListener('mousedown', (module as any)._dragHandler as EventListener);
+                    delete (module as any)._dragHandler;
+                }
+            }
+        });
+
+        // 切换列容器的编辑状态
+        columns.forEach(column => {
+            if (enable) {
+                column.classList.add('editable');
+            } else {
+                column.classList.remove('editable');
+                column.classList.remove('drop-target');
+            }
+        });
     }
 
     // 设置模块编辑
@@ -4862,6 +4861,11 @@ export class CardView extends ItemView {
 
     // 设置模块拖拽
     private setupModuleDragging(module: HTMLElement) {
+        // 如果模块没有 editable 类，不添加拖拽功能
+        if (!module.classList.contains('editable')) {
+            return;
+        }
+
         let isDragging = false;
         let startX: number;
         let startY: number;
@@ -4892,43 +4896,64 @@ export class CardView extends ItemView {
             
             module.style.transform = `translate(${dx}px, ${dy}px)`;
             
-            // 获取当前拖拽位置对应的目标列
-            const newTargetPosition = this.getDropPosition(module);
+            // 获取当前鼠标位置下的列容器
+            const columns = [
+                this.container.querySelector('.left-column'),
+                this.container.querySelector('.center-column'),
+                this.container.querySelector('.right-column')
+            ];
             
-            // 如果目标列改变，更新模块的目标位置属性
-            if (newTargetPosition !== currentTargetPosition) {
-                // 移除旧的目标位置
-                if (currentTargetPosition) {
-                    module.removeAttribute(`data-target-position`);
+            // 清除所有列的放置目标样式
+            columns.forEach(col => col?.removeClass('drop-target'));
+            
+            // 检查鼠标是否在某个列上
+            const targetColumn = columns.find(col => {
+                if (!col) return false;
+                const rect = col.getBoundingClientRect();
+                return e.clientX >= rect.left && e.clientX <= rect.right &&
+                       e.clientY >= rect.top && e.clientY <= rect.bottom;
+            });
+            
+            // 如果找到目标列，添加放置目标样式并更新模块宽度
+            if (targetColumn) {
+                targetColumn.addClass('drop-target');
+                const newPosition = targetColumn.className.includes('left-column') ? 'left'
+                    : targetColumn.className.includes('right-column') ? 'right'
+                    : 'center';
+                    
+                // 更新模块的目标位置属性和宽度
+                if (newPosition !== currentTargetPosition) {
+                    module.setAttribute('data-target-position', newPosition);
+                    // 根据目标列调整模块宽度
+                    module.style.width = newPosition === 'center' ? '50%' : '25%';
+                    currentTargetPosition = newPosition;
                 }
-                // 设置新的目标位置
-                if (newTargetPosition) {
-                    module.setAttribute('data-target-position', newTargetPosition || '');
-                }
-                currentTargetPosition = newTargetPosition || null;
             }
-            
-            // 更新放置目标的视觉反馈
-            this.updateDropTarget(e.pageX, e.pageY);
         };
         
         const stopDrag = () => {
             if (!isDragging) return;
-            
             isDragging = false;
+            
             module.removeClass('dragging');
             module.style.transform = '';
-            
-            // 清除目标位置属性
             module.removeAttribute('data-target-position');
+            module.style.width = ''; // 恢复原始宽度
             
-            // 清除所有放置目标样式
-            this.clearDropTargets();
-            
-            // 更新模块位置
-            const newPosition = this.getDropPosition(module);
-            if (newPosition && newPosition !== startPosition) {
-                this.updateModulePosition(module, newPosition);
+            // 获取目标列
+            const targetColumn = this.container.querySelector('.drop-target');
+            if (targetColumn) {
+                const newPosition = targetColumn.className.includes('left-column') ? 'left'
+                    : targetColumn.className.includes('right-column') ? 'right'
+                    : 'center';
+                
+                // 更新模块位置
+                if (newPosition !== startPosition) {
+                    this.updateModulePosition(module, newPosition);
+                }
+                
+                // 移除放置目标样式
+                targetColumn.removeClass('drop-target');
             }
             
             currentTargetPosition = null;

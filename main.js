@@ -351,7 +351,7 @@ var CardView = class extends import_obsidian.ItemView {
     this.createCommandButton(searchContainer);
     this.searchInput = searchContainer.createEl("input", {
       type: "text",
-      placeholder: "\u641C\u7D22\u7B14\u8BB0...",
+      placeholder: "\u641C\u7D22\u8BB0...",
       cls: "search-input"
     });
     const quickNoteBar = mainLayout.createDiv("quick-note-bar");
@@ -1106,25 +1106,6 @@ ${content}` : content;
             }
           });
         });
-        card.addEventListener("click", (e) => {
-          this.handleCardSelection(file.path, e);
-        });
-        card.addEventListener("dblclick", async () => {
-          await this.openInAppropriateLeaf(file);
-        });
-        card.addEventListener("contextmenu", (e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          if (!card.hasClass("selected")) {
-            if (!e.ctrlKey) {
-              this.clearSelection();
-            }
-            this.selectedNotes.add(file.path);
-            card.addClass("selected");
-            this.lastSelectedNote = file.path;
-          }
-          this.showContextMenu(e, this.getSelectedFiles());
-        });
       } catch (error) {
         console.error("\u7B14\u8BB0\u52A0\u8F7D\u5931\u8D25:", error);
         throw error;
@@ -1583,7 +1564,7 @@ ${content}` : content;
       calendarBtn.toggleClass("active", this.isCalendarVisible);
     });
   }
-  // 历-切换
+  // 历-切
   toggleCalendar() {
     console.log("\u5207\u6362\u65E5\u5386\u663E\u793A\u72B6\u6001, \u5F53\u524D\u72B6\u6001:", this.isCalendarVisible);
     this.isCalendarVisible = !this.isCalendarVisible;
@@ -3407,13 +3388,33 @@ ${content}` : content;
   // 切换模块编辑
   toggleModuleEditing(enable) {
     const modules = this.container.querySelectorAll(".module-container");
+    const columns = this.container.querySelectorAll(".left-column, .center-column, .right-column");
     modules.forEach((module2) => {
       if (enable) {
         this.setupModuleEditing(module2);
-        module2.classList.add("highlight");
+        module2.classList.add("editable");
+        const dragHandler = (e) => {
+          if (e instanceof MouseEvent && module2 instanceof HTMLElement) {
+            this.setupModuleDragging(module2);
+          }
+        };
+        module2.addEventListener("mousedown", dragHandler);
+        module2._dragHandler = dragHandler;
       } else {
         this.cleanupModuleEditing(module2);
-        module2.classList.remove("highlight");
+        module2.classList.remove("editable");
+        if (module2._dragHandler) {
+          module2.removeEventListener("mousedown", module2._dragHandler);
+          delete module2._dragHandler;
+        }
+      }
+    });
+    columns.forEach((column) => {
+      if (enable) {
+        column.classList.add("editable");
+      } else {
+        column.classList.remove("editable");
+        column.classList.remove("drop-target");
       }
     });
   }
@@ -3484,6 +3485,9 @@ ${content}` : content;
   }
   // 设置模块拖拽
   setupModuleDragging(module2) {
+    if (!module2.classList.contains("editable")) {
+      return;
+    }
     let isDragging = false;
     let startX;
     let startY;
@@ -3506,17 +3510,26 @@ ${content}` : content;
       const dx = e.pageX - startX;
       const dy = e.pageY - startY;
       module2.style.transform = `translate(${dx}px, ${dy}px)`;
-      const newTargetPosition = this.getDropPosition(module2);
-      if (newTargetPosition !== currentTargetPosition) {
-        if (currentTargetPosition) {
-          module2.removeAttribute(`data-target-position`);
+      const columns = [
+        this.container.querySelector(".left-column"),
+        this.container.querySelector(".center-column"),
+        this.container.querySelector(".right-column")
+      ];
+      columns.forEach((col) => col == null ? void 0 : col.removeClass("drop-target"));
+      const targetColumn = columns.find((col) => {
+        if (!col) return false;
+        const rect = col.getBoundingClientRect();
+        return e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom;
+      });
+      if (targetColumn) {
+        targetColumn.addClass("drop-target");
+        const newPosition = targetColumn.className.includes("left-column") ? "left" : targetColumn.className.includes("right-column") ? "right" : "center";
+        if (newPosition !== currentTargetPosition) {
+          module2.setAttribute("data-target-position", newPosition);
+          module2.style.width = newPosition === "center" ? "50%" : "25%";
+          currentTargetPosition = newPosition;
         }
-        if (newTargetPosition) {
-          module2.setAttribute("data-target-position", newTargetPosition || "");
-        }
-        currentTargetPosition = newTargetPosition || null;
       }
-      this.updateDropTarget(e.pageX, e.pageY);
     };
     const stopDrag = () => {
       if (!isDragging) return;
@@ -3524,10 +3537,14 @@ ${content}` : content;
       module2.removeClass("dragging");
       module2.style.transform = "";
       module2.removeAttribute("data-target-position");
-      this.clearDropTargets();
-      const newPosition = this.getDropPosition(module2);
-      if (newPosition && newPosition !== startPosition) {
-        this.updateModulePosition(module2, newPosition);
+      module2.style.width = "";
+      const targetColumn = this.container.querySelector(".drop-target");
+      if (targetColumn) {
+        const newPosition = targetColumn.className.includes("left-column") ? "left" : targetColumn.className.includes("right-column") ? "right" : "center";
+        if (newPosition !== startPosition) {
+          this.updateModulePosition(module2, newPosition);
+        }
+        targetColumn.removeClass("drop-target");
       }
       currentTargetPosition = null;
       document.removeEventListener("mousemove", drag);

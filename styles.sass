@@ -1210,7 +1210,7 @@
               &.sub
                 font-size: 1em
           
-          // 修改右侧笔记区域
+          // 修侧笔区域
           .folder-content
             flex: 1
             padding: 12px
@@ -1778,11 +1778,10 @@
     margin: 0 8px
     opacity: 0.6
 
-// 加载动画
+// 加载画
 @keyframes spin
   to
     transform: rotate(360deg)
-
 
 
 .note-card
@@ -2256,10 +2255,10 @@
     .module-grid
         display: flex
         width: 100%
-        max-width: 1200px 
-        gap: 20px
-        min-height: 200px
+        max-width: 1920px
+        gap: 0px
         padding: 20px
+        justify-content: center
         
         // 左侧列
         .left-column
@@ -2301,7 +2300,7 @@
             border-radius: 8px
             border: 1px solid var(--background-modifier-border)
             transition: transform 0.2s ease, box-shadow 0.2s ease
-            min-height: 200px
+            // min-height: 200px
             
             &.dragging
                 opacity: 0.7
@@ -2437,96 +2436,83 @@
     .module-grid
 
         
-        .module-container
-            background: var(--background-secondary)
-            border-radius: 8px
-            border: 1px solid var(--background-modifier-border)
-            overflow: hidden
-            transition: all 0.3s ease
-            grid-column: span 4 // 默认占4列
-            position: relative
-            
-            &:hover
-                transform: translateY(-2px)
-                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1)
-            
-            // 添加模块大小控制按钮
-            .module-resize
-                position: absolute
-                top: 8px
-                right: 8px
-                display: flex
-                gap: 4px
-                opacity: 0
-                transition: opacity 0.2s ease
-                
-                button
-                    background: var(--background-primary)
-                    border: 1px solid var(--background-modifier-border)
-                    border-radius: 4px
-                    width: 24px
-                    height: 24px
-                    display: flex
-                    align-items: center
-                    justify-content: center
-                    cursor: pointer
-                    transition: all 0.2s ease
-                    
-                    &:hover
-                        background: var(--background-modifier-hover)
-                        border-color: var(--interactive-accent)
-                    
-                    svg
-                        width: 14px
-                        height: 14px
-                        color: var(--text-muted)
-            
-            &:hover .module-resize
-                opacity: 1
-            
-            .module-header
-                padding: 12px 16px
-                border-bottom: 1px solid var(--background-modifier-border)
-                display: flex
-                justify-content: space-between
-                align-items: center
-                
-                h3
-                    margin: 0
-                    font-size: 1.1em
-                    color: var(--text-normal)
-            
-            .module-content
-                padding: 16px
-                
-                // 热力图模块样式
-                &.heatmap-module
-                    height: 200px
-                
-                // 笔记列表模块样式
-                .note-item
-                    display: flex
-                    justify-content: space-between
-                    padding: 8px 0
-                    border-bottom: 1px solid var(--background-modifier-border)
-                    cursor: pointer
-                    
-                    &:hover
-                        background: var(--background-modifier-hover)
-                
-                // 统计卡片样式
-                .stat-card
-                    text-align: center
-                    padding: 16px
-                    
-                    .stat-value
-                        font-size: 2em
-                        font-weight: bold
-                        color: var(--text-accent)
-                    
-                    .stat-label
-                        color: var(--text-muted)
-                        font-size: 0.9em
+      .module-container
+          background: var(--background-secondary)
+          border-radius: 8px
+          border: 1px solid var(--background-modifier-border)
+          overflow: hidden
+          transition: all 0.3s ease
+          grid-column: span 4 // 默认占4列
+          position: relative
+          
+          &:hover
+              transform: translateY(-2px)
+              box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1)
+          
+          // 添加模块大小控制按钮
+          .module-resize
+              position: absolute
+              top: 8px
+              right: 8px
+              display: flex
+              gap: 4px
+              opacity: 0
+              transition: opacity 0.2s ease
+              
+              button
+                  background: var(--background-primary)
+                  border: 1px solid var(--background-modifier-border)
+                  border-radius: 4px
+                  width: 24px
+                  height: 24px
+                  display: flex
+                  align-items: center
+                  justify-content: center
+                  cursor: pointer
+                  transition: all 0.2s ease
+                  
+                  &:hover
+                      background: var(--background-modifier-hover)
+                      border-color: var(--interactive-accent)
+                  
+                  svg
+                      width: 14px
+                      height: 14px
+                      color: var(--text-muted)
+          
+          &:hover .module-resize
+              opacity: 1
+          
+          .module-header
+              padding: 12px 16px
+              border-bottom: 1px solid var(--background-modifier-border)
+              display: flex
+              justify-content: space-between
+              align-items: center
+              
+              h3
+                  margin: 0
+                  font-size: 1.1em
+                  color: var(--text-normal)
+          
+          .module-content
+              padding: 8px
+              
+              // 热力图模块样式
+              &.heatmap-module
+                  height: 200px
+              
+              // 笔记列表模块样式
+              .note-item
+                  display: flex
+                  justify-content: space-between
+                  padding: 8px 0
+                  border-bottom: 1px solid var(--background-modifier-border)
+                  cursor: pointer
+                  
+                  &:hover
+                      background: var(--background-modifier-hover)
+              
 
 
 // 日历模块样式优化
@@ -3266,7 +3252,6 @@
 // 主页视图样式优化
 .home-container
     .module-grid
-        // ... 其他样式保持不变 ...
         
         // 模块容器样式
         .module-container
@@ -3275,7 +3260,6 @@
             border-radius: 8px
             border: 1px solid var(--background-modifier-border)
             transition: all 0.3s ease
-            min-height: 200px
             
             // 拖拽时的样式
             &.dragging
@@ -3305,3 +3289,122 @@
                 
                 &[data-position="center"]
                     width: 600px
+
+// 拖拽克隆样式
+.module-drag-clone
+    position: fixed
+    pointer-events: none
+    z-index: 1000
+    opacity: 0.9
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15)
+    transition: none  // 移除过渡效果以避免延迟
+
+// 修改模块容器拖拽样式
+.module-container
+    transition: all 0.3s ease
+    
+    &.dragging
+        position: fixed
+        opacity: 0.7
+        z-index: 1000
+        pointer-events: none
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15)
+        
+        // 根据目置调整宽度
+        &[data-target-position="left"],
+        &[data-target-position="right"]
+            width: 25%  // 左右列宽度
+        
+        &[data-target-position="center"]
+            width: 50%  // 中间列宽度
+    
+    // 放置目标样式
+    &.drop-target
+        background: var(--background-modifier-hover)
+        border: 2px dashed var(--interactive-accent)
+
+
+
+// 统计卡片样式
+.stats-module
+  padding: 8px
+  .stats-container
+    display: flex
+    flex-direction: row
+    justify-content: center
+    .stat-card
+        text-align: center
+        padding: 8px
+
+        .stat-label
+            color: var(--text-muted)
+            font-size: 0.8em
+
+        .stat-value
+            font-size: 1.3em
+            font-weight: bold
+            color: var(--text-accent)
+      
+
+
+// 列容器的放置目标样式
+.module-grid
+    .left-column,
+    .center-column,
+    .right-column
+        &.drop-target
+            background: var(--background-modifier-hover-plus)
+            border: 2px dashed var(--interactive-accent)
+            border-radius: 8px
+
+// 主页容器样式
+.home-container
+    .module-grid
+        // 列容器样式
+        .left-column,
+        .center-column,
+        .right-column
+            border: 1px solid transparent  // 默认透明边框
+            transition: all 0.3s ease
+            
+            // 编辑模式时显示边框
+            &.editable
+                border: 1px dashed var(--background-modifier-border)
+                
+                &.drop-target
+                    border: 2px dashed var(--interactive-accent)
+                    background: var(--background-modifier-hover)
+
+        // 模块容器样式
+        .module-container
+            cursor: pointer  // 默认可点击
+            transition: all 0.3s ease
+            
+            // 编辑模式样式
+            &.editable
+                cursor: move  // 可拖动光标
+                
+                &:hover
+                    transform: translateY(-2px)
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1)
+                
+                // 拖拽时的样式
+                &.dragging
+                    opacity: 0.7
+                    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15)
+                    z-index: 1000
+                    pointer-events: none
+                    
+                    // 根据目标位置调整宽度
+                    &[data-target-position="left"],
+                    &[data-target-position="right"]
+                        width: 25%
+                    
+                    &[data-target-position="center"]
+                        width: 50%
+            
+            // 非编辑模式下的样式
+            &:not(.editable)
+                &:hover
+                    transform: translateY(-2px)  // 保留悬停效果
+                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1)
