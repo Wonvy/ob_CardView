@@ -262,6 +262,8 @@ var CardView = class extends import_obsidian.ItemView {
         columns: 4
       }
     ];
+    // 添加相关的样式类型定义
+    this.gridSnapIndicator = null;
     this.plugin = plugin;
     this.currentView = "card";
     this.container = createDiv();
@@ -510,7 +512,7 @@ var CardView = class extends import_obsidian.ItemView {
       const title = (_a = titleInput == null ? void 0 : titleInput.value) == null ? void 0 : _a.trim();
       const content = noteInput.value.trim();
       if (!content) {
-        new import_obsidian.Notice("\u8BF7\u8F93\u5165\u7B14\u8BB0\u5185\u5BB9");
+        new import_obsidian.Notice("\u8BF7\u8F93\u5165\u7B14\u8BB0\u5BB9");
         return;
       }
       try {
@@ -539,6 +541,7 @@ ${content}` : content;
         new import_obsidian.Notice("\u521B\u5EFA\u7B14\u8BB0\u5931\u8D25");
       }
     });
+    this.updateToolbarButtons();
   }
   // 获取标签和数量
   getTagsWithCount() {
@@ -559,27 +562,58 @@ ${content}` : content;
     const tagCounts = this.getTagsWithCount();
     this.tagContainer.empty();
     const leftArea = this.tagContainer.createDiv("filter-toolbar-left");
-    const calendarDropdown = leftArea.createDiv("calendar-dropdown-container");
-    const calendarBtn = calendarDropdown.createEl("button", {
-      cls: "calendar-toggle-button"
+    const buttonGroup = leftArea.createDiv("filter-toolbar-buttons");
+    const homeButtons = buttonGroup.createDiv("home-view-buttons");
+    homeButtons.setAttribute("data-views", "home");
+    const manageBtn = homeButtons.createEl("button", {
+      cls: "module-manage-btn",
+      text: "\u7BA1\u7406\u5E03\u5C40"
+    });
+    manageBtn.addEventListener("click", () => {
+      this.showModuleManager();
+    });
+    const editBtn = homeButtons.createEl("button", {
+      cls: "module-edit-btn",
+      text: "\u7F16\u8F91\u5E03\u5C40"
+    });
+    let isEditMode = false;
+    editBtn.addEventListener("click", () => {
+      isEditMode = !isEditMode;
+      this.container.toggleClass("edit-mode", isEditMode);
+      editBtn.setText(isEditMode ? "\u5B8C\u6210\u7F16\u8F91" : "\u7F16\u8F91\u5E03\u5C40");
+      this.toggleModuleEditing(isEditMode);
+    });
+    const cardButtons = buttonGroup.createDiv("card-view-buttons");
+    cardButtons.setAttribute("data-views", "card,list,timeline,month,week");
+    const calendarBtn = cardButtons.createEl("button", {
+      cls: "calendar-toggle-button toolbar-button"
     });
     calendarBtn.innerHTML = `
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
             <span>\u65E5\u5386</span>
         `;
-    this.calendarContainer = calendarDropdown.createDiv("calendar-container");
+    const settingsBtn = cardButtons.createEl("button", {
+      cls: "card-settings-button toolbar-button"
+    });
+    settingsBtn.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+            <span>\u5361\u7247\u8BBE\u7F6E</span>
+        `;
+    this.calendarContainer = calendarBtn.createDiv("calendar-container");
     this.calendarContainer.style.display = "none";
     let hoverTimeout;
-    calendarDropdown.addEventListener("mouseenter", () => {
+    calendarBtn.addEventListener("mouseenter", () => {
       clearTimeout(hoverTimeout);
       this.showCalendar();
     });
-    calendarDropdown.addEventListener("mouseleave", () => {
+    calendarBtn.addEventListener("mouseleave", () => {
       hoverTimeout = setTimeout(() => {
         this.hideCalendar();
       }, 200);
     });
-    const dropdownContainer = leftArea.createDiv("tag-dropdown-container");
+    const tagButtons = buttonGroup.createDiv("tag-view-buttons");
+    tagButtons.setAttribute("data-views", "card,list,timeline,month,week");
+    const dropdownContainer = tagButtons.createDiv("tag-dropdown-container");
     const dropdown = dropdownContainer.createEl("select", {
       cls: "tag-dropdown"
     });
@@ -588,6 +622,7 @@ ${content}` : content;
       value: ""
     });
     const dropdownPanel = dropdownContainer.createDiv("dropdown-panel");
+    dropdownPanel.style.display = "none";
     Array.from(tagCounts.entries()).sort(([a], [b]) => a.localeCompare(b)).forEach(([tag, count]) => {
       const option = dropdownPanel.createDiv("dropdown-option");
       option.createSpan({ text: tag });
@@ -646,7 +681,21 @@ ${content}` : content;
       this.addSelectedTag(tag, selectedTagsContainer);
     });
     const rightArea = this.tagContainer.createDiv("filter-toolbar-right");
-    this.createCardSettings(rightArea);
+    const cardSettings = rightArea.createDiv("card-settings-container");
+    cardSettings.setAttribute("data-views", "card,list,timeline");
+    this.createCardSettings(cardSettings);
+    this.registerEvent(
+      this.app.workspace.on("layout-change", () => {
+        const elements = this.tagContainer.querySelectorAll("[data-views]");
+        elements.forEach((el) => {
+          var _a;
+          if (el instanceof HTMLElement) {
+            const allowedViews = ((_a = el.dataset.views) == null ? void 0 : _a.split(",")) || [];
+            el.style.display = allowedViews.includes(this.currentView) ? "flex" : "none";
+          }
+        });
+      })
+    );
   }
   // 添加已选标签
   addSelectedTag(tag, container) {
@@ -773,6 +822,21 @@ ${content}` : content;
       console.error(`\u5207\u6362\u5230${view}\u89C6\u56FE\u65F6\u51FA\u9519:`, error);
       this.currentLoadingView = null;
     }
+    this.updateToolbarButtons();
+  }
+  // 添加新方法来更新按钮显示状态
+  updateToolbarButtons() {
+    console.log("Current view:", this.currentView);
+    const elements = this.tagContainer.querySelectorAll("[data-views]");
+    elements.forEach((el) => {
+      var _a;
+      if (el instanceof HTMLElement) {
+        const allowedViews = ((_a = el.dataset.views) == null ? void 0 : _a.split(",")) || [];
+        const shouldShow = allowedViews.includes(this.currentView);
+        console.log("Element:", el, "Allowed views:", allowedViews, "Should show:", shouldShow);
+        el.style.display = shouldShow ? "" : "none";
+      }
+    });
   }
   // 加载笔记
   async loadNotes() {
@@ -851,7 +915,7 @@ ${content}` : content;
     } finally {
       this.isLoading = false;
       if (!this.hasMoreNotes) {
-        this.updateLoadingStatus("\u52A0\u8F7D\u5B8C\u6210");
+        this.updateLoadingStatus("\u52A0\u8F7D\u6210");
         this.loadingIndicator.style.display = "none";
       } else {
         this.loadingIndicator.style.display = "flex";
@@ -943,7 +1007,7 @@ ${content}` : content;
       }
       const folderPath = header.createDiv("note-folder");
       const folder = file.parent ? file.parent.path : "\u6839\u76EE\u5F55";
-      const pathParts = folder === "\u6839\u76EE\u5F55" ? ["\u6839\u76EE\u5F55"] : folder.split("/");
+      const pathParts = folder === "\u6839\u76EE" ? ["\u6839\u76EE\u5F55"] : folder.split("/");
       pathParts.forEach((part, index) => {
         if (index > 0) {
           folderPath.createSpan({ text: " / ", cls: "folder-separator" });
@@ -1166,7 +1230,7 @@ ${content}` : content;
   }
   // 笔记-创建
   async createNewNote(date) {
-    const baseFileName = date ? date.toLocaleDateString() : "\u672A\u547D\u540D";
+    const baseFileName = date ? date.toLocaleDateString() : "\u672A\u547D";
     let fileName = baseFileName;
     let counter = 1;
     while (this.app.vault.getAbstractFileByPath(`${fileName}.md`)) {
@@ -1349,7 +1413,7 @@ ${content}` : content;
     this.loadingIndicator.style.display = "none";
     await this.loadNextPage();
     this.setupInfiniteScroll();
-    this.updateLoadingStatus("\u5237\u65B0\u89C6\u56FE...");
+    this.updateLoadingStatus("\u5237\u89C6\u56FE...");
   }
   // 卡片-选择
   handleCardSelection(path, event) {
@@ -1505,21 +1569,21 @@ ${content}` : content;
       }
     });
   }
-  // 日历-创建按钮
+  // 日历-建按钮
   createCalendarButton(leftTools) {
     const calendarBtn = leftTools.createEl("button", {
       cls: "calendar-toggle-button"
     });
     calendarBtn.innerHTML = `
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-            <span>\u65E5\u5386</span>
+            <span>\u65E5</span>
         `;
     calendarBtn.addEventListener("click", () => {
       this.toggleCalendar();
       calendarBtn.toggleClass("active", this.isCalendarVisible);
     });
   }
-  // 日历-切换
+  // 历-切换
   toggleCalendar() {
     console.log("\u5207\u6362\u65E5\u5386\u663E\u793A\u72B6\u6001, \u5F53\u524D\u72B6\u6001:", this.isCalendarVisible);
     this.isCalendarVisible = !this.isCalendarVisible;
@@ -1614,7 +1678,7 @@ ${content}` : content;
     const notesSection = container.createDiv("notes-section");
     this.renderCalendarDays(grid, notesByDate, notesSection);
   }
-  // 日历-获取每日笔记数量
+  // 日-获取每日笔记数量
   getNotesCountByDate(year, month) {
     const counts = {};
     const files = this.app.vault.getMarkdownFiles();
@@ -1695,7 +1759,7 @@ ${content}` : content;
     const regex = new RegExp(`(${escapedSearchTerm})`, "gi");
     return text.replace(regex, '<span class="search-highlight">$1</span>');
   }
-  // 搜索=文件内��
+  // 搜索=文件内
   async fileContentContainsSearch(file) {
     if (!this.currentSearchTerm || this.currentSearchTerm.trim() === "") {
       return true;
@@ -1761,7 +1825,7 @@ ${content}` : content;
       }
     });
   }
-  // 命令-删除空白笔记
+  // 命-删除空白笔记
   async deleteEmptyNotes() {
     const selectedFiles = this.getSelectedFiles();
     if (selectedFiles.length === 0) {
@@ -2881,7 +2945,7 @@ ${content}` : content;
     this.currentWeek = this.getWeekNumber(today);
     this.createWeekView();
   }
-  // 修改获取指定日期的笔记方法，添加日期范围检查
+  // 修改获取指定日期的笔记方法，加日期范围检查
   async getNotesForDate(date) {
     const files = this.app.vault.getMarkdownFiles();
     return files.filter((file) => {
@@ -2945,7 +3009,7 @@ ${content}` : content;
   }
   // 周视图导航
   navigateWeek(delta) {
-    console.log("\u5BFC\u822A\u524D - \u5E74\u4EFD:", this.currentYear, "\u5468\u6570:", this.currentWeek, "\u589E\u91CF:", delta);
+    console.log("\u5BFC\u822A\u524D - \u5E74\u4EFD:", this.currentYear, "\u5468:", this.currentWeek, "\u589E\u91CF:", delta);
     let newWeek = this.currentWeek;
     let newYear = this.currentYear;
     newWeek += delta;
@@ -3007,44 +3071,55 @@ ${content}` : content;
       return 1;
     }
   }
+  // 创建主页视图
   async createHomeView() {
+    console.log("Creating home view...");
+    console.log("Current modules:", this.homeModules);
     if (this.currentLoadingView !== "home") {
       return;
     }
     try {
       this.container.empty();
       const homeContainer = this.container.createDiv("home-container");
-      const moduleManager = homeContainer.createDiv("module-manager");
-      const manageBtn = moduleManager.createEl("button", {
-        cls: "module-manage-btn",
-        text: "\u7BA1\u7406\u6A21\u5757"
-      });
-      manageBtn.addEventListener("click", () => {
-        this.showModuleManager();
-      });
       const moduleGrid = homeContainer.createDiv("module-grid");
-      const visibleModules = this.homeModules.filter((m) => m.visible).sort((a, b) => a.order - b.order);
-      for (const module2 of visibleModules) {
-        await this.createModule(moduleGrid, module2);
+      const leftColumn = moduleGrid.createDiv("left-column");
+      const centerColumn = moduleGrid.createDiv("center-column");
+      const rightColumn = moduleGrid.createDiv("right-column");
+      const visibleModules = this.homeModules.filter((m) => m.visible);
+      console.log("Visible modules:", visibleModules);
+      if (visibleModules.length === 0) {
+        console.log("No visible modules found, using default modules");
+        this.homeModules = DEFAULT_HOME_MODULES;
+        await this.plugin.saveSettings();
       }
-      const editBtn = moduleManager.createEl("button", {
-        cls: "module-edit-btn",
-        text: "\u7F16\u8F91\u5E03\u5C40"
-      });
-      let isEditMode = false;
-      editBtn.addEventListener("click", () => {
-        isEditMode = !isEditMode;
-        homeContainer.toggleClass("edit-mode", isEditMode);
-        editBtn.setText(isEditMode ? "\u5B8C\u6210\u7F16\u8F91" : "\u7F16\u8F91\u5E03\u5C40");
-        this.toggleModuleEditing(isEditMode);
-      });
+      const leftModules = visibleModules.filter((m) => m.position === "left").sort((a, b) => a.order - b.order);
+      const centerModules = visibleModules.filter((m) => m.position === "center").sort((a, b) => a.order - b.order);
+      const rightModules = visibleModules.filter((m) => m.position === "right").sort((a, b) => a.order - b.order);
+      console.log("Left modules:", leftModules);
+      console.log("Center modules:", centerModules);
+      console.log("Right modules:", rightModules);
+      for (const module2 of leftModules) {
+        console.log("Creating left module:", module2.id);
+        const moduleEl = await this.createModule(leftColumn, module2);
+        moduleEl.setAttribute("data-position", "left");
+        this.setupModuleDragging(moduleEl);
+      }
+      for (const module2 of centerModules) {
+        console.log("Creating center module:", module2.id);
+        const moduleEl = await this.createModule(centerColumn, module2);
+        moduleEl.setAttribute("data-position", "center");
+        this.setupModuleDragging(moduleEl);
+      }
+      for (const module2 of rightModules) {
+        console.log("Creating right module:", module2.id);
+        const moduleEl = await this.createModule(rightColumn, module2);
+        moduleEl.setAttribute("data-position", "right");
+        this.setupModuleDragging(moduleEl);
+      }
     } catch (error) {
       console.error("\u521B\u5EFA\u4E3B\u9875\u89C6\u56FE\u5931\u8D25:", error);
+      console.error(error.stack);
       new import_obsidian.Notice("\u521B\u5EFA\u4E3B\u9875\u89C6\u56FE\u5931\u8D25");
-    } finally {
-      if (this.currentLoadingView === "home") {
-        this.currentLoadingView = null;
-      }
     }
   }
   // 创建单个模块
@@ -3061,6 +3136,7 @@ ${content}` : content;
     increaseBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>`;
     const content = moduleEl.createDiv("module-content");
     await this.renderModuleContent(content, module2);
+    return moduleEl;
   }
   // 显示模块管理器
   showModuleManager() {
@@ -3070,8 +3146,9 @@ ${content}` : content;
     });
     modal.open();
   }
-  // 渲染热力图
+  // 模块-热力图
   async renderHeatmap(container) {
+    console.log("Rendering heatmap module...");
     const heatmapContainer = container.createDiv("heatmap-container");
     const endDate = /* @__PURE__ */ new Date();
     const startDate = /* @__PURE__ */ new Date();
@@ -3125,8 +3202,9 @@ ${content}` : content;
       currentDate.setDate(currentDate.getDate() + 1);
     }
   }
-  // 渲染本周笔记
+  // 模块-本周笔记
   async renderWeeklyNotes(container) {
+    console.log("Rendering weekly notes module...");
     const weeklyContainer = container.createDiv("weekly-notes");
     const weekStart = this.getStartOfWeek();
     const weekEnd = this.getEndOfWeek();
@@ -3146,13 +3224,26 @@ ${content}` : content;
       });
     }
   }
-  // 渲染最近编辑
+  // 模块-最近编辑
   async renderRecentNotes(container) {
+    console.log("Rendering recent notes module...");
     const recentContainer = container.createDiv("recent-notes");
     const notes = this.app.vault.getMarkdownFiles().sort((a, b) => b.stat.mtime - a.stat.mtime).slice(0, 10);
+    for (const note of notes) {
+      const noteItem = recentContainer.createDiv("note-item");
+      noteItem.createEl("span", { text: note.basename, cls: "note-title" });
+      noteItem.createEl("span", {
+        text: new Date(note.stat.mtime).toLocaleDateString(),
+        cls: "note-date"
+      });
+      noteItem.addEventListener("click", () => {
+        this.openInAppropriateLeaf(note);
+      });
+    }
   }
-  // 渲染统计信息
+  // 模块-统计信息
   async renderStats(container) {
+    console.log("Rendering stats module...");
     const statsContainer = container.createDiv("stats-container");
     const files = this.app.vault.getMarkdownFiles();
     const totalNotes = files.length;
@@ -3276,51 +3367,41 @@ ${content}` : content;
     const diff = date.getDate() - day + (day === 0 ? 0 : 7);
     return new Date(date.setDate(diff));
   }
-  // 获取热力图数据
-  getHeatmapData() {
-    const data = [];
-    const files = this.app.vault.getMarkdownFiles();
-    const dateCount = /* @__PURE__ */ new Map();
-    files.forEach((file) => {
-      const date = new Date(file.stat.mtime).toISOString().split("T")[0];
-      dateCount.set(date, (dateCount.get(date) || 0) + 1);
-    });
-    dateCount.forEach((count, date) => {
-      data.push({ date, count });
-    });
-    return data;
-  }
   // 保存模块设置
   async saveModuleSettings() {
     await this.plugin.saveHomeModules(this.homeModules);
   }
   // 渲染模块内容
   async renderModuleContent(container, module2) {
-    switch (module2.type) {
-      case "heatmap":
-        await this.renderHeatmap(container);
-        break;
-      case "weekly":
-        await this.renderWeeklyNotes(container);
-        break;
-      case "recent":
-        await this.renderRecentNotes(container);
-        break;
-      case "stats":
-        await this.renderStats(container);
-        break;
-      case "calendar":
-        await this.renderCalendarModule(container);
-        break;
-      case "graph":
-        await this.renderGraphModule(container);
-        break;
-      case "quicknote":
-        await this.renderQuickNoteModule(container);
-        break;
-      case "todo":
-        await this.renderTodoModule(container);
-        break;
+    console.log("Rendering module:", module2.type);
+    try {
+      switch (module2.type) {
+        case "heatmap":
+          await this.renderHeatmap(container);
+          break;
+        case "weekly":
+          await this.renderWeeklyNotes(container);
+          break;
+        case "stats":
+          await this.renderStats(container);
+          break;
+        case "calendar":
+          await this.renderCalendarModule(container);
+          break;
+        case "quicknote":
+          await this.renderQuickNoteModule(container);
+          break;
+        case "todo":
+          await this.renderTodoModule(container);
+          break;
+        default:
+          console.warn("Unknown module type:", module2.type);
+          container.createDiv("module-error").setText(`Unknown module type: ${module2.type}`);
+      }
+    } catch (error) {
+      console.error("Error rendering module:", module2.type, error);
+      console.error(error.stack);
+      container.createDiv("module-error").setText(`Error loading ${module2.type} module: ${error.message}`);
     }
   }
   // 切换模块编辑
@@ -3329,8 +3410,10 @@ ${content}` : content;
     modules.forEach((module2) => {
       if (enable) {
         this.setupModuleEditing(module2);
+        module2.classList.add("highlight");
       } else {
         this.cleanupModuleEditing(module2);
+        module2.classList.remove("highlight");
       }
     });
   }
@@ -3404,19 +3487,17 @@ ${content}` : content;
     let isDragging = false;
     let startX;
     let startY;
-    let startOrder;
+    let startPosition;
+    let currentTargetPosition = null;
     const startDrag = (e) => {
-      var _a;
       if (e.target instanceof HTMLElement && e.target.closest(".resize-handle")) {
         return;
       }
       isDragging = true;
       startX = e.pageX;
       startY = e.pageY;
-      startOrder = Array.from(((_a = module2.parentElement) == null ? void 0 : _a.children) || []).indexOf(module2);
-      module2.style.zIndex = "1000";
-      module2.style.opacity = "0.8";
-      module2.classList.add("module-dragging");
+      startPosition = module2.getAttribute("data-position") || "";
+      module2.addClass("dragging");
       document.addEventListener("mousemove", drag);
       document.addEventListener("mouseup", stopDrag);
     };
@@ -3425,69 +3506,76 @@ ${content}` : content;
       const dx = e.pageX - startX;
       const dy = e.pageY - startY;
       module2.style.transform = `translate(${dx}px, ${dy}px)`;
-      this.checkModulePosition(module2, e.pageX, e.pageY);
+      const newTargetPosition = this.getDropPosition(module2);
+      if (newTargetPosition !== currentTargetPosition) {
+        if (currentTargetPosition) {
+          module2.removeAttribute(`data-target-position`);
+        }
+        if (newTargetPosition) {
+          module2.setAttribute("data-target-position", newTargetPosition || "");
+        }
+        currentTargetPosition = newTargetPosition || null;
+      }
+      this.updateDropTarget(e.pageX, e.pageY);
     };
     const stopDrag = () => {
       if (!isDragging) return;
       isDragging = false;
-      this.cleanupModuleEditing(module2);
+      module2.removeClass("dragging");
+      module2.style.transform = "";
+      module2.removeAttribute("data-target-position");
+      this.clearDropTargets();
+      const newPosition = this.getDropPosition(module2);
+      if (newPosition && newPosition !== startPosition) {
+        this.updateModulePosition(module2, newPosition);
+      }
+      currentTargetPosition = null;
       document.removeEventListener("mousemove", drag);
       document.removeEventListener("mouseup", stopDrag);
-      this.saveModuleSettings();
     };
     module2.addEventListener("mousedown", startDrag);
   }
-  // 检查模块位置
-  checkModulePosition(dragModule, x, y) {
+  // 更新放置目标
+  updateDropTarget(x, y) {
     const modules = Array.from(this.container.querySelectorAll(".module-container"));
-    const dragIndex = modules.indexOf(dragModule);
-    modules.forEach((module2, index) => {
-      var _a, _b;
-      if (module2 === dragModule) return;
-      const rect = module2.getBoundingClientRect();
-      if (y >= rect.top && y <= rect.bottom) {
-        if (index < dragIndex) {
-          (_a = module2.parentElement) == null ? void 0 : _a.insertBefore(dragModule, module2);
-        } else {
-          (_b = module2.parentElement) == null ? void 0 : _b.insertBefore(dragModule, module2.nextSibling);
+    modules.forEach((module2) => {
+      module2.removeClass("drop-target");
+      if (module2 instanceof HTMLElement) {
+        const rect = module2.getBoundingClientRect();
+        if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) {
+          module2.addClass("drop-target");
         }
-        this.updateModuleOrder();
       }
     });
   }
-  // 更新模块顺序
-  updateModuleOrder() {
-    const modules = Array.from(this.container.querySelectorAll(".module-container"));
-    modules.forEach((module2, index) => {
-      const moduleId = module2.getAttribute("data-module-id");
-      const moduleConfig = this.homeModules.find((m) => m.id === moduleId);
-      if (moduleConfig) {
-        moduleConfig.order = index;
-      }
+  // 清除放置目标样式
+  clearDropTargets() {
+    this.container.querySelectorAll(".module-container").forEach((module2) => {
+      module2.removeClass("drop-target");
     });
   }
-  // 显示网格对齐指示器
-  showGridSnapIndicator(module2, width) {
-    let indicator = this.container.querySelector(".grid-snap-indicator");
-    if (!indicator) {
-      indicator = this.container.createDiv("grid-snap-indicator");
-    }
+  // 获取放置位置
+  getDropPosition(module2) {
     const rect = module2.getBoundingClientRect();
-    if (indicator instanceof HTMLElement) {
-      indicator.style.top = `${rect.top}px`;
-      indicator.style.left = `${rect.left}px`;
-      indicator.style.width = `${width}px`;
-      indicator.style.height = `${rect.height}px`;
+    const containerRect = this.container.getBoundingClientRect();
+    const relativeX = rect.left - containerRect.left;
+    const containerWidth = containerRect.width;
+    if (relativeX < containerWidth / 4) return "left";
+    if (relativeX > containerWidth * 3 / 4) return "right";
+    return "center";
+  }
+  // 更新模块位置
+  updateModulePosition(module2, newPosition) {
+    const moduleId = module2.getAttribute("data-module-id");
+    const moduleConfig = this.homeModules.find((m) => m.id === moduleId);
+    if (moduleConfig) {
+      moduleConfig.position = newPosition;
+      moduleConfig.columns = newPosition === "center" ? 2 : 1;
+      this.createHomeView();
+      this.saveModuleSettings();
     }
   }
-  // 隐藏网格对齐指示器
-  hideGridSnapIndicator() {
-    const indicator = this.container.querySelector(".grid-snap-indicator");
-    if (indicator) {
-      indicator.remove();
-    }
-  }
-  // 清理模块编辑
+  // 理模块编
   cleanupModuleEditing(module2) {
     module2.querySelectorAll(".resize-handle").forEach((handle) => handle.remove());
     module2.style.transform = "";
@@ -3556,7 +3644,7 @@ ${content}` : content;
     });
     codeBtn.innerHTML = `
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
-            \u4EE3\u7801
+            \u7801
         `;
     const imageBtn = quickNoteToolbar.createEl("button", {
       cls: "quick-note-btn",
@@ -3579,7 +3667,7 @@ ${content}` : content;
     const sendButton = inputContainer.createEl("button", {
       cls: "quick-note-send",
       attr: {
-        "title": "\u9001\u7B14\u8BB0"
+        "title": "\u9001\u8BB0"
       }
     });
     sendButton.innerHTML = `
@@ -3752,6 +3840,29 @@ ${content}` : content;
       });
     });
   }
+  // 在 CardView 类中添加以下方法
+  // 显示网格对齐指示器
+  showGridSnapIndicator(module2, width) {
+    let indicator = this.container.querySelector(".grid-snap-indicator");
+    if (!indicator) {
+      indicator = this.container.createDiv("grid-snap-indicator");
+    }
+    const rect = module2.getBoundingClientRect();
+    if (indicator instanceof HTMLElement) {
+      indicator.style.top = `${rect.top}px`;
+      indicator.style.left = `${rect.left}px`;
+      indicator.style.width = `${width}px`;
+      indicator.style.height = `${rect.height}px`;
+      indicator.style.display = "block";
+    }
+  }
+  // 隐藏网格对齐指示器
+  hideGridSnapIndicator() {
+    const indicator = this.container.querySelector(".grid-snap-indicator");
+    if (indicator instanceof HTMLElement) {
+      indicator.style.display = "none";
+    }
+  }
 };
 var ModuleManagerModal = class extends import_obsidian.Modal {
   constructor(app, modules, onSave) {
@@ -3792,6 +3903,7 @@ var ModuleManagerModal = class extends import_obsidian.Modal {
       this.close();
     });
   }
+  // 移动模块
   moveModule(index, direction) {
     const newIndex = index + direction;
     if (newIndex >= 0 && newIndex < this.modules.length) {
@@ -3815,28 +3927,31 @@ var ModuleManagerModal = class extends import_obsidian.Modal {
 };
 var DEFAULT_HOME_MODULES = [
   {
-    id: "heatmap",
-    name: "\u6D3B\u52A8\u70ED\u529B\u56FE",
-    type: "heatmap",
-    visible: true,
-    order: 0,
-    columns: 6
-  },
-  {
-    id: "graph",
-    name: "\u5173\u7CFB\u56FE\u8C31",
-    type: "graph",
-    visible: true,
-    order: 1,
-    columns: 6
-  },
-  {
     id: "quicknote",
     name: "\u5FEB\u901F\u7B14\u8BB0",
     type: "quicknote",
     visible: true,
+    order: 0,
+    columns: 2,
+    position: "center"
+  },
+  {
+    id: "heatmap",
+    name: "\u6D3B\u52A8\u70ED\u529B\u56FE",
+    type: "heatmap",
+    visible: true,
+    order: 1,
+    columns: 1,
+    position: "left"
+  },
+  {
+    id: "stats",
+    name: "\u7B14\u8BB0\u7EDF\u8BA1",
+    type: "stats",
+    visible: true,
     order: 2,
-    columns: 6
+    columns: 1,
+    position: "right"
   },
   {
     id: "weekly",
@@ -3844,31 +3959,26 @@ var DEFAULT_HOME_MODULES = [
     type: "weekly",
     visible: true,
     order: 3,
-    columns: 3
-  },
-  {
-    id: "stats",
-    name: "\u7B14\u8BB0\u7EDF\u8BA1",
-    type: "stats",
-    visible: true,
-    order: 4,
-    columns: 4
+    columns: 1,
+    position: "left"
   },
   {
     id: "calendar",
     name: "\u65E5\u5386",
     type: "calendar",
     visible: true,
-    order: 5,
-    columns: 8
+    order: 4,
+    columns: 2,
+    position: "center"
   },
   {
     id: "todo",
     name: "\u5F85\u529E\u4E8B\u9879",
     type: "todo",
     visible: true,
-    order: 6,
-    columns: 4
+    order: 5,
+    columns: 1,
+    position: "right"
   }
 ];
 
@@ -3980,11 +4090,21 @@ var CardViewPlugin = class extends import_obsidian2.Plugin {
     console.log(`\u6587\u4EF6\u5939 ${folder} \u88AB\u6253\u5F00`);
   }
   async loadSettings() {
-    this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
-    if (!this.settings.homeModules || this.settings.homeModules.length === 0) {
-      this.settings.homeModules = DEFAULT_HOME_MODULES;
-      await this.saveSettings();
-    } else {
+    var _a;
+    const savedData = await this.loadData();
+    this.settings = {
+      ...DEFAULT_SETTINGS,
+      ...savedData,
+      // 确保 homeModules 有正确的默认值
+      homeModules: ((_a = savedData == null ? void 0 : savedData.homeModules) == null ? void 0 : _a.length) > 0 ? savedData.homeModules : DEFAULT_HOME_MODULES.map((module2) => ({
+        ...module2,
+        visible: true,
+        // 确保所有模块默认可见
+        position: module2.position || "left"
+        // 确保有位置属性
+      }))
+    };
+    if (this.settings.homeModules.length > 0) {
       const existingModuleIds = new Set(this.settings.homeModules.map((m) => m.id));
       const newModules = DEFAULT_HOME_MODULES.filter((m) => !existingModuleIds.has(m.id));
       if (newModules.length > 0) {
@@ -3992,13 +4112,16 @@ var CardViewPlugin = class extends import_obsidian2.Plugin {
           ...this.settings.homeModules,
           ...newModules.map((m) => ({
             ...m,
+            visible: true,
+            position: m.position || "left",
             order: this.settings.homeModules.length + m.order
-            // 确保新模块排在最后
           }))
         ];
-        await this.saveSettings();
       }
     }
+    await this.saveSettings();
+    console.log("Loaded settings:", this.settings);
+    console.log("Home modules:", this.settings.homeModules);
   }
   async saveSettings() {
     await this.saveData(this.settings);

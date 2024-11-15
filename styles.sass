@@ -593,7 +593,7 @@
 
 
 
-// 添容器相关样式   
+// 添容器相式   
 .preview-wrapper 
   position: relative
   display: flex
@@ -874,7 +874,7 @@
     line-height: 1.3
 
 
-// 添搜高亮样式
+// 添亮样式
 .search-highlight 
     background-color: var(--text-highlight-bg)
     color: var(--text-normal)
@@ -1257,7 +1257,7 @@
                 .note-date
                   font-size: 0.8em
                   color: var(--text-muted)
-                  white-space: nowrap  // 防止日期换行
+                  white-space: nowrap  // 防止期换行
                   display: none
                   
                   &::before
@@ -2002,7 +2002,7 @@
             padding: 8px
             display: none  // 默认隐藏
             
-            // 使用网格布局，固定为3列
+            // 使用网格布局固定为3列
             display: grid
             grid-template-columns: repeat(3, 1fr)  // 三列等宽
             gap: 4px  // 设置间距
@@ -2223,7 +2223,7 @@
             grid-template-columns: none  // 移除网格列设置
             justify-content: initial  // 移除原有的居中对齐
             
-            // 移除原有的卡片间距和对齐方式
+            // 移除原有的片间距和对齐方式
             &.grid-view
                 display: block
                 gap: 0
@@ -2253,10 +2253,84 @@
 
 // 主页视图样式优化
 .home-container
-    padding: 20px
-    height: 100%
-    overflow-y: auto
-    background: var(--background-primary)  // 添加背景色
+    .module-grid
+        display: flex
+        width: 100%
+        max-width: 1200px 
+        gap: 20px
+        min-height: 200px
+        padding: 20px
+        
+        // 左侧列
+        .left-column
+            flex: 25%  // 25% 的宽度
+            display: flex
+            flex-direction: column
+            gap: 20px
+            min-width: 250px  // 设置最小宽度防止过小
+            border: 1px dashed var(--background-modifier-border)
+            padding: 10px
+            border-radius: 8px
+            
+        // 中间列
+        .center-column
+            flex: 50%  // 50% 的宽度
+            display: flex
+            flex-direction: column
+            gap: 20px
+            min-width: 400px  // 设置最小宽度防止过小
+            border: 1px dashed var(--background-modifier-border)
+            padding: 10px
+            border-radius: 8px
+            
+        // 右侧列
+        .right-column
+            flex: 25%  // 25% 的宽度
+            display: flex
+            flex-direction: column
+            gap: 20px
+            min-width: 250px  // 设置最小宽度防止过小
+            border: 1px dashed var(--background-modifier-border)
+            padding: 10px
+            border-radius: 8px
+
+        // 模块容器样式
+        .module-container
+            width: 100%
+            background: var(--background-secondary)
+            border-radius: 8px
+            border: 1px solid var(--background-modifier-border)
+            transition: transform 0.2s ease, box-shadow 0.2s ease
+            min-height: 200px
+            
+            &.dragging
+                opacity: 0.7
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15)
+                z-index: 1000
+                cursor: grabbing
+                position: relative
+                pointer-events: none
+                
+                // 根据目标位置调整宽度
+                &[data-target-position="left"],
+                &[data-target-position="right"]
+                    width: 25%  // 左右列宽度
+                
+                &[data-target-position="center"]
+                    width: 50%  // 中间列宽度
+            
+            // 放置目标样式
+            &.drop-target
+                background: var(--background-modifier-hover)
+                border: 2px dashed var(--interactive-accent)
+                
+                // 根据列位置显示不同的宽度指示
+                &[data-position="left"],
+                &[data-position="right"]
+                    width: 25%
+                
+                &[data-position="center"]
+                    width: 50%
     
     .module-manager
         display: flex
@@ -2361,9 +2435,7 @@
                 z-index: 1000
     
     .module-grid
-        display: grid
-        grid-template-columns: repeat(12, 1fr) // 使用12列网格系统
-        gap: 20px
+
         
         .module-container
             background: var(--background-secondary)
@@ -2481,52 +2553,161 @@
 
 // 模块管理器模态框样式优化
 .module-manager-modal
+    width: 80vw
+    max-width: 800px
+    
+    // 标题样式
+    h2
+        margin: 0 0 20px
+        padding-bottom: 12px
+        border-bottom: 1px solid var(--background-modifier-border)
+        color: var(--text-normal)
+        font-size: 1.4em
+    
+    // 预览区域样式
+    .preview-container
+        margin: 20px 0
+        padding: 16px
+        background: var(--background-secondary)
+        border-radius: 8px
+        border: 1px solid var(--background-modifier-border)
+        
+        .module-grid
+
+            .module-preview
+                background: var(--background-primary)
+                border-radius: 6px
+                padding: 12px
+                border: 1px solid var(--background-modifier-border)
+                transition: all 0.2s ease
+                
+                &:hover
+                    transform: translateY(-2px)
+                    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1)
+                
+                h4
+                    margin: 0
+                    font-size: 1em
+                    color: var(--text-normal)
+    
+    // 模块列表样式优化
     .module-list
         display: grid
-        grid-template-columns: repeat(2, 1fr)
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr))
         gap: 16px
-        margin: 16px 0
+        margin: 20px 0
+        max-height: 400px
+        overflow-y: auto
+        padding-right: 8px
+        
+        // 滚动条样式
+        &::-webkit-scrollbar
+            width: 8px
+        
+        &::-webkit-scrollbar-track
+            background: var(--background-secondary)
+            border-radius: 4px
+        
+        &::-webkit-scrollbar-thumb
+            background: var(--background-modifier-border)
+            border-radius: 4px
+            
+            &:hover
+                background: var(--text-muted)
         
         .module-item
             display: flex
             align-items: center
             gap: 12px
             padding: 12px
+            background: var(--background-secondary)
             border: 1px solid var(--background-modifier-border)
-            background: var(--background-primary)
-            border-radius: 6px
+            border-radius: 8px
             transition: all 0.2s ease
             
             &:hover
                 transform: translateY(-2px)
                 box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1)
+                border-color: var(--interactive-accent)
             
+            // 拖动手柄样式
             .drag-handle
-                cursor: move
                 color: var(--text-muted)
-                padding: 4px
+                cursor: move
+                padding: 4px 8px
+                border-radius: 4px
+                
+                &:hover
+                    background: var(--background-modifier-hover)
+                    color: var(--text-normal)
             
-            .module-preview
+            // 可见性切换样式
+            input[type="checkbox"]
+                width: 16px
+                height: 16px
+                border: 2px solid var(--background-modifier-border)
+                border-radius: 4px
+                cursor: pointer
+                transition: all 0.2s ease
+                
+                &:checked
+                    background: var(--interactive-accent)
+                    border-color: var(--interactive-accent)
+            
+            // 模块名称样式
+            span
                 flex: 1
-                min-height: 100px
+                font-size: 0.95em
+                color: var(--text-normal)
+            
+            // 上下移动按钮样式
+            button
+                padding: 4px 8px
+                background: transparent
                 border: 1px solid var(--background-modifier-border)
                 border-radius: 4px
-                overflow: hidden
+                color: var(--text-muted)
+                cursor: pointer
+                transition: all 0.2s ease
                 
-            .module-controls
-                display: flex
-                flex-direction: column
-                gap: 8px
-                
-                button
-                    padding: 4px 8px
+                &:hover
                     background: var(--background-modifier-hover)
-                    border: none
-                    border-radius: 4px
-                    cursor: pointer
-                    
-                    &:hover
-                        background: var(--background-modifier-hover-plus)
+                    color: var(--text-normal)
+                    border-color: var(--interactive-accent)
+    
+    // 保存按钮样式
+    button.mod-cta
+        width: 100%
+        padding: 12px
+        background: var(--interactive-accent)
+        color: var(--text-on-accent)
+        border: none
+        border-radius: 6px
+        font-size: 1em
+        font-weight: 500
+        cursor: pointer
+        transition: all 0.2s ease
+        
+        &:hover
+            opacity: 0.9
+            transform: translateY(-1px)
+            box-shadow: 0 2px 8px rgba(var(--interactive-accent-rgb), 0.2)
+
+// 拖拽时的占位样式
+.module-placeholder
+    background: var(--background-modifier-hover)
+    border: 2px dashed var(--interactive-accent)
+    border-radius: 8px
+    height: 60px
+    animation: pulse 1.5s infinite
+
+@keyframes pulse
+    0%
+        opacity: 0.6
+    50% 
+        opacity: 0.8
+    100%
+        opacity: 0.6
 
 // 热力图样式
 .heatmap-container
@@ -2968,3 +3149,159 @@
       
   // 其他模块在拖拽时的过渡效果
   transition: transform 0.2s ease, opacity 0.2s ease
+
+// 工具栏按钮组样式
+.filter-toolbar
+    .filter-toolbar-buttons
+        display: flex
+        gap: 12px
+        align-items: center
+
+        // 通用按钮组样式
+        .card-view-buttons,
+        .home-view-buttons
+            display: flex
+            gap: 8px
+            align-items: center
+            padding: 0 12px
+            height: 32px
+            
+            // 分隔线
+            &:not(:first-child)
+                border-left: 1px solid var(--background-modifier-border)
+        
+        // 通用按钮基础样式
+        .toolbar-button
+            display: flex
+            align-items: center
+            gap: 6px
+            padding: 6px 12px
+            background: transparent
+            border: 1px solid var(--background-modifier-border)
+            border-radius: 4px
+            color: var(--text-muted)
+            font-size: 13px
+            cursor: pointer
+            transition: all 0.2s ease
+            height: 32px
+            
+            svg
+                width: 16px
+                height: 16px
+                opacity: 0.8
+                transition: all 0.2s ease
+            
+            span
+                white-space: nowrap
+            
+            &:hover
+                background: var(--background-modifier-hover)
+                color: var(--text-normal)
+                border-color: var(--interactive-accent)
+                
+                svg
+                    opacity: 1
+            
+            &.active
+                background: var(--interactive-accent)
+                color: var(--text-on-accent)
+                border-color: var(--interactive-accent)
+                
+                svg
+                    opacity: 1
+                    color: var(--text-on-accent)
+        
+        // 日历按钮
+        .calendar-toggle-button
+            @extend .toolbar-button
+        
+        // 卡片设置按钮
+        .card-settings-button
+            @extend .toolbar-button
+        
+        // 模块管理按钮
+        .module-manage-btn
+            @extend .toolbar-button
+            background: var(--interactive-accent)
+            color: var(--text-on-accent)
+            
+            &:hover
+                opacity: 0.9
+                transform: translateY(-1px)
+        
+        // 编辑布局按钮
+        .module-edit-btn
+            @extend .toolbar-button
+
+// 工具栏按钮组显示/隐藏样式
+.filter-toolbar
+    .filter-toolbar-buttons
+        > div[data-views]
+            display: none  // 默认隐藏所有按钮组
+            
+            &[style*="display: ''"],
+            &[style*="display:''"]
+                display: flex  // 当显示时使用 flex 布局
+                
+        // 确保按钮组内的按钮正确显示
+        .home-view-buttons,
+        .card-view-buttons,
+        .tag-view-buttons
+            &:not([style*="display: none"])
+                display: flex
+                align-items: center
+                gap: 8px
+
+// 网格对齐指示器样式
+.grid-snap-indicator
+    position: absolute
+    background: rgba(var(--interactive-accent-rgb), 0.1)
+    border: 2px dashed var(--interactive-accent)
+    border-radius: 8px
+    pointer-events: none
+    z-index: 1000
+    transition: all 0.2s ease
+    display: none
+
+// 主页视图样式优化
+.home-container
+    .module-grid
+        // ... 其他样式保持不变 ...
+        
+        // 模块容器样式
+        .module-container
+            width: 100%
+            background: var(--background-secondary)
+            border-radius: 8px
+            border: 1px solid var(--background-modifier-border)
+            transition: all 0.3s ease
+            min-height: 200px
+            
+            // 拖拽时的样式
+            &.dragging
+                position: fixed  // 改为固定定位
+                opacity: 0.9
+                box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15)
+                z-index: 1000
+                pointer-events: none
+                
+                // 根据目标位置调整宽度
+                &[data-target-position="left"],
+                &[data-target-position="right"]
+                    width: 300px  // 左右列宽度
+                
+                &[data-target-position="center"]
+                    width: 600px  // 中间列宽度
+            
+            // 放置目标样式
+            &.drop-target
+                background: var(--background-modifier-hover)
+                border: 2px dashed var(--interactive-accent)
+                
+                // 根据列位置显示不同的宽度指示
+                &[data-position="left"],
+                &[data-position="right"]
+                    width: 300px
+                
+                &[data-position="center"]
+                    width: 600px

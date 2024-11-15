@@ -202,30 +202,46 @@ export default class CardViewPlugin extends Plugin {
     }
 
     async loadSettings() {
-        this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+        // 加载保存的设置
+        const savedData = await this.loadData();
         
-        // 检查是否需要更新默认模块配置
-        if (!this.settings.homeModules || this.settings.homeModules.length === 0) {
-            // 使用完整的默认模块配置
-            this.settings.homeModules = DEFAULT_HOME_MODULES;
-            await this.saveSettings();
-        } else {
-            // 检查是否需要添加新模块
+        // 合并默认设置和保存的设置
+        this.settings = {
+            ...DEFAULT_SETTINGS,
+            ...savedData,
+            // 确保 homeModules 有正确的默认值
+            homeModules: savedData?.homeModules?.length > 0 
+                ? savedData.homeModules 
+                : DEFAULT_HOME_MODULES.map(module => ({
+                    ...module,
+                    visible: true,  // 确保所有模块默认可见
+                    position: module.position || 'left'  // 确保有位置属性
+                }))
+        };
+
+        // 如果有保存的模块配置，检查是否需要添加新的默认模块
+        if (this.settings.homeModules.length > 0) {
             const existingModuleIds = new Set(this.settings.homeModules.map(m => m.id));
             const newModules = DEFAULT_HOME_MODULES.filter(m => !existingModuleIds.has(m.id));
             
             if (newModules.length > 0) {
-                // 将新模块添加到现有配置中
                 this.settings.homeModules = [
                     ...this.settings.homeModules,
                     ...newModules.map(m => ({
                         ...m,
-                        order: this.settings.homeModules.length + m.order // 确保新模块排在最后
+                        visible: true,
+                        position: m.position || 'left',
+                        order: this.settings.homeModules.length + m.order
                     }))
                 ];
-                await this.saveSettings();
             }
         }
+
+        // 保存更新后的设置
+        await this.saveSettings();
+        
+        console.log('Loaded settings:', this.settings);
+        console.log('Home modules:', this.settings.homeModules);
     }
 
     async saveSettings() {

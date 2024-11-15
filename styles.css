@@ -2125,11 +2125,75 @@
   grid-template-columns: none;
 }
 
-.home-container {
+.home-container .module-grid {
+  display: flex;
+  width: 100%;
+  max-width: 1200px;
+  gap: 20px;
+  min-height: 200px;
   padding: 20px;
-  height: 100%;
-  overflow-y: auto;
-  background: var(--background-primary);
+}
+.home-container .module-grid .left-column {
+  flex: 25%;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 250px;
+  border: 1px dashed var(--background-modifier-border);
+  padding: 10px;
+  border-radius: 8px;
+}
+.home-container .module-grid .center-column {
+  flex: 50%;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 400px;
+  border: 1px dashed var(--background-modifier-border);
+  padding: 10px;
+  border-radius: 8px;
+}
+.home-container .module-grid .right-column {
+  flex: 25%;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 250px;
+  border: 1px dashed var(--background-modifier-border);
+  padding: 10px;
+  border-radius: 8px;
+}
+.home-container .module-grid .module-container {
+  width: 100%;
+  background: var(--background-secondary);
+  border-radius: 8px;
+  border: 1px solid var(--background-modifier-border);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  min-height: 200px;
+}
+.home-container .module-grid .module-container.dragging {
+  opacity: 0.7;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  cursor: grabbing;
+  position: relative;
+  pointer-events: none;
+}
+.home-container .module-grid .module-container.dragging[data-target-position=left], .home-container .module-grid .module-container.dragging[data-target-position=right] {
+  width: 25%;
+}
+.home-container .module-grid .module-container.dragging[data-target-position=center] {
+  width: 50%;
+}
+.home-container .module-grid .module-container.drop-target {
+  background: var(--background-modifier-hover);
+  border: 2px dashed var(--interactive-accent);
+}
+.home-container .module-grid .module-container.drop-target[data-position=left], .home-container .module-grid .module-container.drop-target[data-position=right] {
+  width: 25%;
+}
+.home-container .module-grid .module-container.drop-target[data-position=center] {
+  width: 50%;
 }
 .home-container .module-manager {
   display: flex;
@@ -2229,11 +2293,6 @@
   background: rgba(var(--interactive-accent-rgb), 0.2);
   pointer-events: none;
   z-index: 1000;
-}
-.home-container .module-grid {
-  display: grid;
-  grid-template-columns: repeat(12, 1fr);
-  gap: 20px;
 }
 .home-container .module-grid .module-container {
   background: var(--background-secondary);
@@ -2342,54 +2401,156 @@
   padding: 0;
 }
 
+.module-manager-modal {
+  width: 80vw;
+  max-width: 800px;
+}
+.module-manager-modal h2 {
+  margin: 0 0 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--background-modifier-border);
+  color: var(--text-normal);
+  font-size: 1.4em;
+}
+.module-manager-modal .preview-container {
+  margin: 20px 0;
+  padding: 16px;
+  background: var(--background-secondary);
+  border-radius: 8px;
+  border: 1px solid var(--background-modifier-border);
+}
+.module-manager-modal .preview-container .module-grid .module-preview {
+  background: var(--background-primary);
+  border-radius: 6px;
+  padding: 12px;
+  border: 1px solid var(--background-modifier-border);
+  transition: all 0.2s ease;
+}
+.module-manager-modal .preview-container .module-grid .module-preview:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+.module-manager-modal .preview-container .module-grid .module-preview h4 {
+  margin: 0;
+  font-size: 1em;
+  color: var(--text-normal);
+}
 .module-manager-modal .module-list {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 16px;
-  margin: 16px 0;
+  margin: 20px 0;
+  max-height: 400px;
+  overflow-y: auto;
+  padding-right: 8px;
+}
+.module-manager-modal .module-list::-webkit-scrollbar {
+  width: 8px;
+}
+.module-manager-modal .module-list::-webkit-scrollbar-track {
+  background: var(--background-secondary);
+  border-radius: 4px;
+}
+.module-manager-modal .module-list::-webkit-scrollbar-thumb {
+  background: var(--background-modifier-border);
+  border-radius: 4px;
+}
+.module-manager-modal .module-list::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
 }
 .module-manager-modal .module-list .module-item {
   display: flex;
   align-items: center;
   gap: 12px;
   padding: 12px;
+  background: var(--background-secondary);
   border: 1px solid var(--background-modifier-border);
-  background: var(--background-primary);
-  border-radius: 6px;
+  border-radius: 8px;
   transition: all 0.2s ease;
 }
 .module-manager-modal .module-list .module-item:hover {
   transform: translateY(-2px);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-color: var(--interactive-accent);
 }
 .module-manager-modal .module-list .module-item .drag-handle {
-  cursor: move;
   color: var(--text-muted);
-  padding: 4px;
-}
-.module-manager-modal .module-list .module-item .module-preview {
-  flex: 1;
-  min-height: 100px;
-  border: 1px solid var(--background-modifier-border);
-  border-radius: 4px;
-  overflow: hidden;
-}
-.module-manager-modal .module-list .module-item .module-controls {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.module-manager-modal .module-list .module-item .module-controls button {
+  cursor: move;
   padding: 4px 8px;
+  border-radius: 4px;
+}
+.module-manager-modal .module-list .module-item .drag-handle:hover {
   background: var(--background-modifier-hover);
-  border: none;
+  color: var(--text-normal);
+}
+.module-manager-modal .module-list .module-item input[type=checkbox] {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--background-modifier-border);
   border-radius: 4px;
   cursor: pointer;
+  transition: all 0.2s ease;
 }
-.module-manager-modal .module-list .module-item .module-controls button:hover {
-  background: var(--background-modifier-hover-plus);
+.module-manager-modal .module-list .module-item input[type=checkbox]:checked {
+  background: var(--interactive-accent);
+  border-color: var(--interactive-accent);
+}
+.module-manager-modal .module-list .module-item span {
+  flex: 1;
+  font-size: 0.95em;
+  color: var(--text-normal);
+}
+.module-manager-modal .module-list .module-item button {
+  padding: 4px 8px;
+  background: transparent;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 4px;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.module-manager-modal .module-list .module-item button:hover {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+  border-color: var(--interactive-accent);
+}
+.module-manager-modal button.mod-cta {
+  width: 100%;
+  padding: 12px;
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+  border: none;
+  border-radius: 6px;
+  font-size: 1em;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.module-manager-modal button.mod-cta:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(var(--interactive-accent-rgb), 0.2);
 }
 
+.module-placeholder {
+  background: var(--background-modifier-hover);
+  border: 2px dashed var(--interactive-accent);
+  border-radius: 8px;
+  height: 60px;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 0.8;
+  }
+  100% {
+    opacity: 0.6;
+  }
+}
 .heatmap-container {
   padding: 16px;
 }
@@ -2823,6 +2984,128 @@
   border: 2px dashed var(--interactive-accent);
   border-radius: 8px;
   pointer-events: none;
+}
+
+.filter-toolbar .filter-toolbar-buttons {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.filter-toolbar .filter-toolbar-buttons .card-view-buttons,
+.filter-toolbar .filter-toolbar-buttons .home-view-buttons {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 0 12px;
+  height: 32px;
+}
+.filter-toolbar .filter-toolbar-buttons .card-view-buttons:not(:first-child),
+.filter-toolbar .filter-toolbar-buttons .home-view-buttons:not(:first-child) {
+  border-left: 1px solid var(--background-modifier-border);
+}
+.filter-toolbar .filter-toolbar-buttons .toolbar-button, .filter-toolbar .filter-toolbar-buttons .module-edit-btn, .filter-toolbar .filter-toolbar-buttons .module-manage-btn, .filter-toolbar .filter-toolbar-buttons .card-settings-button, .filter-toolbar .filter-toolbar-buttons .calendar-toggle-button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: transparent;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 4px;
+  color: var(--text-muted);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  height: 32px;
+}
+.filter-toolbar .filter-toolbar-buttons .toolbar-button svg, .filter-toolbar .filter-toolbar-buttons .module-edit-btn svg, .filter-toolbar .filter-toolbar-buttons .module-manage-btn svg, .filter-toolbar .filter-toolbar-buttons .card-settings-button svg, .filter-toolbar .filter-toolbar-buttons .calendar-toggle-button svg {
+  width: 16px;
+  height: 16px;
+  opacity: 0.8;
+  transition: all 0.2s ease;
+}
+.filter-toolbar .filter-toolbar-buttons .toolbar-button span, .filter-toolbar .filter-toolbar-buttons .module-edit-btn span, .filter-toolbar .filter-toolbar-buttons .module-manage-btn span, .filter-toolbar .filter-toolbar-buttons .card-settings-button span, .filter-toolbar .filter-toolbar-buttons .calendar-toggle-button span {
+  white-space: nowrap;
+}
+.filter-toolbar .filter-toolbar-buttons .toolbar-button:hover, .filter-toolbar .filter-toolbar-buttons .module-edit-btn:hover, .filter-toolbar .filter-toolbar-buttons .module-manage-btn:hover, .filter-toolbar .filter-toolbar-buttons .card-settings-button:hover, .filter-toolbar .filter-toolbar-buttons .calendar-toggle-button:hover {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+  border-color: var(--interactive-accent);
+}
+.filter-toolbar .filter-toolbar-buttons .toolbar-button:hover svg, .filter-toolbar .filter-toolbar-buttons .module-edit-btn:hover svg, .filter-toolbar .filter-toolbar-buttons .module-manage-btn:hover svg, .filter-toolbar .filter-toolbar-buttons .card-settings-button:hover svg, .filter-toolbar .filter-toolbar-buttons .calendar-toggle-button:hover svg {
+  opacity: 1;
+}
+.filter-toolbar .filter-toolbar-buttons .toolbar-button.active, .filter-toolbar .filter-toolbar-buttons .active.module-edit-btn, .filter-toolbar .filter-toolbar-buttons .active.module-manage-btn, .filter-toolbar .filter-toolbar-buttons .active.card-settings-button, .filter-toolbar .filter-toolbar-buttons .active.calendar-toggle-button {
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+  border-color: var(--interactive-accent);
+}
+.filter-toolbar .filter-toolbar-buttons .toolbar-button.active svg, .filter-toolbar .filter-toolbar-buttons .active.module-edit-btn svg, .filter-toolbar .filter-toolbar-buttons .active.module-manage-btn svg, .filter-toolbar .filter-toolbar-buttons .active.card-settings-button svg, .filter-toolbar .filter-toolbar-buttons .active.calendar-toggle-button svg {
+  opacity: 1;
+  color: var(--text-on-accent);
+}
+.filter-toolbar .filter-toolbar-buttons .module-manage-btn {
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+}
+.filter-toolbar .filter-toolbar-buttons .module-manage-btn:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+.filter-toolbar .filter-toolbar-buttons > div[data-views] {
+  display: none;
+}
+.filter-toolbar .filter-toolbar-buttons > div[data-views][style*="display: ''"], .filter-toolbar .filter-toolbar-buttons > div[data-views][style*="display:''"] {
+  display: flex;
+}
+.filter-toolbar .filter-toolbar-buttons .home-view-buttons:not([style*="display: none"]),
+.filter-toolbar .filter-toolbar-buttons .card-view-buttons:not([style*="display: none"]),
+.filter-toolbar .filter-toolbar-buttons .tag-view-buttons:not([style*="display: none"]) {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.grid-snap-indicator {
+  position: absolute;
+  background: rgba(var(--interactive-accent-rgb), 0.1);
+  border: 2px dashed var(--interactive-accent);
+  border-radius: 8px;
+  pointer-events: none;
+  z-index: 1000;
+  transition: all 0.2s ease;
+  display: none;
+}
+
+.home-container .module-grid .module-container {
+  width: 100%;
+  background: var(--background-secondary);
+  border-radius: 8px;
+  border: 1px solid var(--background-modifier-border);
+  transition: all 0.3s ease;
+  min-height: 200px;
+}
+.home-container .module-grid .module-container.dragging {
+  position: fixed;
+  opacity: 0.9;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  pointer-events: none;
+}
+.home-container .module-grid .module-container.dragging[data-target-position=left], .home-container .module-grid .module-container.dragging[data-target-position=right] {
+  width: 300px;
+}
+.home-container .module-grid .module-container.dragging[data-target-position=center] {
+  width: 600px;
+}
+.home-container .module-grid .module-container.drop-target {
+  background: var(--background-modifier-hover);
+  border: 2px dashed var(--interactive-accent);
+}
+.home-container .module-grid .module-container.drop-target[data-position=left], .home-container .module-grid .module-container.drop-target[data-position=right] {
+  width: 300px;
+}
+.home-container .module-grid .module-container.drop-target[data-position=center] {
+  width: 600px;
 }
 
 /*# sourceMappingURL=styles.css.map */
