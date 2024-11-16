@@ -138,3 +138,114 @@
     height: 100%
 
 
+
+.module-container
+  position: relative
+  
+  // 拖拽手柄样式
+  .module-drag-handle
+    position: absolute
+    top: 8px
+    left: 8px
+    width: 24px
+    height: 24px
+    display: flex
+    align-items: center
+    justify-content: center
+    cursor: move
+    opacity: 0
+    visibility: hidden
+    transition: all 0.2s ease
+    z-index: 10
+    border-radius: 4px
+    background: var(--background-secondary)
+    border: 1px solid var(--background-modifier-border)
+    
+    &.visible
+      opacity: 1
+      visibility: visible
+    
+    &:hover
+      background: var(--background-modifier-hover)
+    
+    svg
+      color: var(--text-muted)
+
+  // 控制按钮样式
+  .module-controls
+    position: absolute
+    top: 8px
+    right: 8px
+    display: flex
+    gap: 4px
+    z-index: 10
+    opacity: 0
+    visibility: hidden
+    transition: all 0.2s ease
+    
+    &.visible
+      opacity: 1
+      visibility: visible
+
+    button
+      background: var(--background-secondary)
+      border: 1px solid var(--background-modifier-border)
+      border-radius: 4px
+      width: 24px
+      height: 24px
+      display: flex
+      align-items: center
+      justify-content: center
+      cursor: pointer
+      color: var(--text-muted)
+      transition: all 0.2s ease
+      
+      &:hover
+        background: var(--background-modifier-hover)
+        color: var(--text-normal)
+
+  // 编辑模式下的样式
+  &.editable
+    border: 1px dashed var(--background-modifier-border)
+    
+    &:hover
+      border-color: var(--interactive-accent)
+      
+      .module-drag-handle,
+      .module-controls
+        opacity: 1
+        visibility: visible
+
+  // 拖拽时的样式
+  &.dragging
+    opacity: 0.8
+    cursor: move
+
+.drop-marker
+  position: relative
+  background-color: var(--interactive-accent)
+  margin: 0
+  transition: all 0.2s ease
+  border-radius: 2px
+  pointer-events: none
+  z-index: 1000
+
+.drop-target
+  background-color: var(--background-modifier-hover)
+  transition: background-color 0.2s ease
+
+.module-container
+  &.dragging
+    opacity: 0.8
+    pointer-events: none
+    cursor: move
+    z-index: 1001
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1)
+
+  &.editable
+    cursor: move
+    transition: all 0.2s ease
+    
+    &:hover
+      border-color: var(--interactive-accent)
+      background-color: var(--background-modifier-hover)

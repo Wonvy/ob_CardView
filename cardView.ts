@@ -120,7 +120,7 @@ class EnhancedFileSelectionModal extends Modal {
 
         // 标题
         contentEl.createEl('h3', { 
-            text: `移动 ${this.files.length} 个文件` 
+            text: `动 ${this.files.length} 个文件` 
         });
 
         // 最近使用的文件夹
@@ -251,7 +251,7 @@ class EnhancedFileSelectionModal extends Modal {
     }
 }
 
-// ���视图
+// 视图
 export class CardView extends ItemView {
     private plugin: CardViewPlugin;
     private currentView: 'home' | 'card' | 'list' | 'timeline' | 'month' | 'week';
@@ -401,7 +401,7 @@ export class CardView extends ItemView {
     constructor(leaf: WorkspaceLeaf, plugin: CardViewPlugin) {
         super(leaf);
         this.plugin = plugin;
-        this.currentView = 'card';
+        this.currentView = 'home';
         this.container = createDiv();
         this.tagContainer = createDiv();
         this.previewContainer = createDiv();
@@ -450,7 +450,7 @@ export class CardView extends ItemView {
         this.currentWeek = this.getWeekNumber(today);
         console.log('初始化周视图 - 年份:', this.currentYear, '周数:', this.currentWeek);
 
-        // 使用插件保存的设置初始化主页模块
+        // 使用插件保存的设初始化主页模块
         this.homeModules = plugin.settings.homeModules.length > 0 
             ? plugin.settings.homeModules 
             : DEFAULT_HOME_MODULES;
@@ -490,7 +490,7 @@ export class CardView extends ItemView {
         // 创建工具栏
         const toolbar = contentSection.createDiv('card-view-toolbar');
         
-        // 左侧工具组
+        // 左侧工具
         const leftTools = toolbar.createDiv('toolbar-left');
         
         // 新建笔记按钮
@@ -603,7 +603,7 @@ export class CardView extends ItemView {
         // 创建工具栏
         const quickNoteToolbar = inputContainer.createDiv('quick-note-toolbar');
 
-        // 添加代码按钮
+        // 添代码按钮
         const codeBtn = quickNoteToolbar.createEl('button', {
             cls: 'quick-note-btn',
             attr: { 'data-type': 'code' }
@@ -792,7 +792,7 @@ export class CardView extends ItemView {
                     // 刷新图
                     await this.refreshView();
                     
-                    new Notice('笔创建成功');
+                    new Notice('创建成功');
                 }
             } catch (error) {
                 console.error('创建笔记失败:', error);
@@ -802,6 +802,9 @@ export class CardView extends ItemView {
 
         // 初始化完成后更新按钮状态
         this.updateToolbarButtons();
+
+        // 初始化完成后，切换到主页视图
+        this.switchView('home');
     }
 
 
@@ -854,12 +857,17 @@ export class CardView extends ItemView {
             text: '编辑布局'
         });
         
+
+
+        
+
+        // 编辑布局按钮事件
         let isEditMode = false;
         editBtn.addEventListener('click', () => {
             isEditMode = !isEditMode;
             this.container.toggleClass('edit-mode', isEditMode);
             editBtn.setText(isEditMode ? '完成编辑' : '编辑布局');
-            this.toggleModuleEditing(isEditMode);
+            this.toggleModuleEditing(isEditMode);//切换模块编辑
         });
 
         // 卡片视图按钮组
@@ -1013,7 +1021,7 @@ export class CardView extends ItemView {
 
         this.createCardSettings(cardSettings);
 
-        // 更新视图切换事件
+        // 更新视图切事件
         this.registerEvent(
             this.app.workspace.on('layout-change', () => {
                 // 获取所有带有 data-views 属性的元素
@@ -1129,7 +1137,7 @@ export class CardView extends ItemView {
             this.timelineHasMore = false;
         }
 
-        // 设置新的当前视图和加载状态
+        // 设置的当前视图和加载状态
         this.currentView = view;
         this.currentLoadingView = view;
         
@@ -1224,7 +1232,7 @@ export class CardView extends ItemView {
             // 添加滚动监听
             this.setupInfiniteScroll();
             
-            console.log('笔记加载完成');
+            console.log('笔记加完成');
         } catch (error) {
             console.error('loadNotes 错误:', error);
             new Notice('加载笔记失败，请检查控制台获取详细信息');
@@ -1260,7 +1268,7 @@ export class CardView extends ItemView {
             
             this.hasMoreNotes = end < filteredFiles.length;
             
-            // 更新状态栏信息
+            // 更新态栏信息
             this.updateLoadingStatus(`正在加载第 ${this.currentPage} 页 (${start + 1}-${end} / ${filteredFiles.length})`);
 
             // 创建卡片
@@ -1298,7 +1306,7 @@ export class CardView extends ItemView {
             
         } catch (error) {
             console.error('loadNextPage 错误:', error);
-            this.updateLoadingStatus('加载失败');
+            this.updateLoadingStatus('加失败');
             new Notice('加载笔记失败');
         } finally {
             this.isLoading = false;
@@ -1591,14 +1599,14 @@ export class CardView extends ItemView {
                 // ... 内容加载逻辑 ...
             }
 
-            // 添加右键菜单事件监听
+            // 添加键菜单事件听
             card.addEventListener('contextmenu', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 this.showContextMenu(e, [file]); // 传入当前文件
             });
 
-            // 添加点击事件用于多选
+            // 添加点击事件于多选
             card.addEventListener('click', (e) => {
                 this.handleCardSelection(file.path, e);
             });
@@ -1620,7 +1628,7 @@ export class CardView extends ItemView {
             this.previewContainer.addClass('collapsed');
             previewWrapper?.addClass('collapsed');
             if (previewWrapper instanceof HTMLElement) {
-                previewWrapper.style.width = '0px';  // 直接设置宽度为0
+                previewWrapper.style.width = '0px';  // 直接设宽度为0
             }
             // 调整内容区域宽度
             const contentSection = this.containerEl.querySelector('.content-section');
@@ -1752,7 +1760,7 @@ export class CardView extends ItemView {
         }
     }
 
-    // 快速笔记-创建
+    // 速笔记-创建
     private async createQuickNote(content: string, types: string[], fileName: string): Promise<TFile | null> {
         try {
             // 生成唯一的件
@@ -1868,7 +1876,7 @@ export class CardView extends ItemView {
                                 const card = await this.createNoteCard(file);
                                 if (card instanceof HTMLElement) {
                                     card.style.width = '100%';
-                                    // 只有在当前视图仍然是时间轴时才替换占符
+                                    // 只有在当前视图然是时间轴时才替换占符
                                     if (this.currentView === 'timeline') {
                                         notesList.replaceChild(card, placeholder);
                                     }
@@ -2018,7 +2026,7 @@ export class CardView extends ItemView {
         this.lastSelectedNote = path;
     }
 
-    // 清除选择
+    // 清除择
     private clearSelection() {
         this.selectedNotes.clear();
         this.container.querySelectorAll('.note-card.selected').forEach(card => {
@@ -2186,10 +2194,10 @@ export class CardView extends ItemView {
         this.calendarContainer.empty();
         this.calendarContainer.style.display = 'block';
         
-        // 创建日历头部
+        // 创建日头部
         const header = this.calendarContainer.createDiv('calendar-header');
         
-        // 上个月按钮
+        // 上个月钮
         const prevBtn = header.createEl('button', { cls: 'calendar-nav-btn' });
         prevBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>';
         
@@ -2213,7 +2221,7 @@ export class CardView extends ItemView {
             }
             
             // 更新标题
-            titleEl.setText(`${this.currentDate.getFullYear()}年${this.currentDate.getMonth() + 1}月`);
+            titleEl.setText(`${this.currentDate.getFullYear()}年${this.currentDate.getMonth() + 1}`);
             
             // 清空并重新渲染日历内容区域
             const existingContent = this.calendarContainer.querySelector('.calendar-weekdays, .calendar-grid');
@@ -2237,14 +2245,14 @@ export class CardView extends ItemView {
                 this.currentDate.getMonth()
             );
             
-            // 创建笔记列表容器
+            // 创建笔记列表容
             const notesSection = this.calendarContainer.createDiv('notes-section');
             
             // 填充日期格子
             this.renderCalendarDays(grid, notesByDate, notesSection);
         });
 
-        // 添加鼠标悬停提示
+        // 添加鼠标提示
         titleEl.setAttribute('title', '滚动鼠标滚轮切换月份');
 
         // 添加导航事件
@@ -2291,7 +2299,7 @@ export class CardView extends ItemView {
         // 创建笔记列表容器
         const notesSection = container.createDiv('notes-section');
         
-        // 填充日期格子，传入 notesSection 参数
+        // 填充日期格，传入 notesSection 参数
         this.renderCalendarDays(grid, notesByDate, notesSection);
     }
 
@@ -2321,7 +2329,7 @@ export class CardView extends ItemView {
             const searchTerm = this.currentSearchTerm.trim().toLowerCase();
             const fileContent = content.toLowerCase();
             
-            // 检查文件内容是否包含搜索词
+            // 检查文件容是否包含搜索词
             return fileContent.includes(searchTerm);
         } catch (error) {
             console.error('读取文件内容失败:', error);
@@ -2347,7 +2355,7 @@ export class CardView extends ItemView {
         }, 200));
     }
 
-    // 命令-创建按钮
+    // 令-创建按钮
     private createCommandButton(toolbar: HTMLElement) {
         const commandContainer = toolbar.createDiv('command-container');
         
@@ -2373,7 +2381,7 @@ export class CardView extends ItemView {
         });
 
         const batchRenameItem = menu.createDiv('command-menu-item');
-        batchRenameItem.setText('批量重命名');
+        batchRenameItem.setText('批量重名');
         batchRenameItem.addEventListener('click', () => {
             menu.style.display = 'none';  // 点击隐藏菜单
             console.log('批量重命名功能实现');
@@ -2382,7 +2390,7 @@ export class CardView extends ItemView {
         // 使用击事替代鼠标悬停事件
         let isMenuVisible = false;
         
-        // 点击按钮时换菜单显状态
+        // 点击按钮时菜单显状态
         commandBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             isMenuVisible = !isMenuVisible;
@@ -2496,14 +2504,14 @@ export class CardView extends ItemView {
                 });
                 todayBtn.addEventListener('click', () => this.goToToday());
                 
-                // 添加滚轮事件
+                // 添滚轮事件
                 monthSelector.addEventListener('wheel', (e) => {
                     e.preventDefault();
                     this.navigateMonth(e.deltaY > 0 ? 1 : -1);
                 });
                 
                 // 创建星期头部
-                const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
+                const weekdays = ['', '一', '二', '三', '四', '五', '六'];
                 const weekHeader = monthContainer.createDiv('month-weekdays');
                 weekdays.forEach(day => {
                     weekHeader.createDiv('weekday').setText(day);
@@ -2574,7 +2582,7 @@ export class CardView extends ItemView {
         this.updateMonthView();
     }
 
-    // 月历-渲染月视图格
+    // 月历-渲染视图格
     private renderMonthGrid(grid: HTMLElement) {
         const year = this.currentDate.getFullYear();
         const month = this.currentDate.getMonth();
@@ -2763,7 +2771,7 @@ export class CardView extends ItemView {
         }
     }
 
-    // 列表-显示文件夹内容
+    // 列表-显文件夹内容
     private showFolderContent(container: HTMLElement, notes: TFile[]) {
         container.empty();
         
@@ -2835,7 +2843,7 @@ export class CardView extends ItemView {
 
     // 滚动同步
     private setupScrollSync() {
-        // 获取卡片容器和预览容器
+        // 获取卡片容器和预览器
         const cardContainer = this.container;
         const previewContainer = this.previewContainer;
 
@@ -2985,7 +2993,7 @@ export class CardView extends ItemView {
             }
 
             try {
-                // 获取所有已添加的标签
+                // 获取所有添加的标签
                 const tagItems = tagsContainer?.querySelectorAll('.tag-item.active') ?? [];
                 const tagTexts = Array.from(tagItems).map(item => item.textContent?.replace('×', '').trim() ?? '');
                 
@@ -3000,7 +3008,7 @@ export class CardView extends ItemView {
                     day: '2-digit'
                 }).replace(/\//g, '-');
 
-                // 创建���记
+                // 创建记
                 const file = await this.createQuickNote(finalContent, [], fileName);
                 
                 if (file) {
@@ -3064,7 +3072,7 @@ export class CardView extends ItemView {
                             tagItem?.remove();
                         });
                         
-                        // 添加点击切换状态事件
+                        // 添加点击切换态事件
                         tagItem?.addEventListener('click', (e) => {
                             if (e.target !== removeBtn) {
                                 tagItem.toggleClass('active', !tagItem.hasClass('active')); // 添加第二个参数
@@ -3235,7 +3243,7 @@ export class CardView extends ItemView {
         return saved ? JSON.parse(saved) : [];
     }
 
-    // 快速笔记-最小化
+    // 快速笔-最小化
     private minimizeQuickNote(element: HTMLElement) {
         const workspaceLeafContent = this.containerEl.closest('.workspace-leaf-content');
         if (!workspaceLeafContent) return;
@@ -3345,7 +3353,7 @@ export class CardView extends ItemView {
         const leafRect = workspaceLeafContent.getBoundingClientRect();
         const elementRect = element.getBoundingClientRect();
         
-        // 计算元素中点
+        // 计元素中点
         const centerX = elementRect.left + elementRect.width / 2;
         const centerY = elementRect.top + elementRect.height / 2;
         
@@ -3367,12 +3375,12 @@ export class CardView extends ItemView {
         }
     }
 
-    // 笔记内容-加载
+    // 笔记内容-载
     private async loadNoteContent(container: HTMLElement, file: TFile) {
         if (this.loadedNotes.has(file.path)) return;
         
         try {
-            container.empty(); // 清除加载位符
+            container.empty(); // 清除载位符
             
             const content = await this.app.vault.read(file);
             await MarkdownRenderer.render(
@@ -3472,7 +3480,7 @@ export class CardView extends ItemView {
             this.updateCardLayout();
             
         } catch (error) {
-            console.error('创建时间轴视图失败:', error);
+            console.error('创建时轴视图失败:', error);
             new Notice('创建时间轴视图失败');
             this.updateLoadingStatus('创建时间视图失败');
         }
@@ -3518,7 +3526,7 @@ export class CardView extends ItemView {
 
     // 更新设置面板状态
     private updateSettingsPanel(settingsPanel: HTMLElement) {
-        // 清空现有设置
+        // ��空现有设置
         settingsPanel.empty();
         // 获取当前视图的设置
         const currentSettings = this.cardSettings[this.currentView as keyof typeof this.cardSettings];
@@ -3650,7 +3658,7 @@ export class CardView extends ItemView {
         // 少按钮事件
         decreaseBtn.addEventListener('click', () => {
             const currentValue = parseInt(cardsPerRowInput.value) || 4; // 默认值为4
-            if (currentValue > 0) { // 只有当值大于0时才减少
+            if (currentValue > 0) { // 只有当值大于0才减少
                 updateCardsPerRow(Math.max(1, currentValue - 1)); // 确保不小于0
             }
         });
@@ -3712,7 +3720,7 @@ export class CardView extends ItemView {
             }
         });
 
-        // 计算每行最大可能的卡片数量
+        // 计算每行最大可的卡片数量
         const minCardWidth = 150;
         const containerWidth = container.offsetWidth;
         const maxPossibleCards = Math.floor((containerWidth + currentSettings.cardGap) / (minCardWidth + currentSettings.cardGap));
@@ -3816,7 +3824,7 @@ export class CardView extends ItemView {
             updateValue(currentValue + step);
         });
 
-        // 输入框事件
+        // 入框事件
         numberInput.addEventListener('change', (e) => {
             const value = parseInt((e.target as HTMLInputElement).value);
             updateValue(isNaN(value) ? defaultValue : value);
@@ -3850,7 +3858,7 @@ export class CardView extends ItemView {
 
     // 创建周视图
     private async createWeekView() {
-        // 确当前正在加载的是周视图
+        // 确当前正在加载的周视图
         if (this.currentLoadingView !== 'week') {
             return;
         }
@@ -4031,7 +4039,7 @@ export class CardView extends ItemView {
 
     // 周视图导航
     private navigateWeek(delta: number) {
-        console.log('导航前 - 年份:', this.currentYear, '周:', this.currentWeek, '增量:', delta);
+        console.log('导航前 - 年份:', this.currentYear, ':', this.currentWeek, '增量:', delta);
         
         // 保存当的和年份
         let newWeek = this.currentWeek;
@@ -4111,7 +4119,7 @@ export class CardView extends ItemView {
             console.log('周中间日期:', middleDate);
             return middleDate.getMonth() + 1; // JavaScript 月份从 0 开始，所以要加 1
         } catch (error) {
-            console.error('获取月份失败:', error);
+            console.error('获取月份失:', error);
             return 1; // 返回默认值
         }
     }
@@ -4200,7 +4208,7 @@ export class CardView extends ItemView {
         const header = moduleEl.createDiv('module-header');
         header.createEl('h3', { text: module.name });
         
-        // 添加大小调整按钮
+        // 添加大小调整钮
         const resizeControls = moduleEl.createDiv('module-resize');
         
         // 减小按钮
@@ -4273,7 +4281,7 @@ export class CardView extends ItemView {
         // 创建日期格子容器
         const daysContainer = heatmapGrid.createDiv('days-container');
         
-        // 获取开始日期是星期几（0是周日，1是周一）
+        // 获取开始日期是星期几0是周日，1是周一）
         let currentDate = new Date(startDate);
         let currentMonth = currentDate.getMonth();
         
@@ -4519,7 +4527,7 @@ export class CardView extends ItemView {
                 } 
             });
 
-            // 添加鼠标点击事件
+            // 添加鼠标点击件
             dateCell.addEventListener('click', () => {
 
                 // 显示当天的笔记
@@ -4543,9 +4551,6 @@ export class CardView extends ItemView {
 
         }
     }
-
-
-
 
 
     // 保存模块设置
@@ -4590,128 +4595,73 @@ export class CardView extends ItemView {
 
     // 切换模块
     private toggleModuleEditing(enable: boolean) {
+        console.log('切换模块编辑:', enable);
+        
         const modules = this.container.querySelectorAll('.module-container');
         const columns = this.container.querySelectorAll('.left-column, .center-column, .right-column');
         
-        modules.forEach(module => {
-            if (enable) {
-                // 启用编辑模式
-                this.setupModuleEditing(module as HTMLElement);
-                module.classList.add('editable');
-                // 添加拖拽事件
-                const dragHandler = (e: Event) => {
-                    if (e instanceof MouseEvent && module instanceof HTMLElement) {
-                        this.setupModuleDragging(module);
-                    }
-                };
-                module.addEventListener('mousedown', dragHandler as EventListener);
-                // 存储事件处理函数以便后续移除
-                (module as any)._dragHandler = dragHandler;
-            } else {
-                // 禁用编辑模式
-                this.cleanupModuleEditing(module as HTMLElement);
-                module.classList.remove('editable');
-                // 移除拖拽事件
-                if ((module as any)._dragHandler) {
-                    module.removeEventListener('mousedown', (module as any)._dragHandler as EventListener);
-                    delete (module as any)._dragHandler;
+        if (enable) {
+            // 启用编辑模式
+            modules.forEach(module => {
+                if (module instanceof HTMLElement) {
+                    // 先移除可能存在的旧控件
+                    module.querySelectorAll('.module-drag-handle, .module-controls').forEach(el => el.remove());
+                    
+                    module.classList.add('editable');
+                    this.setupModuleDragging(module);
                 }
-            }
-        });
+            });
 
-        // 切换列容器的编辑状态
-        columns.forEach(column => {
-            if (enable) {
+            columns.forEach(column => {
                 column.classList.add('editable');
-            } else {
+            });
+        } else {
+            // 禁用编辑模式
+            modules.forEach(module => {
+                if (module instanceof HTMLElement) {
+                    // 移除编辑模式类和所有控制元素
+                    module.classList.remove('editable');
+                    module.querySelectorAll('.module-drag-handle, .module-controls').forEach(el => el.remove());
+                    
+                    // 清理所有拖拽相关的样式
+                    module.style.position = '';
+                    module.style.zIndex = '';
+                    module.style.width = '';
+                    module.style.left = '';
+                    module.style.top = '';
+                    module.style.transform = '';
+                    module.style.cursor = '';
+                    module.classList.remove('dragging');
+                    
+                    // 移除所有事件监听器
+                    const newModule = module.cloneNode(true) as HTMLElement;
+                    const content = module.querySelector('.module-content');
+                    if (content && content.parentNode) {
+                        content.parentNode.replaceChild(newModule.querySelector('.module-content')!, content);
+                    }
+                }
+            });
+
+            columns.forEach(column => {
                 column.classList.remove('editable');
                 column.classList.remove('drop-target');
-            }
-        });
-    }
+                column.querySelectorAll('.drop-marker').forEach(marker => marker.remove());
+            });
 
-    // 设置模块编辑
-    private setupModuleEditing(module: HTMLElement) {
-        // 添加调整大小的手柄
-        const handles = [
-            'top', 'right', 'bottom', 'left',
-            'top-left', 'top-right', 'bottom-left', 'bottom-right'
-        ];
-        
-        handles.forEach(position => {
-            const handle = module.createDiv(`resize-handle ${position}`);
-            this.setupResizeHandle(handle, module, position);
-        });
-        
-        // 设置拖拽
-        this.setupModuleDragging(module);
-        
-        // 添加拖拽时的样式类
-        module.addEventListener('mousedown', () => {
-            module.classList.add('module-dragging');
-        });
-        
-        document.addEventListener('mouseup', () => {
-            module.classList.remove('module-dragging');
-        });
-    }
+            // 移除所有占位符和标记
+            this.container.querySelectorAll('.module-placeholder, .drop-marker').forEach(el => el.remove());
+        }
 
-    // 设置调整大小手柄
-    private setupResizeHandle(handle: HTMLElement, module: HTMLElement, position: string) {
-        let startX: number;
-        let startY: number;
-        let startWidth: number;
-        let startHeight: number;
-        let startColumns: number;
-        
-        const startResize = (e: MouseEvent) => {
-            e.preventDefault();
-            startX = e.pageX;
-            startY = e.pageY;
-            startWidth = module.offsetWidth;
-            startHeight = module.offsetHeight;
-            startColumns = parseInt(module.style.gridColumn.split(' ')[1]) || 4;
-            
-            document.addEventListener('mousemove', resize);
-            document.addEventListener('mouseup', stopResize);
-        };
-        
-        const resize = (e: MouseEvent) => {
-            const dx = e.pageX - startX;
-            const dy = e.pageY - startY;
-            
-            // 计算网格单位
-            const gridUnit = this.container.offsetWidth / 12;
-            
-            // 根据拖拽方向调整大小
-            if (position.includes('right')) {
-                const newColumns = Math.round((startWidth + dx) / gridUnit);
-                if (newColumns >=1 && newColumns <= 12) {
-                    module.style.gridColumn = `span ${newColumns}`;
-                    this.showGridSnapIndicator(module, newColumns * gridUnit);
-                }
-            }
-            
-            if (position.includes('bottom')) {
-                const newHeight = Math.max(100, startHeight + dy);
-                module.style.height = `${newHeight}px`;
-            }
-        };
-        
-        const stopResize = () => {
-            document.removeEventListener('mousemove', resize);
-            document.removeEventListener('mouseup', stopResize);
-            this.hideGridSnapIndicator();
-            this.saveModuleSettings();
-        };
-        
-        handle.addEventListener('mousedown', startResize);
+        console.log('模块编辑切换完成');
     }
 
     // 设置模块拖拽
     private setupModuleDragging(module: HTMLElement) {
-        // 如果模块没有 editable 类，不添加拖拽功能
+        console.log('设置模块拖拽:', module);
+        
+        // 检查模块是否有 editable 类
         if (!module.classList.contains('editable')) {
+            console.log('模块不是可编辑的,跳过拖拽设置');
             return;
         }
 
@@ -4719,100 +4669,354 @@ export class CardView extends ItemView {
         let startX: number;
         let startY: number;
         let startPosition: string;
-        let currentTargetPosition: string | null = null;
+        let startIndex: number;
+        let placeholder: HTMLElement | null = null;
+        let dropTarget: HTMLElement | null = null;
+
+        // 添加拖拽手柄到左上角
+        const dragHandle = document.createElement('div');
+        dragHandle.className = 'module-drag-handle visible'; // 添加 visible 类
+        dragHandle.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 12h18M3 6h18M3 18h18"></path>
+            </svg>
+        `;
+        module.appendChild(dragHandle);
+
+        // 添加上下移动按钮到右角
+        const moduleControls = document.createElement('div');
+        moduleControls.className = 'module-controls visible'; // 添加 visible 类
         
+        const moveUpBtn = document.createElement('button');
+        moveUpBtn.className = 'move-up-btn';
+        moveUpBtn.innerHTML = '↑';
+        moveUpBtn.title = '向上移动';
+        moveUpBtn.addEventListener('click', (e) => {
+            e.stopPropagation(); // 阻止事件冒泡
+            console.log('点击向上移动按钮');
+            this.moveModule(module, 'up');
+        });
+
+        const moveDownBtn = document.createElement('button');
+        moveDownBtn.className = 'move-down-btn';
+        moveDownBtn.innerHTML = '↓';
+        moveDownBtn.title = '向下移动';
+        moveDownBtn.addEventListener('click', (e) => {
+            e.stopPropagation(); // 阻止事件冒泡
+            console.log('点击向下移动按钮');
+            this.moveModule(module, 'down');
+        });
+
+        moduleControls.appendChild(moveUpBtn);
+        moduleControls.appendChild(moveDownBtn);
+        module.appendChild(moduleControls);
+
+        // 定义拖拽开始函数
         const startDrag = (e: MouseEvent) => {
-            if (e.target instanceof HTMLElement && e.target.closest('.resize-handle')) {
+            console.log('开始拖拽', e.target); 
+            
+            // 检查点击目标
+            if (e.target instanceof HTMLElement && (
+                e.target.closest('.module-controls') ||
+                e.target.closest('input') ||
+                e.target.closest('textarea') ||
+                e.target.closest('button')
+            )) {
+                console.log('点击了交互元素,忽略拖拽');
                 return;
             }
-            
+
             isDragging = true;
             startX = e.pageX;
             startY = e.pageY;
             startPosition = module.getAttribute('data-position') || '';
-            
-            module.addClass('dragging');
-            
-            document.addEventListener('mousemove', drag);
+            startIndex = Array.from(module.parentElement?.children || []).indexOf(module);
+
+            console.log('拖拽开始:', { 
+                startX,
+                startY,
+                startPosition,
+                startIndex
+            });
+
+            // 创建占位符
+            placeholder = document.createElement('div');
+            placeholder.className = 'module-placeholder';
+            placeholder.style.height = `${module.offsetHeight}px`;
+            placeholder.style.width = `${module.offsetWidth}px`;
+            module.parentElement?.insertBefore(placeholder, module);
+            console.log('创建占位符');
+
+            // 设置拖拽样式
+            module.style.position = 'fixed';
+            module.style.zIndex = '1000';
+            module.style.width = `${module.offsetWidth}px`;
+            module.style.left = `${module.getBoundingClientRect().left}px`;
+            module.style.top = `${module.getBoundingClientRect().top}px`;
+            module.classList.add('dragging');
+            console.log('应用拖拽样式');
+
+            document.addEventListener('mousemove', handleDrag);
             document.addEventListener('mouseup', stopDrag);
+
+            e.preventDefault();
+            e.stopPropagation();
         };
-        
-        const drag = (e: MouseEvent) => {
+
+        // 定义拖拽过程函数
+        const handleDrag = (e: MouseEvent) => {
             if (!isDragging) return;
-            
+            console.log('拖拽中:', e.pageX, e.pageY);
+
             const dx = e.pageX - startX;
             const dy = e.pageY - startY;
             
+            // 更新模块位置
             module.style.transform = `translate(${dx}px, ${dy}px)`;
-            
-            // 获取当前鼠标位置下的列容器
+
+            // 获取所有列容器
             const columns = [
                 this.container.querySelector('.left-column'),
                 this.container.querySelector('.center-column'),
                 this.container.querySelector('.right-column')
-            ];
-            
-            // 清除所有列的放置目标样式
-            columns.forEach(col => col?.removeClass('drop-target'));
-            
-            // 检查鼠标是否在某个列上
-            const targetColumn = columns.find(col => {
-                if (!col) return false;
-                const rect = col.getBoundingClientRect();
-                return e.clientX >= rect.left && e.clientX <= rect.right &&
-                       e.clientY >= rect.top && e.clientY <= rect.bottom;
-            });
-            
-            // 如果找到目标列，添加放置目标样式并更新模块宽度
-            if (targetColumn) {
-                targetColumn.addClass('drop-target');
-                const newPosition = targetColumn.className.includes('left-column') ? 'left'
-                    : targetColumn.className.includes('right-column') ? 'right'
-                    : 'center';
+            ].filter((col): col is HTMLElement => col instanceof HTMLElement);
+
+            // 清除所有放置标记
+            this.container.querySelectorAll('.drop-marker').forEach(marker => marker.remove());
+            columns.forEach(col => col.classList.remove('drop-target'));
+
+            // 检查鼠标位置并更新放置标记
+            for (const column of columns) {
+                const rect = column.getBoundingClientRect();
+                if (e.clientX >= rect.left && e.clientX <= rect.right &&
+                    e.clientY >= rect.top && e.clientY <= rect.bottom) {
                     
-                // 更新模块的目标位置属性和宽度
-                if (newPosition !== currentTargetPosition) {
-                    module.setAttribute('data-target-position', newPosition);
-                    // 根据目标列调整模块宽度
-                    module.style.width = newPosition === 'center' ? '50%' : '25%';
-                    currentTargetPosition = newPosition;
+                    // 找到目标列
+                    dropTarget = column;
+                    column.classList.add('drop-target');
+
+                    // 获取列中的所有模块
+                    const modules = Array.from(column.children).filter(child => 
+                        child.classList.contains('module-container') && 
+                        child !== module && 
+                        child !== placeholder
+                    );
+
+                    // 找到最近的模块和插入位置
+                    let insertBefore: Element | null = null;
+                    let insertPosition: 'before' | 'after' = 'before';
+
+                    for (const targetModule of modules) {
+                        const targetRect = targetModule.getBoundingClientRect();
+                        const targetMiddle = targetRect.top + targetRect.height / 2;
+
+                        if (e.clientY < targetMiddle) {
+                            insertBefore = targetModule;
+                            insertPosition = 'before';
+                            break;
+                        } else {
+                            insertBefore = targetModule.nextElementSibling;
+                            insertPosition = 'after';
+                        }
+                    }
+
+                    // 创建放置标记
+                    const marker = document.createElement('div');
+                    marker.className = 'drop-marker';
+                    
+                    if (modules.length === 0) {
+                        // 如果列为空，显示一个水平线
+                        marker.style.width = '100%';
+                        marker.style.height = '2px';
+                        column.appendChild(marker);
+                    } else {
+                        // 在目标位置显示一个水平线
+                        marker.style.width = '100%';
+                        marker.style.height = '2px';
+                        if (insertBefore) {
+                            column.insertBefore(marker, insertBefore);
+                        } else {
+                            column.appendChild(marker);
+                        }
+                    }
+
+                    // 移动占位符
+                    if (placeholder) {
+                        if (insertBefore) {
+                            column.insertBefore(placeholder, insertBefore);
+                        } else {
+                            column.appendChild(placeholder);
+                        }
+                    }
+
+                    break;
                 }
             }
         };
-        
-        const stopDrag = () => {
+
+        // 定义拖拽结束函数
+        const stopDrag = async () => {
             if (!isDragging) return;
+            console.log('停止拖拽');
+            
             isDragging = false;
-            
-            module.removeClass('dragging');
-            module.style.transform = '';
-            module.removeAttribute('data-target-position');
-            module.style.width = ''; // 恢复原始宽度
-            
-            // 获取目标列
-            const targetColumn = this.container.querySelector('.drop-target');
-            if (targetColumn) {
-                const newPosition = targetColumn.className.includes('left-column') ? 'left'
-                    : targetColumn.className.includes('right-column') ? 'right'
-                    : 'center';
-                
-                // 更新模块位置
-                if (newPosition !== startPosition) {
-                    this.updateModulePosition(module, newPosition);
-                }
-                
-                // 移除放置目标样式
-                targetColumn.removeClass('drop-target');
-            }
-            
-            currentTargetPosition = null;
-            document.removeEventListener('mousemove', drag);
+
+            // 移除事件监听
+            document.removeEventListener('mousemove', handleDrag);
             document.removeEventListener('mouseup', stopDrag);
+
+            try {
+                // 如果有占位符，使用占位符的位置来确定目标列
+                if (placeholder && placeholder.parentElement) {
+                    const targetColumn = placeholder.parentElement;
+                    const newPosition = targetColumn.classList.contains('left-column') ? 'left'
+                        : targetColumn.classList.contains('right-column') ? 'right'
+                        : 'center';
+
+                    // 更新模块配置
+                    const moduleId = module.getAttribute('data-module-id');
+                    const moduleConfig = this.homeModules.find(m => m.id === moduleId);
+                    
+                    if (moduleConfig) {
+                        // 更新位置和列数
+                        moduleConfig.position = newPosition;
+                        moduleConfig.columns = newPosition === 'center' ? 2 : 1;
+
+                        // 获取在目标列中的位置索引
+                        const beforeElement = placeholder.nextElementSibling;
+                        const modules = Array.from(targetColumn.children).filter(
+                            child => child.classList.contains('module-container')
+                        );
+                        const newIndex = beforeElement 
+                            ? modules.indexOf(beforeElement as Element)
+                            : modules.length;
+
+                        // 更新顺序
+                        const sameColumnModules = this.homeModules
+                            .filter(m => m.position === newPosition)
+                            .sort((a, b) => a.order - b.order);
+                        
+                        // 插入到正确的位置
+                        moduleConfig.order = newIndex;
+                        
+                        // 重新排序其他模块
+                        sameColumnModules.forEach((m, i) => {
+                            if (i >= newIndex) {
+                                m.order = i + 1;
+                            }
+                        });
+
+                        // 保存更新
+                        await this.saveModuleSettings();
+
+                        // 直接移动模块到目标位置
+                        targetColumn.insertBefore(module, placeholder);
+
+                        // 重置模块样式
+                        module.style.position = '';
+                        module.style.zIndex = '';
+                        module.style.left = '';
+                        module.style.top = '';
+                        module.style.transform = '';
+                        module.classList.remove('dragging');
+                        module.style.width = '100%';
+
+                        // 保持编辑模式
+                        module.classList.add('editable');
+                    }
+                }
+
+                // 移除占位符和标记
+                placeholder?.remove();
+                this.container.querySelectorAll('.drop-marker').forEach(marker => marker.remove());
+                this.container.querySelectorAll('.drop-target').forEach(el => el.classList.remove('drop-target'));
+
+            } catch (error) {
+                console.error('拖拽结束处理错误:', error);
+                // 确保清理样式和占位符
+                module.style.position = '';
+                module.style.zIndex = '';
+                module.style.left = '';
+                module.style.top = '';
+                module.style.transform = '';
+                module.classList.remove('dragging');
+                placeholder?.remove();
+            }
         };
-        
-        module.addEventListener('mousedown', startDrag);
+
+        // 添加拖拽事件监听
+        console.log('添加拖拽事件监听');
+        dragHandle.addEventListener('mousedown', (e: Event) => {
+            console.log('拖拽手柄mousedown');
+            if (e instanceof MouseEvent) {
+                startDrag(e);
+            }
+        });
+
+        module.addEventListener('mousedown', (e: Event) => {
+            console.log('Module mousedown');
+            if (e instanceof MouseEvent) {
+                startDrag(e);
+            }
+        });
+
+        console.log('模块拖拽设置完成');
     }
 
+    // 添加移动模块的方法
+    private moveModule(module: HTMLElement, direction: 'up' | 'down') {
+        console.log('移动模块:', direction);
+        
+        const moduleId = module.getAttribute('data-module-id');
+        const moduleConfig = this.homeModules.find(m => m.id === moduleId);
+        if (!moduleConfig) {
+            console.log('未找到模块配置');
+            return;
+        }
+
+        const currentPosition = moduleConfig.position;
+        const sameColumnModules = this.homeModules
+            .filter(m => m.position === currentPosition)
+            .sort((a, b) => a.order - b.order);
+
+        console.log('同列模块:', sameColumnModules);
+        
+        const currentIndex = sameColumnModules.indexOf(moduleConfig);
+        if (currentIndex === -1) {
+            console.log('未找到当前模块索引');
+            return;
+        }
+
+        const newIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+        if (newIndex < 0 || newIndex >= sameColumnModules.length) {
+            console.log('新索引超出范围:', newIndex);
+            return;
+        }
+
+        // 交换顺序
+        const targetModule = sameColumnModules[newIndex];
+        console.log('交换顺序:', {
+            current: moduleConfig.order,
+            target: targetModule.order
+        });
+        
+        const tempOrder = moduleConfig.order;
+        moduleConfig.order = targetModule.order;
+        targetModule.order = tempOrder;
+
+        // 保存更新并重新渲染
+        this.saveModuleSettings();
+        this.createHomeView().then(() => {
+            // 重新应用编辑模式
+            const modules = this.container.querySelectorAll('.module-container');
+            modules.forEach(m => {
+                if (m instanceof HTMLElement) {
+                    m.classList.add('editable');
+                    this.setupModuleDragging(m);
+                }
+            });
+        });
+    }
 
     // 更新模块位置
     private updateModulePosition(module: HTMLElement, newPosition: 'left' | 'center' | 'right') {
@@ -4820,18 +5024,40 @@ export class CardView extends ItemView {
         const moduleConfig = this.homeModules.find(m => m.id === moduleId);
         
         if (moduleConfig) {
+            console.log('更新模块位置:', {
+                from: moduleConfig.position,
+                to: newPosition
+            });
+
+            // 更新位置和列数
             moduleConfig.position = newPosition;
             moduleConfig.columns = newPosition === 'center' ? 2 : 1;
+
+            // 更新顺序（添加到目标列的末尾）
+            const sameColumnModules = this.homeModules
+                .filter(m => m.position === newPosition)
+                .sort((a, b) => a.order - b.order);
             
-            // 重新渲染主页视图
-            this.createHomeView();
-            
-            // 保存更新后的配置
+            moduleConfig.order = sameColumnModules.length;
+
+            // 保存更新
             this.saveModuleSettings();
+
+            // 重新渲染主页视图并保持编辑模式
+            this.createHomeView().then(() => {
+                // 重新应用编辑模式
+                const modules = this.container.querySelectorAll('.module-container');
+                modules.forEach(m => {
+                    if (m instanceof HTMLElement) {
+                        m.classList.add('editable');
+                        this.setupModuleDragging(m);
+                    }
+                });
+            });
         }
     }
 
-    // 理模块编
+    // 清理模块编辑
     private cleanupModuleEditing(module: HTMLElement) {
         // 移除所有调整大小的手柄
         module.querySelectorAll('.resize-handle').forEach(handle => handle.remove());
@@ -4842,7 +5068,7 @@ export class CardView extends ItemView {
         module.style.opacity = '';
         module.classList.remove('module-dragging'); // 添加这行，移除拖拽时的样式类
         
-        // 移除虚线边框
+        // 移除虚线边
         module.style.border = '1px solid var(--background-modifier-border)'; // 恢复默认边框样式
     }
     
@@ -4858,7 +5084,7 @@ export class CardView extends ItemView {
         const titleInput = inputContainer.createEl('input', {
             cls: 'quick-note-title',
             attr: {
-                placeholder: '输入笔记标题...',
+                placeholder: '输入笔标题...',
                 type: 'text'
             }
         });
@@ -5157,7 +5383,7 @@ export class CardView extends ItemView {
         });
     }
 
-    // 在 CardView 类中添加以下方法
+    // 在 CardView 类中添以下方法
 
     // 显示网格对齐指示器
     private showGridSnapIndicator(module: HTMLElement, width: number) {
@@ -5206,7 +5432,7 @@ class ModuleManagerModal extends Modal {
         
         contentEl.createEl('h2', { text: '管理主页模块' });
         
-        // 添加预览容器
+        // 添加预览容
         this.previewContainer = contentEl.createDiv('preview-container');
         this.updatePreview();
         

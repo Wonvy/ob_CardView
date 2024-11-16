@@ -179,7 +179,7 @@ var EnhancedFileSelectionModal = class extends import_obsidian2.Modal {
     const { contentEl } = this;
     contentEl.empty();
     contentEl.createEl("h3", {
-      text: `\u79FB\u52A8 ${this.files.length} \u4E2A\u6587\u4EF6`
+      text: `\u52A8 ${this.files.length} \u4E2A\u6587\u4EF6`
     });
     if (this.recentFolders.length > 0) {
       const recentSection = contentEl.createDiv("recent-folders-section");
@@ -359,7 +359,7 @@ var CardView = class extends import_obsidian2.ItemView {
       }
     ];
     this.plugin = plugin;
-    this.currentView = "card";
+    this.currentView = "home";
     this.container = createDiv();
     this.tagContainer = createDiv();
     this.previewContainer = createDiv();
@@ -627,7 +627,7 @@ ${content}` : content;
         if (file) {
           this.clearQuickNoteInputs(titleInput != null ? titleInput : null, noteInput, tags, tagsContainer != null ? tagsContainer : null, tagInput != null ? tagInput : null);
           await this.refreshView();
-          new import_obsidian2.Notice("\u7B14\u521B\u5EFA\u6210\u529F");
+          new import_obsidian2.Notice("\u521B\u5EFA\u6210\u529F");
         }
       } catch (error) {
         console.error("\u521B\u5EFA\u7B14\u8BB0\u5931\u8D25:", error);
@@ -635,6 +635,7 @@ ${content}` : content;
       }
     });
     this.updateToolbarButtons();
+    this.switchView("home");
   }
   // 获取标签和数量
   getTagsWithCount() {
@@ -948,7 +949,7 @@ ${content}` : content;
       this.loadingIndicator.style.display = "flex";
       await this.loadNextPage();
       this.setupInfiniteScroll();
-      console.log("\u7B14\u8BB0\u52A0\u8F7D\u5B8C\u6210");
+      console.log("\u7B14\u8BB0\u52A0\u5B8C\u6210");
     } catch (error) {
       console.error("loadNotes \u9519\u8BEF:", error);
       new import_obsidian2.Notice("\u52A0\u8F7D\u7B14\u8BB0\u5931\u8D25\uFF0C\u8BF7\u68C0\u67E5\u63A7\u5236\u53F0\u83B7\u53D6\u8BE6\u7EC6\u4FE1\u606F");
@@ -1003,7 +1004,7 @@ ${content}` : content;
       this.currentPage++;
     } catch (error) {
       console.error("loadNextPage \u9519\u8BEF:", error);
-      this.updateLoadingStatus("\u52A0\u8F7D\u5931\u8D25");
+      this.updateLoadingStatus("\u52A0\u5931\u8D25");
       new import_obsidian2.Notice("\u52A0\u8F7D\u7B14\u8BB0\u5931\u8D25");
     } finally {
       this.isLoading = false;
@@ -1335,7 +1336,7 @@ ${content}` : content;
       console.error("\u521B\u5EFA\u7B14\u8BB0\u5931\u8D25:", error);
     }
   }
-  // 快速笔记-创建
+  // 速笔记-创建
   async createQuickNote(content, types, fileName) {
     try {
       let finalFileName = fileName;
@@ -1531,7 +1532,7 @@ ${content}` : content;
     }
     this.lastSelectedNote = path;
   }
-  // 清除选择
+  // 清除择
   clearSelection() {
     this.selectedNotes.clear();
     this.container.querySelectorAll(".note-card.selected").forEach((card) => {
@@ -1669,7 +1670,7 @@ ${content}` : content;
       } else {
         this.currentDate.setMonth(this.currentDate.getMonth() - 1);
       }
-      titleEl.setText(`${this.currentDate.getFullYear()}\u5E74${this.currentDate.getMonth() + 1}\u6708`);
+      titleEl.setText(`${this.currentDate.getFullYear()}\u5E74${this.currentDate.getMonth() + 1}`);
       const existingContent = this.calendarContainer.querySelector(".calendar-weekdays, .calendar-grid");
       if (existingContent) {
         existingContent.remove();
@@ -1758,7 +1759,7 @@ ${content}` : content;
       this.refreshView();
     }, 200));
   }
-  // 命令-创建按钮
+  // 令-创建按钮
   createCommandButton(toolbar) {
     const commandContainer = toolbar.createDiv("command-container");
     const commandBtn = commandContainer.createEl("button", {
@@ -1777,7 +1778,7 @@ ${content}` : content;
       this.deleteEmptyNotes();
     });
     const batchRenameItem = menu.createDiv("command-menu-item");
-    batchRenameItem.setText("\u6279\u91CF\u91CD\u547D\u540D");
+    batchRenameItem.setText("\u6279\u91CF\u91CD\u540D");
     batchRenameItem.addEventListener("click", () => {
       menu.style.display = "none";
       console.log("\u6279\u91CF\u91CD\u547D\u540D\u529F\u80FD\u5B9E\u73B0");
@@ -1865,7 +1866,7 @@ ${emptyNotes.map((file) => file.basename).join("\n")}`
           e.preventDefault();
           this.navigateMonth(e.deltaY > 0 ? 1 : -1);
         });
-        const weekdays = ["\u65E5", "\u4E00", "\u4E8C", "\u4E09", "\u56DB", "\u4E94", "\u516D"];
+        const weekdays = ["", "\u4E00", "\u4E8C", "\u4E09", "\u56DB", "\u4E94", "\u516D"];
         const weekHeader = monthContainer.createDiv("month-weekdays");
         weekdays.forEach((day) => {
           weekHeader.createDiv("weekday").setText(day);
@@ -1919,7 +1920,7 @@ ${emptyNotes.map((file) => file.basename).join("\n")}`
     this.currentDate = /* @__PURE__ */ new Date();
     this.updateMonthView();
   }
-  // 月历-渲染月视图格
+  // 月历-渲染视图格
   renderMonthGrid(grid) {
     const year = this.currentDate.getFullYear();
     const month = this.currentDate.getMonth();
@@ -2053,7 +2054,7 @@ ${emptyNotes.map((file) => file.basename).join("\n")}`
       }
     }
   }
-  // 列表-显示文件夹内容
+  // 列表-显文件夹内容
   showFolderContent(container, notes) {
     container.empty();
     notes.sort((a, b) => b.stat.mtime - a.stat.mtime);
@@ -2379,7 +2380,7 @@ ${content}` : content;
     const saved = localStorage.getItem("recent-tags");
     return saved ? JSON.parse(saved) : [];
   }
-  // 快速笔记-最小化
+  // 快速笔-最小化
   minimizeQuickNote(element) {
     const workspaceLeafContent = this.containerEl.closest(".workspace-leaf-content");
     if (!workspaceLeafContent) return;
@@ -2476,7 +2477,7 @@ ${content}` : content;
       this.intersectionObserver.observe(element);
     }
   }
-  // 笔记内容-加载
+  // 笔记内容-载
   async loadNoteContent(container, file) {
     if (this.loadedNotes.has(file.path)) return;
     try {
@@ -2556,7 +2557,7 @@ ${content}` : content;
       this.setupTimelineScroll(timelineContainer);
       this.updateCardLayout();
     } catch (error) {
-      console.error("\u521B\u5EFA\u65F6\u95F4\u8F74\u89C6\u56FE\u5931\u8D25:", error);
+      console.error("\u521B\u5EFA\u65F6\u8F74\u89C6\u56FE\u5931\u8D25:", error);
       new import_obsidian2.Notice("\u521B\u5EFA\u65F6\u95F4\u8F74\u89C6\u56FE\u5931\u8D25");
       this.updateLoadingStatus("\u521B\u5EFA\u65F6\u95F4\u89C6\u56FE\u5931\u8D25");
     }
@@ -2960,7 +2961,7 @@ ${content}` : content;
   }
   // 周视图导航
   navigateWeek(delta) {
-    console.log("\u5BFC\u822A\u524D - \u5E74\u4EFD:", this.currentYear, "\u5468:", this.currentWeek, "\u589E\u91CF:", delta);
+    console.log("\u5BFC\u822A\u524D - \u5E74\u4EFD:", this.currentYear, ":", this.currentWeek, "\u589E\u91CF:", delta);
     let newWeek = this.currentWeek;
     let newYear = this.currentYear;
     newWeek += delta;
@@ -3018,7 +3019,7 @@ ${content}` : content;
       console.log("\u5468\u4E2D\u95F4\u65E5\u671F:", middleDate);
       return middleDate.getMonth() + 1;
     } catch (error) {
-      console.error("\u83B7\u53D6\u6708\u4EFD\u5931\u8D25:", error);
+      console.error("\u83B7\u53D6\u6708\u4EFD\u5931:", error);
       return 1;
     }
   }
@@ -3337,126 +3338,133 @@ ${content}` : content;
   }
   // 切换模块
   toggleModuleEditing(enable) {
+    console.log("\u5207\u6362\u6A21\u5757\u7F16\u8F91:", enable);
     const modules = this.container.querySelectorAll(".module-container");
     const columns = this.container.querySelectorAll(".left-column, .center-column, .right-column");
-    modules.forEach((module2) => {
-      if (enable) {
-        this.setupModuleEditing(module2);
-        module2.classList.add("editable");
-        const dragHandler = (e) => {
-          if (e instanceof MouseEvent && module2 instanceof HTMLElement) {
-            this.setupModuleDragging(module2);
-          }
-        };
-        module2.addEventListener("mousedown", dragHandler);
-        module2._dragHandler = dragHandler;
-      } else {
-        this.cleanupModuleEditing(module2);
-        module2.classList.remove("editable");
-        if (module2._dragHandler) {
-          module2.removeEventListener("mousedown", module2._dragHandler);
-          delete module2._dragHandler;
+    if (enable) {
+      modules.forEach((module2) => {
+        if (module2 instanceof HTMLElement) {
+          module2.querySelectorAll(".module-drag-handle, .module-controls").forEach((el) => el.remove());
+          module2.classList.add("editable");
+          this.setupModuleDragging(module2);
         }
-      }
-    });
-    columns.forEach((column) => {
-      if (enable) {
+      });
+      columns.forEach((column) => {
         column.classList.add("editable");
-      } else {
+      });
+    } else {
+      modules.forEach((module2) => {
+        if (module2 instanceof HTMLElement) {
+          module2.classList.remove("editable");
+          module2.querySelectorAll(".module-drag-handle, .module-controls").forEach((el) => el.remove());
+          module2.style.position = "";
+          module2.style.zIndex = "";
+          module2.style.width = "";
+          module2.style.left = "";
+          module2.style.top = "";
+          module2.style.transform = "";
+          module2.style.cursor = "";
+          module2.classList.remove("dragging");
+          const newModule = module2.cloneNode(true);
+          const content = module2.querySelector(".module-content");
+          if (content && content.parentNode) {
+            content.parentNode.replaceChild(newModule.querySelector(".module-content"), content);
+          }
+        }
+      });
+      columns.forEach((column) => {
         column.classList.remove("editable");
         column.classList.remove("drop-target");
-      }
-    });
-  }
-  // 设置模块编辑
-  setupModuleEditing(module2) {
-    const handles = [
-      "top",
-      "right",
-      "bottom",
-      "left",
-      "top-left",
-      "top-right",
-      "bottom-left",
-      "bottom-right"
-    ];
-    handles.forEach((position) => {
-      const handle = module2.createDiv(`resize-handle ${position}`);
-      this.setupResizeHandle(handle, module2, position);
-    });
-    this.setupModuleDragging(module2);
-    module2.addEventListener("mousedown", () => {
-      module2.classList.add("module-dragging");
-    });
-    document.addEventListener("mouseup", () => {
-      module2.classList.remove("module-dragging");
-    });
-  }
-  // 设置调整大小手柄
-  setupResizeHandle(handle, module2, position) {
-    let startX;
-    let startY;
-    let startWidth;
-    let startHeight;
-    let startColumns;
-    const startResize = (e) => {
-      e.preventDefault();
-      startX = e.pageX;
-      startY = e.pageY;
-      startWidth = module2.offsetWidth;
-      startHeight = module2.offsetHeight;
-      startColumns = parseInt(module2.style.gridColumn.split(" ")[1]) || 4;
-      document.addEventListener("mousemove", resize);
-      document.addEventListener("mouseup", stopResize);
-    };
-    const resize = (e) => {
-      const dx = e.pageX - startX;
-      const dy = e.pageY - startY;
-      const gridUnit = this.container.offsetWidth / 12;
-      if (position.includes("right")) {
-        const newColumns = Math.round((startWidth + dx) / gridUnit);
-        if (newColumns >= 1 && newColumns <= 12) {
-          module2.style.gridColumn = `span ${newColumns}`;
-          this.showGridSnapIndicator(module2, newColumns * gridUnit);
-        }
-      }
-      if (position.includes("bottom")) {
-        const newHeight = Math.max(100, startHeight + dy);
-        module2.style.height = `${newHeight}px`;
-      }
-    };
-    const stopResize = () => {
-      document.removeEventListener("mousemove", resize);
-      document.removeEventListener("mouseup", stopResize);
-      this.hideGridSnapIndicator();
-      this.saveModuleSettings();
-    };
-    handle.addEventListener("mousedown", startResize);
+        column.querySelectorAll(".drop-marker").forEach((marker) => marker.remove());
+      });
+      this.container.querySelectorAll(".module-placeholder, .drop-marker").forEach((el) => el.remove());
+    }
+    console.log("\u6A21\u5757\u7F16\u8F91\u5207\u6362\u5B8C\u6210");
   }
   // 设置模块拖拽
   setupModuleDragging(module2) {
+    console.log("\u8BBE\u7F6E\u6A21\u5757\u62D6\u62FD:", module2);
     if (!module2.classList.contains("editable")) {
+      console.log("\u6A21\u5757\u4E0D\u662F\u53EF\u7F16\u8F91\u7684,\u8DF3\u8FC7\u62D6\u62FD\u8BBE\u7F6E");
       return;
     }
     let isDragging = false;
     let startX;
     let startY;
     let startPosition;
-    let currentTargetPosition = null;
+    let startIndex;
+    let placeholder = null;
+    let dropTarget = null;
+    const dragHandle = document.createElement("div");
+    dragHandle.className = "module-drag-handle visible";
+    dragHandle.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 12h18M3 6h18M3 18h18"></path>
+            </svg>
+        `;
+    module2.appendChild(dragHandle);
+    const moduleControls = document.createElement("div");
+    moduleControls.className = "module-controls visible";
+    const moveUpBtn = document.createElement("button");
+    moveUpBtn.className = "move-up-btn";
+    moveUpBtn.innerHTML = "\u2191";
+    moveUpBtn.title = "\u5411\u4E0A\u79FB\u52A8";
+    moveUpBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      console.log("\u70B9\u51FB\u5411\u4E0A\u79FB\u52A8\u6309\u94AE");
+      this.moveModule(module2, "up");
+    });
+    const moveDownBtn = document.createElement("button");
+    moveDownBtn.className = "move-down-btn";
+    moveDownBtn.innerHTML = "\u2193";
+    moveDownBtn.title = "\u5411\u4E0B\u79FB\u52A8";
+    moveDownBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      console.log("\u70B9\u51FB\u5411\u4E0B\u79FB\u52A8\u6309\u94AE");
+      this.moveModule(module2, "down");
+    });
+    moduleControls.appendChild(moveUpBtn);
+    moduleControls.appendChild(moveDownBtn);
+    module2.appendChild(moduleControls);
     const startDrag = (e) => {
-      if (e.target instanceof HTMLElement && e.target.closest(".resize-handle")) {
+      var _a, _b;
+      console.log("\u5F00\u59CB\u62D6\u62FD", e.target);
+      if (e.target instanceof HTMLElement && (e.target.closest(".module-controls") || e.target.closest("input") || e.target.closest("textarea") || e.target.closest("button"))) {
+        console.log("\u70B9\u51FB\u4E86\u4EA4\u4E92\u5143\u7D20,\u5FFD\u7565\u62D6\u62FD");
         return;
       }
       isDragging = true;
       startX = e.pageX;
       startY = e.pageY;
       startPosition = module2.getAttribute("data-position") || "";
-      module2.addClass("dragging");
-      document.addEventListener("mousemove", drag);
+      startIndex = Array.from(((_a = module2.parentElement) == null ? void 0 : _a.children) || []).indexOf(module2);
+      console.log("\u62D6\u62FD\u5F00\u59CB:", {
+        startX,
+        startY,
+        startPosition,
+        startIndex
+      });
+      placeholder = document.createElement("div");
+      placeholder.className = "module-placeholder";
+      placeholder.style.height = `${module2.offsetHeight}px`;
+      placeholder.style.width = `${module2.offsetWidth}px`;
+      (_b = module2.parentElement) == null ? void 0 : _b.insertBefore(placeholder, module2);
+      console.log("\u521B\u5EFA\u5360\u4F4D\u7B26");
+      module2.style.position = "fixed";
+      module2.style.zIndex = "1000";
+      module2.style.width = `${module2.offsetWidth}px`;
+      module2.style.left = `${module2.getBoundingClientRect().left}px`;
+      module2.style.top = `${module2.getBoundingClientRect().top}px`;
+      module2.classList.add("dragging");
+      console.log("\u5E94\u7528\u62D6\u62FD\u6837\u5F0F");
+      document.addEventListener("mousemove", handleDrag);
       document.addEventListener("mouseup", stopDrag);
+      e.preventDefault();
+      e.stopPropagation();
     };
-    const drag = (e) => {
+    const handleDrag = (e) => {
       if (!isDragging) return;
+      console.log("\u62D6\u62FD\u4E2D:", e.pageX, e.pageY);
       const dx = e.pageX - startX;
       const dy = e.pageY - startY;
       module2.style.transform = `translate(${dx}px, ${dy}px)`;
@@ -3464,56 +3472,192 @@ ${content}` : content;
         this.container.querySelector(".left-column"),
         this.container.querySelector(".center-column"),
         this.container.querySelector(".right-column")
-      ];
-      columns.forEach((col) => col == null ? void 0 : col.removeClass("drop-target"));
-      const targetColumn = columns.find((col) => {
-        if (!col) return false;
-        const rect = col.getBoundingClientRect();
-        return e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom;
-      });
-      if (targetColumn) {
-        targetColumn.addClass("drop-target");
-        const newPosition = targetColumn.className.includes("left-column") ? "left" : targetColumn.className.includes("right-column") ? "right" : "center";
-        if (newPosition !== currentTargetPosition) {
-          module2.setAttribute("data-target-position", newPosition);
-          module2.style.width = newPosition === "center" ? "50%" : "25%";
-          currentTargetPosition = newPosition;
+      ].filter((col) => col instanceof HTMLElement);
+      this.container.querySelectorAll(".drop-marker").forEach((marker) => marker.remove());
+      columns.forEach((col) => col.classList.remove("drop-target"));
+      for (const column of columns) {
+        const rect = column.getBoundingClientRect();
+        if (e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom) {
+          dropTarget = column;
+          column.classList.add("drop-target");
+          const modules = Array.from(column.children).filter(
+            (child) => child.classList.contains("module-container") && child !== module2 && child !== placeholder
+          );
+          let insertBefore = null;
+          let insertPosition = "before";
+          for (const targetModule of modules) {
+            const targetRect = targetModule.getBoundingClientRect();
+            const targetMiddle = targetRect.top + targetRect.height / 2;
+            if (e.clientY < targetMiddle) {
+              insertBefore = targetModule;
+              insertPosition = "before";
+              break;
+            } else {
+              insertBefore = targetModule.nextElementSibling;
+              insertPosition = "after";
+            }
+          }
+          const marker = document.createElement("div");
+          marker.className = "drop-marker";
+          if (modules.length === 0) {
+            marker.style.width = "100%";
+            marker.style.height = "2px";
+            column.appendChild(marker);
+          } else {
+            marker.style.width = "100%";
+            marker.style.height = "2px";
+            if (insertBefore) {
+              column.insertBefore(marker, insertBefore);
+            } else {
+              column.appendChild(marker);
+            }
+          }
+          if (placeholder) {
+            if (insertBefore) {
+              column.insertBefore(placeholder, insertBefore);
+            } else {
+              column.appendChild(placeholder);
+            }
+          }
+          break;
         }
       }
     };
-    const stopDrag = () => {
+    const stopDrag = async () => {
       if (!isDragging) return;
+      console.log("\u505C\u6B62\u62D6\u62FD");
       isDragging = false;
-      module2.removeClass("dragging");
-      module2.style.transform = "";
-      module2.removeAttribute("data-target-position");
-      module2.style.width = "";
-      const targetColumn = this.container.querySelector(".drop-target");
-      if (targetColumn) {
-        const newPosition = targetColumn.className.includes("left-column") ? "left" : targetColumn.className.includes("right-column") ? "right" : "center";
-        if (newPosition !== startPosition) {
-          this.updateModulePosition(module2, newPosition);
-        }
-        targetColumn.removeClass("drop-target");
-      }
-      currentTargetPosition = null;
-      document.removeEventListener("mousemove", drag);
+      document.removeEventListener("mousemove", handleDrag);
       document.removeEventListener("mouseup", stopDrag);
+      try {
+        if (placeholder && placeholder.parentElement) {
+          const targetColumn = placeholder.parentElement;
+          const newPosition = targetColumn.classList.contains("left-column") ? "left" : targetColumn.classList.contains("right-column") ? "right" : "center";
+          const moduleId = module2.getAttribute("data-module-id");
+          const moduleConfig = this.homeModules.find((m) => m.id === moduleId);
+          if (moduleConfig) {
+            moduleConfig.position = newPosition;
+            moduleConfig.columns = newPosition === "center" ? 2 : 1;
+            const beforeElement = placeholder.nextElementSibling;
+            const modules = Array.from(targetColumn.children).filter(
+              (child) => child.classList.contains("module-container")
+            );
+            const newIndex = beforeElement ? modules.indexOf(beforeElement) : modules.length;
+            const sameColumnModules = this.homeModules.filter((m) => m.position === newPosition).sort((a, b) => a.order - b.order);
+            moduleConfig.order = newIndex;
+            sameColumnModules.forEach((m, i) => {
+              if (i >= newIndex) {
+                m.order = i + 1;
+              }
+            });
+            await this.saveModuleSettings();
+            targetColumn.insertBefore(module2, placeholder);
+            module2.style.position = "";
+            module2.style.zIndex = "";
+            module2.style.left = "";
+            module2.style.top = "";
+            module2.style.transform = "";
+            module2.classList.remove("dragging");
+            module2.style.width = "100%";
+            module2.classList.add("editable");
+          }
+        }
+        placeholder == null ? void 0 : placeholder.remove();
+        this.container.querySelectorAll(".drop-marker").forEach((marker) => marker.remove());
+        this.container.querySelectorAll(".drop-target").forEach((el) => el.classList.remove("drop-target"));
+      } catch (error) {
+        console.error("\u62D6\u62FD\u7ED3\u675F\u5904\u7406\u9519\u8BEF:", error);
+        module2.style.position = "";
+        module2.style.zIndex = "";
+        module2.style.left = "";
+        module2.style.top = "";
+        module2.style.transform = "";
+        module2.classList.remove("dragging");
+        placeholder == null ? void 0 : placeholder.remove();
+      }
     };
-    module2.addEventListener("mousedown", startDrag);
+    console.log("\u6DFB\u52A0\u62D6\u62FD\u4E8B\u4EF6\u76D1\u542C");
+    dragHandle.addEventListener("mousedown", (e) => {
+      console.log("\u62D6\u62FD\u624B\u67C4mousedown");
+      if (e instanceof MouseEvent) {
+        startDrag(e);
+      }
+    });
+    module2.addEventListener("mousedown", (e) => {
+      console.log("Module mousedown");
+      if (e instanceof MouseEvent) {
+        startDrag(e);
+      }
+    });
+    console.log("\u6A21\u5757\u62D6\u62FD\u8BBE\u7F6E\u5B8C\u6210");
+  }
+  // 添加移动模块的方法
+  moveModule(module2, direction) {
+    console.log("\u79FB\u52A8\u6A21\u5757:", direction);
+    const moduleId = module2.getAttribute("data-module-id");
+    const moduleConfig = this.homeModules.find((m) => m.id === moduleId);
+    if (!moduleConfig) {
+      console.log("\u672A\u627E\u5230\u6A21\u5757\u914D\u7F6E");
+      return;
+    }
+    const currentPosition = moduleConfig.position;
+    const sameColumnModules = this.homeModules.filter((m) => m.position === currentPosition).sort((a, b) => a.order - b.order);
+    console.log("\u540C\u5217\u6A21\u5757:", sameColumnModules);
+    const currentIndex = sameColumnModules.indexOf(moduleConfig);
+    if (currentIndex === -1) {
+      console.log("\u672A\u627E\u5230\u5F53\u524D\u6A21\u5757\u7D22\u5F15");
+      return;
+    }
+    const newIndex = direction === "up" ? currentIndex - 1 : currentIndex + 1;
+    if (newIndex < 0 || newIndex >= sameColumnModules.length) {
+      console.log("\u65B0\u7D22\u5F15\u8D85\u51FA\u8303\u56F4:", newIndex);
+      return;
+    }
+    const targetModule = sameColumnModules[newIndex];
+    console.log("\u4EA4\u6362\u987A\u5E8F:", {
+      current: moduleConfig.order,
+      target: targetModule.order
+    });
+    const tempOrder = moduleConfig.order;
+    moduleConfig.order = targetModule.order;
+    targetModule.order = tempOrder;
+    this.saveModuleSettings();
+    this.createHomeView().then(() => {
+      const modules = this.container.querySelectorAll(".module-container");
+      modules.forEach((m) => {
+        if (m instanceof HTMLElement) {
+          m.classList.add("editable");
+          this.setupModuleDragging(m);
+        }
+      });
+    });
   }
   // 更新模块位置
   updateModulePosition(module2, newPosition) {
     const moduleId = module2.getAttribute("data-module-id");
     const moduleConfig = this.homeModules.find((m) => m.id === moduleId);
     if (moduleConfig) {
+      console.log("\u66F4\u65B0\u6A21\u5757\u4F4D\u7F6E:", {
+        from: moduleConfig.position,
+        to: newPosition
+      });
       moduleConfig.position = newPosition;
       moduleConfig.columns = newPosition === "center" ? 2 : 1;
-      this.createHomeView();
+      const sameColumnModules = this.homeModules.filter((m) => m.position === newPosition).sort((a, b) => a.order - b.order);
+      moduleConfig.order = sameColumnModules.length;
       this.saveModuleSettings();
+      this.createHomeView().then(() => {
+        const modules = this.container.querySelectorAll(".module-container");
+        modules.forEach((m) => {
+          if (m instanceof HTMLElement) {
+            m.classList.add("editable");
+            this.setupModuleDragging(m);
+          }
+        });
+      });
     }
   }
-  // 理模块编
+  // 清理模块编辑
   cleanupModuleEditing(module2) {
     module2.querySelectorAll(".resize-handle").forEach((handle) => handle.remove());
     module2.style.transform = "";
@@ -3529,7 +3673,7 @@ ${content}` : content;
     const titleInput = inputContainer.createEl("input", {
       cls: "quick-note-title",
       attr: {
-        placeholder: "\u8F93\u5165\u7B14\u8BB0\u6807\u9898...",
+        placeholder: "\u8F93\u5165\u7B14\u6807\u9898...",
         type: "text"
       }
     });
@@ -3750,7 +3894,7 @@ ${content}` : content;
       });
     });
   }
-  // 在 CardView 类中添加以下方法
+  // 在 CardView 类中添以下方法
   // 显示网格对齐指示器
   showGridSnapIndicator(module2, width) {
     let indicator = this.container.querySelector(".grid-snap-indicator");
