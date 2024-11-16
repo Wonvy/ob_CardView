@@ -15,7 +15,7 @@ interface FolderItem {
 export async function openInAppropriateLeaf(app: any, file: TFile, openFile: boolean = true) {
     const fileExplorer = app.workspace.getLeavesOfType('file-explorer')[0];
     if (fileExplorer) {
-        app.workspace.revealLeaf(fileExplorer);  // 如果文件浏览已经在，直接活它
+        // app.workspace.revealLeaf(fileExplorer);  // 如果文件浏览已经在，直接活它
         try {
             if (openFile) {
                 // 只有在要打开文件时才执行这些操作

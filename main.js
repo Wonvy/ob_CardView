@@ -39,7 +39,6 @@ async function openInAppropriateLeaf(app, file, openFile = true) {
   var _a;
   const fileExplorer = app.workspace.getLeavesOfType("file-explorer")[0];
   if (fileExplorer) {
-    app.workspace.revealLeaf(fileExplorer);
     try {
       if (openFile) {
         const leaves = app.workspace.getLeavesOfType("markdown");
