@@ -787,6 +787,7 @@
   gap: 8px;
   padding: 8px 0;
   margin-top: 8px;
+  flex-wrap: wrap;
 }
 .quick-note-toolbar .quick-note-btn {
   display: flex;
@@ -1171,6 +1172,7 @@
 .todo-module .todo-input-area {
   display: flex;
   gap: 8px;
+  flex-wrap: wrap;
 }
 .todo-module .todo-input-area .todo-input {
   flex: 1;
@@ -2142,6 +2144,7 @@
   display: flex;
   flex-direction: column;
   gap: 20px;
+  max-width: 50%;
   padding: 10px;
   border-radius: 8px;
 }

@@ -4244,10 +4244,12 @@ export class CardView extends ItemView {
         const heatmapContainer = container.createDiv('heatmap-container');
         
         // 获取过去一年的数据
-        const endDate = new Date();
-        const startDate = new Date();
-        startDate.setFullYear(endDate.getFullYear() - 1);
-        
+        const endDate = new Date();// 当前日期
+        const startDate = new Date();// 当前日期
+        startDate.setFullYear(endDate.getFullYear() - 1);// 设置为一年前
+        console.log('开始日期:', startDate);
+        console.log('结束日期:', endDate);
+
         // 创建日期到计数的映射
         const dateCountMap = new Map<string, number>();
         
@@ -4409,6 +4411,7 @@ export class CardView extends ItemView {
         });
     }
 
+    
     // 模块-本周笔记
     private async renderWeeklyNotes(container: HTMLElement) {
         console.log('Rendering weekly notes module...');

@@ -3104,6 +3104,8 @@ ${content}` : content;
     const endDate = /* @__PURE__ */ new Date();
     const startDate = /* @__PURE__ */ new Date();
     startDate.setFullYear(endDate.getFullYear() - 1);
+    console.log("\u5F00\u59CB\u65E5\u671F:", startDate);
+    console.log("\u7ED3\u675F\u65E5\u671F:", endDate);
     const dateCountMap = /* @__PURE__ */ new Map();
     for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
       const dateStr = d.toISOString().split("T")[0];
