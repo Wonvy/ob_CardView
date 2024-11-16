@@ -1341,41 +1341,67 @@
 
 .heatmap-container {
   padding: 16px;
+  max-width: 100%;
+  overflow-x: auto;
 }
 .heatmap-container .heatmap-grid {
   display: flex;
   flex-direction: column;
   gap: 4px;
   position: relative;
+  width: fit-content;
 }
 .heatmap-container .heatmap-grid .month-labels {
   display: flex;
-  padding-left: 20px;
   margin-bottom: 4px;
+  flex-direction: row;
+  justify-content: space-between;
+  flex-wrap: nowrap;
 }
 .heatmap-container .heatmap-grid .month-labels .month-label {
-  flex: 1;
   text-align: center;
   color: var(--text-muted);
   font-size: 0.8em;
+  cursor: pointer;
+  opacity: 0.2;
+  transition: all 0.2s ease;
+}
+.heatmap-container .heatmap-grid .month-labels .month-label:hover {
+  color: var(--text-normal);
+  opacity: 1;
+}
+.heatmap-container .heatmap-grid .month-labels .month-label.highlight {
+  color: var(--text-normal);
+  font-weight: 800;
+  opacity: 1;
 }
 .heatmap-container .heatmap-grid .week-labels {
   position: absolute;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 3px;
   padding-top: 4px;
 }
 .heatmap-container .heatmap-grid .week-labels .week-label {
   height: 10px;
   color: var(--text-muted);
   font-size: 0.8em;
+  text-align: left;
+  transition: all 0.2s ease;
+  opacity: 0.2;
+}
+.heatmap-container .heatmap-grid .week-labels .week-label.highlight {
+  color: var(--text-normal);
+  font-weight: 800;
+  opacity: 1;
 }
 .heatmap-container .heatmap-grid .days-container {
   padding-left: 20px;
   display: grid;
-  grid-template-columns: repeat(53, 1fr);
+  grid-template-rows: repeat(7, 1fr);
+  grid-auto-flow: column;
   gap: 2px;
+  width: fit-content;
 }
 .heatmap-container .heatmap-grid .days-container .day-cell {
   width: 10px;
@@ -1385,22 +1411,41 @@
   cursor: pointer;
 }
 .heatmap-container .heatmap-grid .days-container .day-cell:hover {
-  transform: scale(1.2);
+  border: 1px solid var(--text-normal);
+  transform: scale(1.5);
+}
+.heatmap-container .heatmap-grid .days-container .day-cell.month-hover {
+  filter: brightness(1.1);
 }
 .heatmap-container .heatmap-grid .days-container .day-cell.level-0 {
   background-color: var(--background-modifier-border);
 }
+.heatmap-container .heatmap-grid .days-container .day-cell.level-0.month-hover {
+  background-color: var(--background-modifier-border-hover);
+}
 .heatmap-container .heatmap-grid .days-container .day-cell.level-1 {
   background-color: #9be9a8;
+}
+.heatmap-container .heatmap-grid .days-container .day-cell.level-1.month-hover {
+  background-color: #adf0b9;
 }
 .heatmap-container .heatmap-grid .days-container .day-cell.level-2 {
   background-color: #40c463;
 }
+.heatmap-container .heatmap-grid .days-container .day-cell.level-2.month-hover {
+  background-color: #52d375;
+}
 .heatmap-container .heatmap-grid .days-container .day-cell.level-3 {
   background-color: #30a14e;
 }
+.heatmap-container .heatmap-grid .days-container .day-cell.level-3.month-hover {
+  background-color: #42b360;
+}
 .heatmap-container .heatmap-grid .days-container .day-cell.level-4 {
   background-color: #216e39;
+}
+.heatmap-container .heatmap-grid .days-container .day-cell.level-4.month-hover {
+  background-color: #338a4b;
 }
 
 .module-container.calendar-module {

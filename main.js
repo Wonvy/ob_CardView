@@ -402,7 +402,7 @@ var CardView = class extends import_obsidian2.ItemView {
     const today = /* @__PURE__ */ new Date();
     this.currentYear = today.getFullYear();
     this.currentWeek = this.getWeekNumber(today);
-    console.log("\u521D\u59CB\u5316\u5468\u89C6\u56FE - \u5E74\u4EFD:", this.currentYear, "\u5468\u6570:", this.currentWeek);
+    console.log("\u521D\u59CB\u5316\u5468\u89C6 - \u5E74\u4EFD:", this.currentYear, "\u5468\u6570:", this.currentWeek);
     this.homeModules = plugin.settings.homeModules.length > 0 ? plugin.settings.homeModules : DEFAULT_HOME_MODULES;
   }
   /**
@@ -1134,7 +1134,7 @@ ${content}` : content;
       });
       const openButton = header.createDiv("note-open-button");
       openButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>`;
-      openButton.setAttribute("title", "\u5728\u65B0\u6807\u7B7E\u9875\u4E2D\u6253\u5F00");
+      openButton.setAttribute("title", "\u5728\u65B0\u6807\u7B7E\u9875\u4E2D\uFFFD\uFFFD\uFFFD\u5F00");
       openButton.style.opacity = "0";
       const cardContent = card.createDiv("note-card-content");
       const title = cardContent.createDiv("note-title");
@@ -1643,7 +1643,7 @@ ${content}` : content;
       }
     });
   }
-  // 卡片-更新高度
+  // 片-新高度
   updateCardHeight(height) {
     this.cardHeight = height;
     this.container.querySelectorAll(".note-card").forEach((card) => {
@@ -1832,7 +1832,7 @@ ${emptyNotes.map((file) => file.basename).join("\n")}`
   // 月历-创建月视图
   async createMonthView() {
     if (this.currentLoadingView !== "month") {
-      console.log("\u4E2D\u65AD\u6708\u5386\u89C6\u56FE\uFFFD\uFFFD\u8F7D\uFF1A\u89C6\u56FE\u5DF2\u5207\u6362");
+      console.log("\u4E2D\u65AD\u6708\u5386\u89C6\u56FE\u8F7D\uFF1A\u89C6\u56FE\u5DF2\u5207\u6362");
       return;
     }
     try {
@@ -2595,7 +2595,7 @@ ${content}` : content;
     const currentSettings = this.cardSettings[this.currentView];
     const basicSettings = settingsPanel.createDiv("settings-section");
     basicSettings.createEl("h3", { text: "\u57FA\u672C\u8BBE\u7F6E" });
-    const showDateOption = this.createCheckboxOption(basicSettings, "\u663E\u793A\u65E5\u671F", currentSettings.showDate);
+    const showDateOption = this.createCheckboxOption(basicSettings, "\u663E\u793A\u671F", currentSettings.showDate);
     showDateOption.addEventListener("change", (e) => {
       currentSettings.showDate = e.target.checked;
       const dateElements = this.container.querySelectorAll(".note-date");
@@ -2766,7 +2766,7 @@ ${content}` : content;
       }
     );
   }
-  // 创建滑块选项
+  // 创建滑块选
   createSliderOption(container, label, defaultValue, min, max, step, onChange) {
     const settingItem = container.createDiv("setting-item");
     settingItem.createEl("label", { text: label });
@@ -3099,7 +3099,7 @@ ${content}` : content;
   }
   // 模块-热力图
   async renderHeatmap(container) {
-    console.log("Rendering heatmap module...");
+    console.log("\u6E32\u67D3\u70ED\u529B\u56FE...");
     const heatmapContainer = container.createDiv("heatmap-container");
     const endDate = /* @__PURE__ */ new Date();
     const startDate = /* @__PURE__ */ new Date();
@@ -3119,20 +3119,29 @@ ${content}` : content;
     });
     const heatmapGrid = heatmapContainer.createDiv("heatmap-grid");
     const weekLabels = heatmapGrid.createDiv("week-labels");
-    ["", "Mon", "Wed", "Fri"].forEach((label) => {
+    ["", "\u4E00", "\u4E8C", "\u4E09", "\u56DB", "\u4E94", "\u516D", "\u65E5"].forEach((label) => {
       weekLabels.createDiv("week-label").setText(label);
     });
     const monthLabels = heatmapGrid.createDiv("month-labels");
     const daysContainer = heatmapGrid.createDiv("days-container");
-    let currentDate = new Date(startDate);
-    let currentMonth = currentDate.getMonth();
-    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    let iterDate = new Date(startDate);
+    const dayOfWeek = iterDate.getDay();
+    const diff = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    iterDate.setDate(iterDate.getDate() - diff);
+    let currentMonth = iterDate.getMonth();
+    const months = ["\u4E00\u6708", "\u4E8C\u6708", "\u4E09\u6708", "\u56DB\u6708", "\u4E94\u6708", "\u516D\u6708", "\u4E03\u6708", "\u516B\u6708", "\u4E5D\u6708", "\u5341\u6708", "\u5341\u4E00\u6708", "\u5341\u4E8C\u6708"];
     let monthDiv = monthLabels.createDiv("month-label");
     monthDiv.setText(months[currentMonth]);
-    while (currentDate <= endDate) {
-      const dateStr = currentDate.toISOString().split("T")[0];
+    let monthLabelsMap = /* @__PURE__ */ new Map();
+    let currentMonthStartCol = 0;
+    let currentCol = 0;
+    const allDayCells = [];
+    let currentYear = iterDate.getFullYear();
+    while (iterDate <= endDate) {
+      const dateStr = iterDate.toISOString().split("T")[0];
       const count = dateCountMap.get(dateStr) || 0;
-      const dayCell = daysContainer.createDiv("day-cell");
+      const dayCell = document.createElement("div");
+      dayCell.className = "day-cell";
       dayCell.setAttribute("data-date", dateStr);
       dayCell.setAttribute("data-count", count.toString());
       let colorClass = "level-0";
@@ -3142,16 +3151,60 @@ ${content}` : content;
         else if (count >= 2) colorClass = "level-2";
         else colorClass = "level-1";
       }
-      dayCell.addClass(colorClass);
-      dayCell.setAttribute("title", `${dateStr}: ${count} contributions`);
-      const newMonth = currentDate.getMonth();
-      if (newMonth !== currentMonth) {
+      dayCell.classList.add(colorClass);
+      dayCell.setAttribute("title", `${dateStr}: ${count} \u6761\u7B14\u8BB0`);
+      allDayCells.push(dayCell);
+      const newMonth = iterDate.getMonth();
+      const newYear = iterDate.getFullYear();
+      if (newMonth !== currentMonth || newYear !== currentYear) {
+        const monthLabel = monthLabels.createDiv("month-label");
+        monthLabel.setText(months[currentMonth]);
+        monthLabelsMap.set(currentMonth + currentYear * 12, monthLabel);
         currentMonth = newMonth;
-        monthDiv = monthLabels.createDiv("month-label");
-        monthDiv.setText(months[currentMonth]);
+        currentYear = newYear;
+        currentMonthStartCol = currentCol;
       }
-      currentDate.setDate(currentDate.getDate() + 1);
+      currentCol++;
+      iterDate.setDate(iterDate.getDate() + 1);
     }
+    const lastMonthLabel = monthLabels.createDiv("month-label");
+    lastMonthLabel.setText(months[currentMonth]);
+    monthLabelsMap.set(currentMonth + currentYear * 12, lastMonthLabel);
+    allDayCells.forEach((cell) => daysContainer.appendChild(cell));
+    daysContainer.querySelectorAll(".day-cell").forEach((cell) => {
+      cell.addEventListener("mouseenter", () => {
+        const dateStr = cell.getAttribute("data-date");
+        if (!dateStr) return;
+        const date = new Date(dateStr);
+        const monthKey = date.getMonth() + date.getFullYear() * 12;
+        monthLabelsMap.forEach((label) => label.removeClass("highlight"));
+        const monthLabel = monthLabelsMap.get(monthKey);
+        if (monthLabel) {
+          monthLabel.addClass("highlight");
+        }
+        const weekDay = date.getDay();
+        weekLabels.querySelectorAll(".week-label").forEach((label, index) => {
+          label.toggleClass("highlight", index === weekDay);
+        });
+        daysContainer.querySelectorAll(".day-cell").forEach((otherCell) => {
+          const otherDateStr = otherCell.getAttribute("data-date");
+          if (!otherDateStr) return;
+          const otherDate = new Date(otherDateStr);
+          if (otherDate.getMonth() === date.getMonth() && otherDate.getFullYear() === date.getFullYear()) {
+            otherCell.addClass("month-hover");
+          }
+        });
+      });
+      cell.addEventListener("mouseleave", () => {
+        monthLabelsMap.forEach((label) => label.removeClass("highlight"));
+        weekLabels.querySelectorAll(".week-label").forEach((label) => {
+          label.removeClass("highlight");
+        });
+        daysContainer.querySelectorAll(".day-cell").forEach((cell2) => {
+          cell2.removeClass("month-hover");
+        });
+      });
+    });
   }
   // 模块-本周笔记
   async renderWeeklyNotes(container) {

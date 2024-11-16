@@ -448,7 +448,7 @@ export class CardView extends ItemView {
         const today = new Date();
         this.currentYear = today.getFullYear();
         this.currentWeek = this.getWeekNumber(today);
-        console.log('初始化周视图 - 年份:', this.currentYear, '周数:', this.currentWeek);
+        console.log('初始化周视 - 年份:', this.currentYear, '周数:', this.currentWeek);
 
         // 使用插件保存的设初始化主页模块
         this.homeModules = plugin.settings.homeModules.length > 0 
@@ -646,11 +646,11 @@ export class CardView extends ItemView {
         this.tagContainer = contentSection.createDiv('filter-toolbar');
         await this.loadTags();
 
-        // 创建主内容区域
+        // 创主内容区域
         const contentArea = contentSection.createDiv('card-view-content');
         this.container = contentArea.createDiv('card-container');
         
-        // 使用保存的宽度和高度初始化卡片容器
+        // 使用存的宽度和高度初始化卡片容器
         this.cardSize = this.plugin.settings.cardWidth;
         // 删除读取高度的代码，因为cardHeight属性不存
         // this.container.style.gridTemplateColumns = `repeat(auto-fill, ${this.cardSize}px`;
@@ -867,8 +867,8 @@ export class CardView extends ItemView {
             isEditMode = !isEditMode;
             this.container.toggleClass('edit-mode', isEditMode);
             editBtn.setText(isEditMode ? '完成编辑' : '编辑布局');
-            editBtn.toggleClass('active', isEditMode); // 添加这行，切换按钮的激活状态
-            this.toggleModuleEditing(isEditMode);//切换模块辑
+            editBtn.toggleClass('active', isEditMode); // 添加这行切换按钮的激活状态
+            this.toggleModuleEditing(isEditMode);//切换模块
         });
 
         // 卡片视图按钮组
@@ -1211,7 +1211,7 @@ export class CardView extends ItemView {
     private async loadNotes() {
         try {
             console.log('开始加载笔记...');
-            // 重置分页状态
+            // 重置分状态
             this.currentPage = 1;
             this.hasMoreNotes = true;
             this.container.empty();
@@ -1296,7 +1296,7 @@ export class CardView extends ItemView {
                 }
             });
 
-            // 确保加载指示器始终在底部
+            // 确保加载指示始终在底部
             if (this.hasMoreNotes) {
                 this.container.appendChild(this.loadingIndicator);
                 // 设置加载示器的最小高度，确保可以触发滚动
@@ -1426,7 +1426,7 @@ export class CardView extends ItemView {
             // card.style.width = `${this.cardSize}px`;
             // card.style.height = `${this.cardHeight}px`;
             
-            // 创建卡片头部
+            // 创建卡片头
             const header = card.createDiv('note-card-header');
             // 添加修改日期
             if (this.cardSettings[this.currentView as keyof typeof this.cardSettings].showDate) {
@@ -1488,7 +1488,7 @@ export class CardView extends ItemView {
             // 添加打开按钮
             const openButton = header.createDiv('note-open-button');
             openButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>`;
-            openButton.setAttribute('title', '在新标签页中打开');
+            openButton.setAttribute('title', '在新标签页中���开');
             openButton.style.opacity = '0';  // 默认隐藏
 
             // 创卡内容器
@@ -1645,7 +1645,7 @@ export class CardView extends ItemView {
                 previewWrapper.style.width = width;
             }
             this.previewContainer.style.width = width;
-            // 调整内区域
+            // 调整内域
             // this.adjustContentWidth();
         }
 
@@ -1873,7 +1873,7 @@ export class CardView extends ItemView {
                                 placeholder.style.marginBottom = '1rem';
                                 notesList.appendChild(placeholder);
 
-                                // 异步创建实际的卡片
+                                // 异步创建实际卡片
                                 const card = await this.createNoteCard(file);
                                 if (card instanceof HTMLElement) {
                                     card.style.width = '100%';
@@ -2173,11 +2173,11 @@ export class CardView extends ItemView {
                 card.style.width = `${width}px`;
             }
         });
-        // 更新容器的网格列宽度
+        // 更新容器的网格宽度
         // this.container.style.gridTemplateColumns = `repeat(auto-fill, ${width}px)`;
     }
 
-    // 卡片-更新高度
+    // 片-新高度
     private updateCardHeight(height: number) {
         this.cardHeight = height;
         // 更新所有卡片的高度
@@ -2246,7 +2246,7 @@ export class CardView extends ItemView {
                 this.currentDate.getMonth()
             );
             
-            // 创建笔记列表容
+            // 创笔记列表容
             const notesSection = this.calendarContainer.createDiv('notes-section');
             
             // 填充日期格子
@@ -2360,7 +2360,7 @@ export class CardView extends ItemView {
     private createCommandButton(toolbar: HTMLElement) {
         const commandContainer = toolbar.createDiv('command-container');
         
-        // 创建命按
+        // 建命按
         const commandBtn = commandContainer.createEl('button', {
             cls: 'command-button',
         });
@@ -2369,7 +2369,7 @@ export class CardView extends ItemView {
         `;
         commandBtn.setAttribute('title', '命令菜单');
 
-        // 创建菜单容器
+        // 创建菜单容
         const menu = commandContainer.createDiv('command-menu');
         menu.style.display = 'none';
 
@@ -2452,7 +2452,7 @@ export class CardView extends ItemView {
     // 月历-创建月视图
     private async createMonthView() {
         if (this.currentLoadingView !== 'month') {
-            console.log('中断月历视图��载：视图已切换');
+            console.log('中断月历视图载：视图已切换');
             return;
         }
 
@@ -2565,7 +2565,7 @@ export class CardView extends ItemView {
     private navigateMonth(delta: number) {
         const newDate = new Date(this.currentDate.getFullYear(), this.currentDate.getMonth() + delta);
         
-        // 如果年份变化，需要新年份显示
+        // 如果年份变化，需新年份显示
         if (newDate.getFullYear() !== this.currentDate.getFullYear()) {
             const yearDisplay = this.container.querySelector('.year-display');
             if (yearDisplay) {
@@ -3253,7 +3253,7 @@ export class CardView extends ItemView {
         const elementRect = element.getBoundingClientRect();
         const position = this.getQuickNotePosition(element);
         
-        // 计算相对于 workspace-leaf-content 的位置
+        // 计算相对于 workspace-leaf-content 位置
         const relativeLeft = elementRect.left - leafRect.left;
         const relativeTop = elementRect.top - leafRect.top;
         
@@ -3281,7 +3281,7 @@ export class CardView extends ItemView {
                 element.style.top = `${relativeTop}px`;
                 break;
             default:
-                // 居中最小化
+                // 居最小化
                 element.style.left = '50%';
                 element.style.transform = 'translateX(-50%)';
         }
@@ -3417,7 +3417,7 @@ export class CardView extends ItemView {
             this.intersectionObserver.disconnect();
         }
         this.loadedNotes.clear();
-        // ... 其他清理代码 ...
+        // ... 其他清理码 ...
     }
 
     // 状态栏-更新加载状态
@@ -3537,7 +3537,7 @@ export class CardView extends ItemView {
         basicSettings.createEl('h3', { text: '基本设置' });
 
         // 显示日期选
-        const showDateOption = this.createCheckboxOption(basicSettings, '显示日期', currentSettings.showDate);
+        const showDateOption = this.createCheckboxOption(basicSettings, '显示期', currentSettings.showDate);
        
         showDateOption.addEventListener('change', (e) => {
             currentSettings.showDate = (e.target as HTMLInputElement).checked;
@@ -3768,7 +3768,7 @@ export class CardView extends ItemView {
         );
     }
 
-    // 创建滑块选项
+    // 创建滑块选
     private createSliderOption(
         container: HTMLElement, 
         label: string, 
@@ -4240,7 +4240,7 @@ export class CardView extends ItemView {
 
     // 模块-热力图
     private async renderHeatmap(container: HTMLElement) {
-        console.log('Rendering heatmap module...');
+        console.log('渲染热力图...');
         const heatmapContainer = container.createDiv('heatmap-container');
         
         // 获取过去一年的数据
@@ -4266,13 +4266,13 @@ export class CardView extends ItemView {
                 dateCountMap.set(dateStr, (dateCountMap.get(dateStr) || 0) + 1);
             }
         });
-        
+
         // 创建热力图表格
         const heatmapGrid = heatmapContainer.createDiv('heatmap-grid');
         
-        // 添加星期标签
+        // 添加星期标签 - 显示所有工作日
         const weekLabels = heatmapGrid.createDiv('week-labels');
-        ['', 'Mon', 'Wed', 'Fri'].forEach(label => {
+        ['', '一', '二', '三', '四', '五', '六', '日'].forEach(label => {
             weekLabels.createDiv('week-label').setText(label);
         });
         
@@ -4282,26 +4282,40 @@ export class CardView extends ItemView {
         // 创建日期格子容器
         const daysContainer = heatmapGrid.createDiv('days-container');
         
-        // 获取开始日期是星期几0是周日，1是周一）
-        let currentDate = new Date(startDate);
-        let currentMonth = currentDate.getMonth();
+        // 调整开始日期到周一
+        let iterDate = new Date(startDate);
+        // 如果开始日期不是周一，调整到上一个周一
+        const dayOfWeek = iterDate.getDay();
+        const diff = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // 将周日(0)转换为6
+        iterDate.setDate(iterDate.getDate() - diff);
+        
+        let currentMonth = iterDate.getMonth();
         
         // 创建月份标签
-        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const months = ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月'];
         let monthDiv = monthLabels.createDiv('month-label');
         monthDiv.setText(months[currentMonth]);
-        
-        // 创建日期格子
-        while (currentDate <= endDate) {
-            const dateStr = currentDate.toISOString().split('T')[0];
+
+        // 创建月份标签映射
+        let monthLabelsMap = new Map<number, HTMLElement>();
+        let currentMonthStartCol = 0;
+        let currentCol = 0;
+
+        // 创建所有日期格子
+        const allDayCells: HTMLElement[] = [];
+        let currentYear = iterDate.getFullYear();
+
+        while (iterDate <= endDate) {
+            const dateStr = iterDate.toISOString().split('T')[0];
             const count = dateCountMap.get(dateStr) || 0;
             
             // 创建日期格子
-            const dayCell = daysContainer.createDiv('day-cell');
+            const dayCell = document.createElement('div');
+            dayCell.className = 'day-cell';
             dayCell.setAttribute('data-date', dateStr);
             dayCell.setAttribute('data-count', count.toString());
             
-            // 根据计数设置颜色深浅
+            // 设置颜色级别
             let colorClass = 'level-0';
             if (count > 0) {
                 if (count >= 5) colorClass = 'level-4';
@@ -4309,22 +4323,90 @@ export class CardView extends ItemView {
                 else if (count >= 2) colorClass = 'level-2';
                 else colorClass = 'level-1';
             }
-            dayCell.addClass(colorClass);
+            dayCell.classList.add(colorClass);
             
             // 添加悬停提示
-            dayCell.setAttribute('title', `${dateStr}: ${count} contributions`);
+            dayCell.setAttribute('title', `${dateStr}: ${count} 条笔记`);
             
-            // 检查是否需要添加新的月份标签
-            const newMonth = currentDate.getMonth();
-            if (newMonth !== currentMonth) {
+            allDayCells.push(dayCell);
+
+            // 检查月份变化
+            const newMonth = iterDate.getMonth();
+            const newYear = iterDate.getFullYear();
+            if (newMonth !== currentMonth || newYear !== currentYear) {
+                // 为上一个月创建标签
+                const monthLabel = monthLabels.createDiv('month-label');
+                monthLabel.setText(months[currentMonth]);
+                // monthLabel.style.width = `${(currentCol - currentMonthStartCol) * 14}px`; // 14px = 格子宽度(10px) + 间距(2px) * 2
+                monthLabelsMap.set(currentMonth + currentYear * 12, monthLabel);
+                
+                // 更新当前月份信息
                 currentMonth = newMonth;
-                monthDiv = monthLabels.createDiv('month-label');
-                monthDiv.setText(months[currentMonth]);
+                currentYear = newYear;
+                currentMonthStartCol = currentCol;
             }
             
-            // 移到下一天
-            currentDate.setDate(currentDate.getDate() + 1);
+            currentCol++;
+            iterDate.setDate(iterDate.getDate() + 1);
         }
+
+        // 为最后一个月创建标签
+        const lastMonthLabel = monthLabels.createDiv('month-label');
+        lastMonthLabel.setText(months[currentMonth]);
+        // lastMonthLabel.style.width = `${(currentCol - currentMonthStartCol) * 14}px`;
+        monthLabelsMap.set(currentMonth + currentYear * 12, lastMonthLabel);
+
+        // 将所有日期格子添加到容器中
+        allDayCells.forEach(cell => daysContainer.appendChild(cell));
+
+        // 添加日期格子的鼠标事件
+        daysContainer.querySelectorAll('.day-cell').forEach(cell => {
+            cell.addEventListener('mouseenter', () => {
+                const dateStr = cell.getAttribute('data-date');
+                if (!dateStr) return;
+                
+                const date = new Date(dateStr);
+                const monthKey = date.getMonth() + date.getFullYear() * 12;
+
+                // 移除所有月份标签的高亮
+                monthLabelsMap.forEach(label => label.removeClass('highlight'));
+
+                // 高亮对应月份的标签
+                const monthLabel = monthLabelsMap.get(monthKey);
+                if (monthLabel) {
+                    monthLabel.addClass('highlight');
+                }
+
+                // 高亮对应的星期标签
+                const weekDay = date.getDay();
+                weekLabels.querySelectorAll('.week-label').forEach((label, index) => {
+                    label.toggleClass('highlight', index === weekDay);
+                });
+
+                // 高亮同月份的所有格子
+                daysContainer.querySelectorAll('.day-cell').forEach(otherCell => {
+                    const otherDateStr = otherCell.getAttribute('data-date');
+                    if (!otherDateStr) return;
+                    
+                    const otherDate = new Date(otherDateStr);
+                    if (otherDate.getMonth() === date.getMonth() && 
+                        otherDate.getFullYear() === date.getFullYear()) {
+                        otherCell.addClass('month-hover');
+                    }
+                });
+            });
+            
+            cell.addEventListener('mouseleave', () => {
+                // 移除所有高亮
+                monthLabelsMap.forEach(label => label.removeClass('highlight'));
+                weekLabels.querySelectorAll('.week-label').forEach(label => {
+                    label.removeClass('highlight');
+                });
+                daysContainer.querySelectorAll('.day-cell').forEach(cell => {
+                    cell.removeClass('month-hover');
+                });
+            });
+        });
     }
 
     // 模块-本周笔记
@@ -5250,7 +5332,7 @@ export class CardView extends ItemView {
             cls: 'todo-add-btn'
         });
 
-        // 创建待办事列表容器
+        // 创建待办事列表容
         const todoList = todoContainer.createDiv('todo-list');
         
 
