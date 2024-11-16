@@ -1508,7 +1508,7 @@ export class CardView extends ItemView {
             }
 
             try {
-                // 创建笔记内容容器
+                // 创建笔��内容容器
                 const noteContent = cardContent.createDiv('note-content');
                 if (this.cardSettings[this.currentView as keyof typeof this.cardSettings].showContent) {
                     noteContent.addClass('show');
@@ -3311,7 +3311,7 @@ export class CardView extends ItemView {
         element.style.width = '800px';
         element.style.removeProperty('height');
         
-        // 计算对于 workspace-leaf-content 的位置
+        // 计算对于 workspace-leaf-content 的���置
         const relativeLeft = elementRect.left - leafRect.left;
         const relativeTop = elementRect.top - leafRect.top;
         
@@ -3526,7 +3526,7 @@ export class CardView extends ItemView {
 
     // 更新设置面板状态
     private updateSettingsPanel(settingsPanel: HTMLElement) {
-        // ��空现有设置
+        // 空现有设置
         settingsPanel.empty();
         // 获取当前视图的设置
         const currentSettings = this.cardSettings[this.currentView as keyof typeof this.cardSettings];
@@ -4633,11 +4633,20 @@ export class CardView extends ItemView {
                     module.style.cursor = '';
                     module.classList.remove('dragging');
                     
-                    // 移除所有事件监听器
+                    // 通过克隆节点来移除所有事件监听器
                     const newModule = module.cloneNode(true) as HTMLElement;
-                    const content = module.querySelector('.module-content');
-                    if (content && content.parentNode) {
-                        content.parentNode.replaceChild(newModule.querySelector('.module-content')!, content);
+                    if (module.parentNode) {
+                        // 保存原有的内容元素
+                        const content = module.querySelector('.module-content');
+                        const newContent = newModule.querySelector('.module-content');
+                        
+                        if (content && newContent) {
+                            // 替换内容元素，保持原有的事件监听器
+                            newContent.replaceWith(content);
+                        }
+                        
+                        // 替换整个模块
+                        module.parentNode.replaceChild(newModule, module);
                     }
                 }
             });
@@ -4650,6 +4659,9 @@ export class CardView extends ItemView {
 
             // 移除所有占位符和标记
             this.container.querySelectorAll('.module-placeholder, .drop-marker').forEach(el => el.remove());
+
+            // 重新渲染主页视图，但不进入编辑模式
+            this.createHomeView();
         }
 
         console.log('模块编辑切换完成');
@@ -5043,7 +5055,7 @@ export class CardView extends ItemView {
             // 保存更新
             this.saveModuleSettings();
 
-            // 重新渲染主页视图并保持编辑模式
+            // 重新渲染主页视图并保持编��模式
             this.createHomeView().then(() => {
                 // 重新应用编辑模式
                 const modules = this.container.querySelectorAll('.module-container');

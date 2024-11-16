@@ -3366,9 +3366,13 @@ ${content}` : content;
           module2.style.cursor = "";
           module2.classList.remove("dragging");
           const newModule = module2.cloneNode(true);
-          const content = module2.querySelector(".module-content");
-          if (content && content.parentNode) {
-            content.parentNode.replaceChild(newModule.querySelector(".module-content"), content);
+          if (module2.parentNode) {
+            const content = module2.querySelector(".module-content");
+            const newContent = newModule.querySelector(".module-content");
+            if (content && newContent) {
+              newContent.replaceWith(content);
+            }
+            module2.parentNode.replaceChild(newModule, module2);
           }
         }
       });
@@ -3378,6 +3382,7 @@ ${content}` : content;
         column.querySelectorAll(".drop-marker").forEach((marker) => marker.remove());
       });
       this.container.querySelectorAll(".module-placeholder, .drop-marker").forEach((el) => el.remove());
+      this.createHomeView();
     }
     console.log("\u6A21\u5757\u7F16\u8F91\u5207\u6362\u5B8C\u6210");
   }
