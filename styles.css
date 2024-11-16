@@ -223,65 +223,6 @@
   left: 0;
 }
 
-.module-container.calendar-module:hover .notes-section {
-  transform: translateX(100%);
-}
-.module-container.calendar-module .module-content .calendar-module {
-  position: relative;
-}
-.module-container.calendar-module .notes-section.active {
-  transform: translateX(100%);
-}
-
-.module-container.calendar-module {
-  position: relative;
-}
-.module-container.calendar-module .calendar-container {
-  width: auto;
-  position: relative;
-}
-.module-container.calendar-module .notes-section {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  padding: 10px;
-  background: var(--background-primary);
-  border-radius: 0 8px 8px 0;
-  border: 1px solid var(--background-modifier-border);
-  border-bottom: none;
-  z-index: 1;
-  transition: all 0.2s ease;
-}
-.module-container.calendar-module .notes-section .date-title {
-  display: flex;
-  height: 30px;
-  justify-content: center;
-  align-items: center;
-  color: var(--interactive-accent);
-  border-bottom: 1px solid var(--background-modifier-border);
-}
-.module-container.calendar-module .notes-section .notes-list {
-  height: calc(100% - 30px);
-  display: flex;
-  font-size: 14px;
-  gap: 7px;
-  margin-top: 7px;
-  flex-direction: column;
-  overflow-y: auto;
-}
-.module-container.calendar-module .notes-section .note-item {
-  display: flex;
-  padding: 4px;
-  cursor: pointer;
-  border-radius: 4px;
-}
-.module-container.calendar-module .notes-section .note-item:hover {
-  background-color: var(--background-modifier-hover);
-}
-
 .main-layout.with-calendar .content-section {
   margin-left: 0;
 }
@@ -431,6 +372,16 @@
   flex: 1;
 }
 .filter-toolbar .filter-toolbar-left .filter-toolbar-buttons {
+  display: flex;
+  gap: 10px;
+  flex-direction: row;
+}
+.filter-toolbar .filter-toolbar-left .filter-toolbar-buttons .home-view-buttons {
+  display: flex;
+  gap: 10px;
+  flex-direction: row;
+}
+.filter-toolbar .filter-toolbar-left .filter-toolbar-buttons .card-view-buttons {
   display: flex;
   gap: 10px;
   flex-direction: row;
@@ -1464,6 +1415,90 @@
   padding: 0;
 }
 
+.module-container.calendar-module .module-content .calendar-module {
+  position: relative;
+}
+
+.right-column .module-container.calendar-module:hover .notes-section {
+  transform: translateX(-100%);
+}
+.right-column .module-container.calendar-module .notes-section.active {
+  transform: translateX(-100%);
+}
+
+.left-column .module-container.calendar-module:hover .notes-section {
+  transform: translateX(100%);
+}
+.left-column .module-container.calendar-module .notes-section.active {
+  transform: translateX(100%);
+}
+
+.center-column .module-container.calendar-module {
+  max-height: 289px;
+}
+.center-column .module-container.calendar-module .calendar-module {
+  display: flex;
+  height: 100%;
+  position: relative;
+  flex-direction: row;
+}
+.center-column .module-container.calendar-module .calendar-module .calendar-section {
+  width: 50%;
+}
+.center-column .module-container.calendar-module .calendar-module .notes-section {
+  width: 50%;
+  position: relative;
+}
+
+.module-container.calendar-module {
+  position: relative;
+}
+.module-container.calendar-module .calendar-container {
+  width: auto;
+  position: relative;
+}
+.module-container.calendar-module .notes-section {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  padding: 10px;
+  background: var(--background-primary);
+  border-radius: 0 8px 8px 0;
+  border: 1px solid var(--background-modifier-border);
+  border-bottom: none;
+  z-index: 1;
+  transition: all 0.2s ease;
+}
+.module-container.calendar-module .notes-section .date-title {
+  display: flex;
+  height: 30px;
+  justify-content: center;
+  align-items: center;
+  color: var(--interactive-accent);
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+.module-container.calendar-module .notes-section .notes-list {
+  height: calc(100% - 30px);
+  display: flex;
+  font-size: 14px;
+  gap: 7px;
+  margin-top: 7px;
+  flex-direction: column;
+  overflow-y: auto;
+}
+.module-container.calendar-module .notes-section .note-item {
+  display: flex;
+  padding: 4px;
+  cursor: pointer;
+  border-radius: 4px;
+}
+.module-container.calendar-module .notes-section .note-item:hover {
+  background-color: var(--background-modifier-hover);
+}
+
 .week-view {
   display: flex;
   flex-direction: column;
@@ -2064,7 +2099,6 @@
   gap: 20px;
   padding: 10px;
   border-radius: 8px;
-  overflow-x: hidden;
 }
 .home-container .module-grid .right-column {
   flex: 0 0 25%;
@@ -2074,7 +2108,6 @@
   gap: 20px;
   padding: 10px;
   border-radius: 8px;
-  overflow-x: hidden;
 }
 
 .module-container {
@@ -2118,6 +2151,7 @@
 .module-container .module-header h3 {
   font-size: 15px;
   font-weight: bold;
+  margin: 0;
   color: var(--text-normal);
 }
 .module-container:hover .module-resize {
@@ -2266,6 +2300,18 @@
 .module-container.editable:hover {
   border-color: var(--interactive-accent);
   background-color: var(--background-modifier-hover);
+}
+
+.module-edit-btn {
+  transition: all 0.2s ease;
+}
+.module-edit-btn.active {
+  background-color: var(--interactive-accent);
+  color: var(--text-on-accent);
+  border-color: var(--interactive-accent);
+}
+.module-edit-btn.active:hover {
+  background-color: var(--interactive-accent-hover);
 }
 
 .card-view-container {

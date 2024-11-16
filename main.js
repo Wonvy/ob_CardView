@@ -675,6 +675,7 @@ ${content}` : content;
       isEditMode = !isEditMode;
       this.container.toggleClass("edit-mode", isEditMode);
       editBtn.setText(isEditMode ? "\u5B8C\u6210\u7F16\u8F91" : "\u7F16\u8F91\u5E03\u5C40");
+      editBtn.toggleClass("active", isEditMode);
       this.toggleModuleEditing(isEditMode);
     });
     const cardButtons = buttonGroup.createDiv("card-view-buttons");

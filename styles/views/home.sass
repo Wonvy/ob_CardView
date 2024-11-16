@@ -38,7 +38,7 @@
       // border: 1px dashed var(--background-modifier-border)
       padding: 10px
       border-radius: 8px
-      overflow-x: hidden
+      // overflow-x: hidden
         
     // 右侧列
     .right-column
@@ -51,7 +51,7 @@
       // border: 1px dashed var(--background-modifier-border)
       padding: 10px
       border-radius: 8px
-      overflow-x: hidden
+      // overflow-x: hidden
 
 
 // 模块容器样式
@@ -98,6 +98,7 @@
     h3
       font-size: 15px
       font-weight: bold
+      margin: 0 
       color: var(--text-normal)
 
   // 添加模块大小控制按钮
@@ -249,3 +250,16 @@
     &:hover
       border-color: var(--interactive-accent)
       background-color: var(--background-modifier-hover)
+
+
+// 编辑布局按钮样式
+.module-edit-btn
+  transition: all 0.2s ease
+  
+  &.active
+    background-color: var(--interactive-accent)
+    color: var(--text-on-accent)
+    border-color: var(--interactive-accent)
+    
+    &:hover
+      background-color: var(--interactive-accent-hover)

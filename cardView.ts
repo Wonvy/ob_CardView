@@ -867,6 +867,7 @@ export class CardView extends ItemView {
             isEditMode = !isEditMode;
             this.container.toggleClass('edit-mode', isEditMode);
             editBtn.setText(isEditMode ? '完成编辑' : '编辑布局');
+            editBtn.toggleClass('active', isEditMode); // 添加这行，切换按钮的激活状态
             this.toggleModuleEditing(isEditMode);//切换模块编辑
         });
 
@@ -1508,7 +1509,7 @@ export class CardView extends ItemView {
             }
 
             try {
-                // 创建笔��内容容器
+                // 创建笔内容容器
                 const noteContent = cardContent.createDiv('note-content');
                 if (this.cardSettings[this.currentView as keyof typeof this.cardSettings].showContent) {
                     noteContent.addClass('show');
@@ -1836,7 +1837,7 @@ export class CardView extends ItemView {
 
             // 使用虚拟滚动技术
             const fragment = document.createDocumentFragment();
-            const batchSize = 3; // 每批处理的日期组数
+            const batchSize = 3; // 每批处理的日��组数
             const batches = Math.ceil(pageDates.length / batchSize);
 
             for (let i = 0; i < batches; i++) {
@@ -3143,7 +3144,7 @@ export class CardView extends ItemView {
             startX = e.clientX;
             startY = e.clientY;
 
-            // 获取各种位置信息
+            // 获��各种位置信息
             const elementRect = element.getBoundingClientRect();
             const workspaceLeafContent = this.containerEl.closest('.workspace-leaf-content');
             
@@ -3311,7 +3312,7 @@ export class CardView extends ItemView {
         element.style.width = '800px';
         element.style.removeProperty('height');
         
-        // 计算对于 workspace-leaf-content 的���置
+        // 计算对于 workspace-leaf-content 的置
         const relativeLeft = elementRect.left - leafRect.left;
         const relativeTop = elementRect.top - leafRect.top;
         
@@ -3528,7 +3529,7 @@ export class CardView extends ItemView {
     private updateSettingsPanel(settingsPanel: HTMLElement) {
         // 空现有设置
         settingsPanel.empty();
-        // 获取当前视图的设置
+        // 获取当前视图的��置
         const currentSettings = this.cardSettings[this.currentView as keyof typeof this.cardSettings];
 
         // 添加基本设置选项
@@ -4797,7 +4798,7 @@ export class CardView extends ItemView {
             this.container.querySelectorAll('.drop-marker').forEach(marker => marker.remove());
             columns.forEach(col => col.classList.remove('drop-target'));
 
-            // 检查鼠标位置并更新放置标记
+            // 检查鼠标位���并更新放置标记
             for (const column of columns) {
                 const rect = column.getBoundingClientRect();
                 if (e.clientX >= rect.left && e.clientX <= rect.right &&
@@ -5055,7 +5056,7 @@ export class CardView extends ItemView {
             // 保存更新
             this.saveModuleSettings();
 
-            // 重新渲染主页视图并保持编��模式
+            // 重新渲染主页视图并保持编模式
             this.createHomeView().then(() => {
                 // 重新应用编辑模式
                 const modules = this.container.querySelectorAll('.module-container');
@@ -5252,7 +5253,7 @@ export class CardView extends ItemView {
             cls: 'todo-add-btn'
         });
 
-        // 创建待办事项列表容器
+        // 创建待办事���列表容器
         const todoList = todoContainer.createDiv('todo-list');
         
 
