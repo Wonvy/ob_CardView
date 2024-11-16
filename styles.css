@@ -1297,26 +1297,26 @@
 .weekly-notes .note-item {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   padding: 8px;
-  border-bottom: 1px solid var(--background-modifier-border);
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
   cursor: pointer;
 }
 .weekly-notes .note-item:hover {
-  color: var(--text-normal);
   background-color: var(--background-modifier-hover);
 }
 .weekly-notes .note-item .note-title {
-  width: 70%;
-  font-size: 0.85em;
-  color: var(--text-normal);
-  white-space: nowrap;
+  flex: 1;
+  margin-right: 12px;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .weekly-notes .note-item .note-date {
-  font-size: 0.85em;
-  white-space: nowrap;
+  font-size: 0.9em;
   color: var(--text-muted);
+  transition: all 0.2s ease;
 }
 
 .stats-module .stats-container {

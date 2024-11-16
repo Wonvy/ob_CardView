@@ -6,21 +6,21 @@
   .note-item
     display: flex
     justify-content: space-between
+    align-items: center
     padding: 8px
-    border-bottom: 1px solid var(--background-modifier-border)
+    border-radius: 4px
+    transition: background-color 0.2s ease
     cursor: pointer
     &:hover
-      color: var(--text-normal)
       background-color: var(--background-modifier-hover)
     .note-title
-      width: 70%
-      font-size: 0.85em
-      color: var(--text-normal)
-      white-space: nowrap
+      flex: 1
+      margin-right: 12px
       overflow: hidden
       text-overflow: ellipsis
-    .note-date
-      font-size: 0.85em
       white-space: nowrap
+    .note-date
+      font-size: 0.9em
       color: var(--text-muted)
+      transition: all 0.2s ease
     

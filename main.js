@@ -1134,7 +1134,7 @@ ${content}` : content;
       });
       const openButton = header.createDiv("note-open-button");
       openButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>`;
-      openButton.setAttribute("title", "\u5728\u65B0\u6807\u7B7E\u9875\u4E2D\uFFFD\uFFFD\uFFFD\u5F00");
+      openButton.setAttribute("title", "\u5728\u65B0\u6807\u7B7E\u9875\u4E2D\u5F00");
       openButton.style.opacity = "0";
       const cardContent = card.createDiv("note-card-content");
       const title = cardContent.createDiv("note-title");
@@ -1886,7 +1886,7 @@ ${emptyNotes.map((file) => file.basename).join("\n")}`
     this.currentDate = new Date(this.currentDate.getFullYear(), month);
     this.updateMonthView();
   }
-  // 月历-更新月视图
+  // 月历-更新��视图
   updateMonthView() {
     const monthView = this.container.querySelector(".month-view");
     if (!monthView) return;
@@ -3221,13 +3221,58 @@ ${content}` : content;
     for (const note of notes) {
       const noteItem = weeklyContainer.createDiv("note-item");
       noteItem.createEl("span", { text: note.basename, cls: "note-title" });
-      noteItem.createEl("span", {
-        text: new Date(note.stat.mtime).toLocaleDateString(),
-        cls: "note-date"
+      const dateContainer = noteItem.createEl("span", { cls: "note-date" });
+      const relativeTime = this.getRelativeTime(note.stat.mtime);
+      dateContainer.setText(relativeTime);
+      const exactDate = new Date(note.stat.mtime).toLocaleString("zh-CN", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit"
+      });
+      dateContainer.setAttribute("title", exactDate);
+      noteItem.addEventListener("mouseenter", () => {
+        dateContainer.setText(exactDate);
+      });
+      noteItem.addEventListener("mouseleave", () => {
+        dateContainer.setText(relativeTime);
       });
       noteItem.addEventListener("click", () => {
         openInAppropriateLeaf(this.app, note);
       });
+    }
+  }
+  // 添加计算相对时间的辅助方法
+  getRelativeTime(timestamp) {
+    const now = Date.now();
+    const diff = now - timestamp;
+    const minute = 60 * 1e3;
+    const hour = minute * 60;
+    const day = hour * 24;
+    const week = day * 7;
+    const month = day * 30;
+    const year = day * 365;
+    if (diff < minute) {
+      return "\u521A\u521A";
+    } else if (diff < hour) {
+      const minutes = Math.floor(diff / minute);
+      return `${minutes}\u5206\u949F\u524D`;
+    } else if (diff < day) {
+      const hours = Math.floor(diff / hour);
+      return `${hours}\u5C0F\u65F6\u524D`;
+    } else if (diff < week) {
+      const days = Math.floor(diff / day);
+      return `${days}\u5929\u524D`;
+    } else if (diff < month) {
+      const weeks = Math.floor(diff / week);
+      return `${weeks}\u5468\u524D`;
+    } else if (diff < year) {
+      const months = Math.floor(diff / month);
+      return `${months}\u4E2A\u6708\u524D`;
+    } else {
+      const years = Math.floor(diff / year);
+      return `${years}\u5E74\u524D`;
     }
   }
   // 模块-日历
@@ -3815,7 +3860,7 @@ ${content}` : content;
         const file = await this.createQuickNote(finalContent, [], fileName);
         if (file) {
           this.clearQuickNoteInputs(titleInput, noteInput, tags, tagsContainer, tagInput);
-          new import_obsidian2.Notice("\u7B14\u8BB0\u521B\u5EFA\u6210\u529F");
+          new import_obsidian2.Notice("\uFFFD\uFFFD\uFFFD\u8BB0\u521B\u5EFA\u6210\u529F");
         }
       } catch (error) {
         console.error("\u521B\u5EFA\u7B14\u8BB0\u5931\u8D25:", error);

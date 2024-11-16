@@ -700,7 +700,7 @@ export class CardView extends ItemView {
         this.statusLeft.empty();
         this.statusRight.empty();
         
-        // 添加加载状态指示器
+        // 添加加��状态指示器
         this.loadingStatus.innerHTML = `
             <div class="loading-indicator">
                 <div class="loading-spinner"></div>
@@ -1488,7 +1488,7 @@ export class CardView extends ItemView {
             // 添加打开按钮
             const openButton = header.createDiv('note-open-button');
             openButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>`;
-            openButton.setAttribute('title', '在新标签页中���开');
+            openButton.setAttribute('title', '在新标签页中开');
             openButton.style.opacity = '0';  // 默认隐藏
 
             // 创卡内容器
@@ -2536,7 +2536,7 @@ export class CardView extends ItemView {
         this.updateMonthView();
     }
 
-    // 月历-更新月视图
+    // 月历-更新��视图
     private updateMonthView() {
         const monthView = this.container.querySelector('.month-view');
         if (!monthView) return;
@@ -4430,14 +4430,70 @@ export class CardView extends ItemView {
         for (const note of notes) {
             const noteItem = weeklyContainer.createDiv('note-item');
             noteItem.createEl('span', { text: note.basename, cls: 'note-title' });
-            noteItem.createEl('span', { 
-                text: new Date(note.stat.mtime).toLocaleDateString(),
-                cls: 'note-date'
+            
+            // 创建日期容器
+            const dateContainer = noteItem.createEl('span', { cls: 'note-date' });
+            
+            // 计算相对时间
+            const relativeTime = this.getRelativeTime(note.stat.mtime);
+            dateContainer.setText(relativeTime);
+            
+            // 添加具体日期作为 title 属性
+            const exactDate = new Date(note.stat.mtime).toLocaleString('zh-CN', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            dateContainer.setAttribute('title', exactDate);
+            
+            // 添加鼠标悬停事件
+            noteItem.addEventListener('mouseenter', () => {
+                dateContainer.setText(exactDate);
+            });
+            
+            noteItem.addEventListener('mouseleave', () => {
+                dateContainer.setText(relativeTime);
             });
             
             noteItem.addEventListener('click', () => {
-                openInAppropriateLeaf(this.app,note);
+                openInAppropriateLeaf(this.app, note);
             });
+        }
+    }
+
+    // 添加计算相对时间的辅助方法
+    private getRelativeTime(timestamp: number): string {
+        const now = Date.now();
+        const diff = now - timestamp;
+        const minute = 60 * 1000;
+        const hour = minute * 60;
+        const day = hour * 24;
+        const week = day * 7;
+        const month = day * 30;
+        const year = day * 365;
+
+        if (diff < minute) {
+            return '刚刚';
+        } else if (diff < hour) {
+            const minutes = Math.floor(diff / minute);
+            return `${minutes}分钟前`;
+        } else if (diff < day) {
+            const hours = Math.floor(diff / hour);
+            return `${hours}小时前`;
+        } else if (diff < week) {
+            const days = Math.floor(diff / day);
+            return `${days}天前`;
+        } else if (diff < month) {
+            const weeks = Math.floor(diff / week);
+            return `${weeks}周前`;
+        } else if (diff < year) {
+            const months = Math.floor(diff / month);
+            return `${months}个月前`;
+        } else {
+            const years = Math.floor(diff / year);
+            return `${years}年前`;
         }
     }
 
@@ -4897,7 +4953,7 @@ export class CardView extends ItemView {
                 if (e.clientX >= rect.left && e.clientX <= rect.right &&
                     e.clientY >= rect.top && e.clientY <= rect.bottom) {
                     
-                    // 找到目标列
+                    // 找到目���列
                     dropTarget = column;
                     column.classList.add('drop-target');
 
@@ -5290,7 +5346,7 @@ export class CardView extends ItemView {
                     // 清理输入状态
                     this.clearQuickNoteInputs(titleInput, noteInput, tags, tagsContainer, tagInput);
                     
-                    new Notice('笔记创建成功');
+                    new Notice('���记创建成功');
                 }
             } catch (error) {
                 console.error('创建笔记失败:', error);
