@@ -1102,7 +1102,7 @@ ${content}` : content;
       }
       const folderPath = header.createDiv("note-folder");
       const folder = file.parent ? file.parent.path : "\u6839\u76EE\u5F55";
-      const pathParts = folder === "\u6839\u76EE" ? ["\u6839\u76EE\u5F55"] : folder.split("/");
+      const pathParts = folder === "\u76EE" ? ["\u6839\u76EE\u5F55"] : folder.split("/");
       pathParts.forEach((part, index) => {
         if (index > 0) {
           folderPath.createSpan({ text: " / ", cls: "folder-separator" });
@@ -1832,7 +1832,7 @@ ${emptyNotes.map((file) => file.basename).join("\n")}`
   // 月历-创建月视图
   async createMonthView() {
     if (this.currentLoadingView !== "month") {
-      console.log("\u4E2D\u65AD\u6708\u5386\u89C6\u56FE\u52A0\u8F7D\uFF1A\u89C6\u56FE\u5DF2\u5207\u6362");
+      console.log("\u4E2D\u65AD\u6708\u5386\u89C6\u56FE\uFFFD\uFFFD\u8F7D\uFF1A\u89C6\u56FE\u5DF2\u5207\u6362");
       return;
     }
     try {
@@ -2079,7 +2079,7 @@ ${emptyNotes.map((file) => file.basename).join("\n")}`
       await openInAppropriateLeaf(this.app, note);
     });
     noteItem.addEventListener("contextmenu", (e) => {
-      console.log("\u53F3\u83DC\u5355");
+      console.log("\u83DC\u5355");
       e.preventDefault();
       this.showContextMenu(e, this.getSelectedFiles());
     });
@@ -3026,8 +3026,6 @@ ${content}` : content;
   }
   // 创建主页视图
   async createHomeView() {
-    console.log("Creating home view...");
-    console.log("Current modules:", this.homeModules);
     if (this.currentLoadingView !== "home") {
       return;
     }
@@ -3444,23 +3442,29 @@ ${content}` : content;
       startY = e.pageY;
       startPosition = module2.getAttribute("data-position") || "";
       startIndex = Array.from(((_a = module2.parentElement) == null ? void 0 : _a.children) || []).indexOf(module2);
+      const rect = module2.getBoundingClientRect();
+      const originalWidth = rect.width;
+      const originalHeight = rect.height;
       console.log("\u62D6\u62FD\u5F00\u59CB:", {
         startX,
         startY,
         startPosition,
-        startIndex
+        startIndex,
+        originalWidth,
+        originalHeight
       });
       placeholder = document.createElement("div");
       placeholder.className = "module-placeholder";
-      placeholder.style.height = `${module2.offsetHeight}px`;
-      placeholder.style.width = `${module2.offsetWidth}px`;
+      placeholder.style.height = `${originalHeight}px`;
+      placeholder.style.width = `${originalWidth}px`;
       (_b = module2.parentElement) == null ? void 0 : _b.insertBefore(placeholder, module2);
       console.log("\u521B\u5EFA\u5360\u4F4D\u7B26");
       module2.style.position = "fixed";
       module2.style.zIndex = "1000";
-      module2.style.width = `${module2.offsetWidth}px`;
-      module2.style.left = `${module2.getBoundingClientRect().left}px`;
-      module2.style.top = `${module2.getBoundingClientRect().top}px`;
+      module2.style.width = `${originalWidth}px`;
+      module2.style.height = `${originalHeight}px`;
+      module2.style.left = `${rect.left}px`;
+      module2.style.top = `${rect.top}px`;
       module2.classList.add("dragging");
       console.log("\u5E94\u7528\u62D6\u62FD\u6837\u5F0F");
       document.addEventListener("mousemove", handleDrag);
@@ -3533,8 +3537,6 @@ ${content}` : content;
       if (!isDragging) return;
       console.log("\u505C\u6B62\u62D6\u62FD");
       isDragging = false;
-      document.removeEventListener("mousemove", handleDrag);
-      document.removeEventListener("mouseup", stopDrag);
       try {
         if (placeholder && placeholder.parentElement) {
           const targetColumn = placeholder.parentElement;
@@ -3542,30 +3544,26 @@ ${content}` : content;
           const moduleId = module2.getAttribute("data-module-id");
           const moduleConfig = this.homeModules.find((m) => m.id === moduleId);
           if (moduleConfig) {
-            moduleConfig.position = newPosition;
-            moduleConfig.columns = newPosition === "center" ? 2 : 1;
-            const beforeElement = placeholder.nextElementSibling;
-            const modules = Array.from(targetColumn.children).filter(
-              (child) => child.classList.contains("module-container")
-            );
-            const newIndex = beforeElement ? modules.indexOf(beforeElement) : modules.length;
-            const sameColumnModules = this.homeModules.filter((m) => m.position === newPosition).sort((a, b) => a.order - b.order);
-            moduleConfig.order = newIndex;
-            sameColumnModules.forEach((m, i) => {
-              if (i >= newIndex) {
-                m.order = i + 1;
-              }
-            });
-            await this.saveModuleSettings();
-            targetColumn.insertBefore(module2, placeholder);
             module2.style.position = "";
             module2.style.zIndex = "";
             module2.style.left = "";
             module2.style.top = "";
             module2.style.transform = "";
+            module2.style.width = "";
+            module2.style.height = "";
             module2.classList.remove("dragging");
-            module2.style.width = "100%";
-            module2.classList.add("editable");
+            targetColumn.insertBefore(module2, placeholder);
+            moduleConfig.position = newPosition;
+            moduleConfig.columns = newPosition === "center" ? 2 : 1;
+            const sameColumnModules = this.homeModules.filter((m) => m.position === newPosition);
+            const newIndex = Array.from(targetColumn.children).filter((child) => child.classList.contains("module-container")).indexOf(module2);
+            moduleConfig.order = newIndex;
+            sameColumnModules.forEach((m, i) => {
+              if (i >= newIndex && m.id !== moduleConfig.id) {
+                m.order = i + 1;
+              }
+            });
+            await this.saveModuleSettings();
           }
         }
         placeholder == null ? void 0 : placeholder.remove();
@@ -3578,6 +3576,8 @@ ${content}` : content;
         module2.style.left = "";
         module2.style.top = "";
         module2.style.transform = "";
+        module2.style.width = "";
+        module2.style.height = "";
         module2.classList.remove("dragging");
         placeholder == null ? void 0 : placeholder.remove();
       }

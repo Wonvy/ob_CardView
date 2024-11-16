@@ -868,7 +868,7 @@ export class CardView extends ItemView {
             this.container.toggleClass('edit-mode', isEditMode);
             editBtn.setText(isEditMode ? '完成编辑' : '编辑布局');
             editBtn.toggleClass('active', isEditMode); // 添加这行，切换按钮的激活状态
-            this.toggleModuleEditing(isEditMode);//切换模块编辑
+            this.toggleModuleEditing(isEditMode);//切换模块辑
         });
 
         // 卡片视图按钮组
@@ -1437,7 +1437,7 @@ export class CardView extends ItemView {
             // 创建文件夹路径
             const folderPath = header.createDiv('note-folder');
             const folder = file.parent ? file.parent.path : '根目录';
-            const pathParts = folder === '根目' ? ['根目录'] : folder.split('/');
+            const pathParts = folder === '目' ? ['根目录'] : folder.split('/');
 
             pathParts.forEach((part, index) => {
                 if (index > 0) {
@@ -1837,7 +1837,7 @@ export class CardView extends ItemView {
 
             // 使用虚拟滚动技术
             const fragment = document.createDocumentFragment();
-            const batchSize = 3; // 每批处理的日��组数
+            const batchSize = 3; // 每批处理的日组数
             const batches = Math.ceil(pageDates.length / batchSize);
 
             for (let i = 0; i < batches; i++) {
@@ -2452,7 +2452,7 @@ export class CardView extends ItemView {
     // 月历-创建月视图
     private async createMonthView() {
         if (this.currentLoadingView !== 'month') {
-            console.log('中断月历视图加载：视图已切换');
+            console.log('中断月历视图��载：视图已切换');
             return;
         }
 
@@ -2814,7 +2814,7 @@ export class CardView extends ItemView {
 
         // 右菜单
         noteItem.addEventListener('contextmenu', (e) => {
-            console.log('右菜单');
+            console.log('菜单');
             e.preventDefault();
             this.showContextMenu(e, this.getSelectedFiles());
         });
@@ -3126,7 +3126,7 @@ export class CardView extends ItemView {
         let isClick = true; // 新增变量，用于判断是否为点击事件
 
         const dragStart = (e: MouseEvent) => {
-            // 检查是否应该允许拖拽
+            // 检查是否应该允许拖
             const target = e.target as HTMLElement;
             if (!element.hasClass('minimized') && (
                 target.closest('.quick-note-input') || 
@@ -3144,7 +3144,7 @@ export class CardView extends ItemView {
             startX = e.clientX;
             startY = e.clientY;
 
-            // 获��各种位置信息
+            // 获各种位置信息
             const elementRect = element.getBoundingClientRect();
             const workspaceLeafContent = this.containerEl.closest('.workspace-leaf-content');
             
@@ -3529,7 +3529,7 @@ export class CardView extends ItemView {
     private updateSettingsPanel(settingsPanel: HTMLElement) {
         // 空现有设置
         settingsPanel.empty();
-        // 获取当前视图的��置
+        // 获取当前视图的设置
         const currentSettings = this.cardSettings[this.currentView as keyof typeof this.cardSettings];
 
         // 添加基本设置选项
@@ -4049,7 +4049,7 @@ export class CardView extends ItemView {
         // 计算新的周数
         newWeek += delta;
         
-        // 处理年份变更
+        // 处理年份更
         const getWeeksInYear = (year: number) => {
             const lastDay = new Date(year, 11, 31);
             const weekNum = this.getWeekNumber(lastDay);
@@ -4127,8 +4127,8 @@ export class CardView extends ItemView {
 
     // 创建主页视图
     private async createHomeView() {
-        console.log('Creating home view...');
-        console.log('Current modules:', this.homeModules);
+        // console.log('Creating home view...');
+        // console.log('Current modules:', this.homeModules);
         
         if (this.currentLoadingView !== 'home') {
             return;
@@ -4168,7 +4168,7 @@ export class CardView extends ItemView {
             console.log('Center modules:', centerModules);
             console.log('Right modules:', rightModules);
 
-            // 渲染左侧列模块
+            // 渲左侧列模块
             for (const module of leftModules) {
                 console.log('Creating left module:', module.id);
                 const moduleEl = await this.createModule(leftColumn, module);
@@ -4609,7 +4609,7 @@ export class CardView extends ItemView {
                     module.querySelectorAll('.module-drag-handle, .module-controls').forEach(el => el.remove());
                     
                     module.classList.add('editable');
-                    this.setupModuleDragging(module);
+                    this.setupModuleDragging(module); // 设置拖拽
                 }
             });
 
@@ -4720,9 +4720,9 @@ export class CardView extends ItemView {
             this.moveModule(module, 'down');
         });
 
-        moduleControls.appendChild(moveUpBtn);
-        moduleControls.appendChild(moveDownBtn);
-        module.appendChild(moduleControls);
+        moduleControls.appendChild(moveUpBtn);//向上移动按钮
+        moduleControls.appendChild(moveDownBtn);//向下移动按钮
+        module.appendChild(moduleControls);//添加到模块上
 
         // 定义拖拽开始函数
         const startDrag = (e: MouseEvent) => {
@@ -4745,27 +4745,35 @@ export class CardView extends ItemView {
             startPosition = module.getAttribute('data-position') || '';
             startIndex = Array.from(module.parentElement?.children || []).indexOf(module);
 
+            // 记录模块原始尺寸
+            const rect = module.getBoundingClientRect();
+            const originalWidth = rect.width;
+            const originalHeight = rect.height;
+
             console.log('拖拽开始:', { 
                 startX,
                 startY,
                 startPosition,
-                startIndex
+                startIndex,
+                originalWidth,
+                originalHeight
             });
 
             // 创建占位符
             placeholder = document.createElement('div');
             placeholder.className = 'module-placeholder';
-            placeholder.style.height = `${module.offsetHeight}px`;
-            placeholder.style.width = `${module.offsetWidth}px`;
+            placeholder.style.height = `${originalHeight}px`;
+            placeholder.style.width = `${originalWidth}px`;
             module.parentElement?.insertBefore(placeholder, module);
             console.log('创建占位符');
 
             // 设置拖拽样式
             module.style.position = 'fixed';
             module.style.zIndex = '1000';
-            module.style.width = `${module.offsetWidth}px`;
-            module.style.left = `${module.getBoundingClientRect().left}px`;
-            module.style.top = `${module.getBoundingClientRect().top}px`;
+            module.style.width = `${originalWidth}px`; // 使用固定宽度
+            module.style.height = `${originalHeight}px`; // 使用固定高度
+            module.style.left = `${rect.left}px`;
+            module.style.top = `${rect.top}px`;
             module.classList.add('dragging');
             console.log('应用拖拽样式');
 
@@ -4798,7 +4806,7 @@ export class CardView extends ItemView {
             this.container.querySelectorAll('.drop-marker').forEach(marker => marker.remove());
             columns.forEach(col => col.classList.remove('drop-target'));
 
-            // 检查鼠标位���并更新放置标记
+            // 检查鼠标位并更新放置标记
             for (const column of columns) {
                 const rect = column.getBoundingClientRect();
                 if (e.clientX >= rect.left && e.clientX <= rect.right &&
@@ -4874,12 +4882,8 @@ export class CardView extends ItemView {
             
             isDragging = false;
 
-            // 移除事件监听
-            document.removeEventListener('mousemove', handleDrag);
-            document.removeEventListener('mouseup', stopDrag);
-
             try {
-                // 如果有占位符，使用占位符的位置来确定目标列
+                // 如果有占位符，使用占位符的位置来确定目标位置
                 if (placeholder && placeholder.parentElement) {
                     const targetColumn = placeholder.parentElement;
                     const newPosition = targetColumn.classList.contains('left-column') ? 'left'
@@ -4891,51 +4895,42 @@ export class CardView extends ItemView {
                     const moduleConfig = this.homeModules.find(m => m.id === moduleId);
                     
                     if (moduleConfig) {
+                        // 先重置模块样式，这样模块就会回到文档流中
+                        module.style.position = '';
+                        module.style.zIndex = '';
+                        module.style.left = '';
+                        module.style.top = '';
+                        module.style.transform = '';
+                        module.style.width = '';
+                        module.style.height = '';
+                        module.classList.remove('dragging');
+
+                        // 然后移动模块到目标位置
+                        targetColumn.insertBefore(module, placeholder);
+
                         // 更新位置和列数
                         moduleConfig.position = newPosition;
                         moduleConfig.columns = newPosition === 'center' ? 2 : 1;
 
-                        // 获取在目标列中的位置索引
-                        const beforeElement = placeholder.nextElementSibling;
-                        const modules = Array.from(targetColumn.children).filter(
-                            child => child.classList.contains('module-container')
-                        );
-                        const newIndex = beforeElement 
-                            ? modules.indexOf(beforeElement as Element)
-                            : modules.length;
-
                         // 更新顺序
                         const sameColumnModules = this.homeModules
-                            .filter(m => m.position === newPosition)
-                            .sort((a, b) => a.order - b.order);
-                        
-                        // 插入到正确的位置
+                            .filter(m => m.position === newPosition);
+
+                        // 获取新的索引位置
+                        const newIndex = Array.from(targetColumn.children)
+                            .filter(child => child.classList.contains('module-container'))
+                            .indexOf(module);
+
+                        // 更新顺序
                         moduleConfig.order = newIndex;
-                        
-                        // 重新排序其他模块
                         sameColumnModules.forEach((m, i) => {
-                            if (i >= newIndex) {
+                            if (i >= newIndex && m.id !== moduleConfig.id) {
                                 m.order = i + 1;
                             }
                         });
 
                         // 保存更新
                         await this.saveModuleSettings();
-
-                        // 直接移动模块到目标位置
-                        targetColumn.insertBefore(module, placeholder);
-
-                        // 重置模块样式
-                        module.style.position = '';
-                        module.style.zIndex = '';
-                        module.style.left = '';
-                        module.style.top = '';
-                        module.style.transform = '';
-                        module.classList.remove('dragging');
-                        module.style.width = '100%';
-
-                        // 保持编辑模式
-                        module.classList.add('editable');
                     }
                 }
 
@@ -4952,6 +4947,8 @@ export class CardView extends ItemView {
                 module.style.left = '';
                 module.style.top = '';
                 module.style.transform = '';
+                module.style.width = '';
+                module.style.height = '';
                 module.classList.remove('dragging');
                 placeholder?.remove();
             }
@@ -5253,7 +5250,7 @@ export class CardView extends ItemView {
             cls: 'todo-add-btn'
         });
 
-        // 创建待办事���列表容器
+        // 创建待办事列表容器
         const todoList = todoContainer.createDiv('todo-list');
         
 
