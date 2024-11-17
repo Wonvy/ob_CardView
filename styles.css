@@ -1163,503 +1163,6 @@
   position: relative;
 }
 
-.todo-module {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  height: auto;
-}
-.todo-module .todo-input-area {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-.todo-module .todo-input-area .todo-input {
-  flex: 1;
-  padding: 8px 12px;
-  border: 1px solid var(--background-modifier-border);
-  border-radius: 4px;
-  background: var(--background-primary);
-}
-.todo-module .todo-input-area .todo-input:focus {
-  border-color: var(--interactive-accent);
-  outline: none;
-}
-.todo-module .todo-input-area .todo-date-input {
-  width: 130px;
-  padding: 8px 12px;
-  border: 1px solid var(--background-modifier-border);
-  border-radius: 4px;
-  background: var(--background-primary);
-  cursor: pointer;
-}
-.todo-module .todo-input-area .todo-date-input:focus {
-  border-color: var(--interactive-accent);
-  outline: none;
-}
-.todo-module .todo-input-area .todo-add-btn {
-  padding: 8px 16px;
-  background: var(--interactive-accent);
-  color: var(--text-on-accent);
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-.todo-module .todo-input-area .todo-add-btn:hover {
-  opacity: 0.9;
-  transform: translateY(-1px);
-}
-.todo-module .todo-tabs {
-  display: flex;
-  gap: 8px;
-  border-bottom: 1px solid var(--background-modifier-border);
-  padding-bottom: 8px;
-}
-.todo-module .todo-tabs .todo-tab {
-  padding: 4px 12px;
-  border-radius: 4px;
-  cursor: pointer;
-  color: var(--text-muted);
-  transition: all 0.2s ease;
-}
-.todo-module .todo-tabs .todo-tab:hover {
-  background: var(--background-modifier-hover);
-  color: var(--text-normal);
-}
-.todo-module .todo-tabs .todo-tab.active {
-  background: var(--interactive-accent);
-  color: var(--text-on-accent);
-}
-.todo-module .todo-list {
-  flex: 1;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.todo-module .todo-list .todo-item {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  padding: 0px 8px;
-  border-radius: 4px;
-  transition: all 0.2s ease;
-}
-.todo-module .todo-list .todo-item:hover {
-  background: var(--background-primary);
-  border-color: var(--interactive-accent);
-}
-.todo-module .todo-list .todo-item:hover .todo-delete-btn {
-  visibility: visible;
-}
-.todo-module .todo-list .todo-item .todo-checkbox {
-  width: 16px;
-  height: 16px;
-  cursor: pointer;
-}
-.todo-module .todo-list .todo-item .todo-content {
-  flex: 1;
-  color: var(--text-normal);
-}
-.todo-module .todo-list .todo-item .todo-content.completed {
-  text-decoration: line-through;
-  color: var(--text-muted);
-}
-.todo-module .todo-list .todo-item .todo-due-date {
-  font-size: 0.9em;
-  color: var(--text-muted);
-  padding: 2px;
-  border-radius: 4px;
-  transition: all 0.2s ease;
-}
-.todo-module .todo-list .todo-item .todo-due-date.overdue {
-  color: var(--text-error);
-}
-.todo-module .todo-list .todo-item .todo-delete-btn {
-  visibility: hidden;
-  color: var(--text-muted);
-  cursor: pointer;
-  font-size: 12px;
-  padding: 4px;
-  box-sizing: border-box;
-  border-radius: 4px;
-}
-.todo-module .todo-list .todo-item .todo-delete-btn:hover {
-  color: var(--text-error);
-}
-
-.weekly-notes {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.weekly-notes .note-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px;
-  border-radius: 4px;
-  transition: background-color 0.2s ease;
-  cursor: pointer;
-}
-.weekly-notes .note-item:hover {
-  background-color: var(--background-modifier-hover);
-}
-.weekly-notes .note-item .note-title {
-  flex: 1;
-  margin-right: 12px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.weekly-notes .note-item .note-date {
-  font-size: 0.9em;
-  color: var(--text-muted);
-  transition: all 0.2s ease;
-}
-
-.stats-module .stats-container {
-  display: flex;
-  flex-direction: row;
-  justify-content: space-evenly;
-}
-.stats-module .stats-container .stat-card {
-  text-align: center;
-  display: flex;
-  gap: 5px;
-  padding: 8px;
-  flex-direction: column;
-}
-.stats-module .stats-container .stat-card .stat-label {
-  color: var(--text-muted);
-  font-size: 0.8em;
-}
-.stats-module .stats-container .stat-card .stat-value {
-  font-size: 1.3em;
-  font-weight: bold;
-  color: var(--text-accent);
-}
-
-.heatmap-container {
-  padding: 16px;
-  max-width: 100%;
-  overflow-x: auto;
-}
-.heatmap-container .heatmap-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  position: relative;
-  width: fit-content;
-}
-.heatmap-container .heatmap-grid .month-labels {
-  display: flex;
-  margin-bottom: 4px;
-  flex-direction: row;
-  justify-content: space-between;
-  flex-wrap: nowrap;
-}
-.heatmap-container .heatmap-grid .month-labels .month-label {
-  text-align: center;
-  color: var(--text-muted);
-  font-size: 0.8em;
-  cursor: pointer;
-  opacity: 0.2;
-  transition: all 0.2s ease;
-}
-.heatmap-container .heatmap-grid .month-labels .month-label:hover {
-  color: var(--text-normal);
-  opacity: 1;
-}
-.heatmap-container .heatmap-grid .month-labels .month-label.highlight {
-  color: var(--text-normal);
-  font-weight: 800;
-  opacity: 1;
-}
-.heatmap-container .heatmap-grid .week-labels {
-  position: absolute;
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  padding-top: 4px;
-}
-.heatmap-container .heatmap-grid .week-labels .week-label {
-  height: 10px;
-  color: var(--text-muted);
-  font-size: 0.8em;
-  text-align: left;
-  transition: all 0.2s ease;
-  opacity: 0.2;
-}
-.heatmap-container .heatmap-grid .week-labels .week-label.highlight {
-  color: var(--text-normal);
-  font-weight: 800;
-  opacity: 1;
-}
-.heatmap-container .heatmap-grid .days-container {
-  padding-left: 20px;
-  display: grid;
-  grid-template-rows: repeat(7, 1fr);
-  grid-auto-flow: column;
-  gap: 2px;
-  width: fit-content;
-}
-.heatmap-container .heatmap-grid .days-container .day-cell {
-  width: 10px;
-  height: 10px;
-  border-radius: 2px;
-  transition: all 0.2s ease;
-  cursor: pointer;
-}
-.heatmap-container .heatmap-grid .days-container .day-cell:hover {
-  border: 1px solid var(--text-normal);
-  transform: scale(1.5);
-}
-.heatmap-container .heatmap-grid .days-container .day-cell.month-hover {
-  filter: brightness(1.1);
-}
-.heatmap-container .heatmap-grid .days-container .day-cell.level-0 {
-  background-color: var(--background-modifier-border);
-}
-.heatmap-container .heatmap-grid .days-container .day-cell.level-0.month-hover {
-  background-color: var(--background-modifier-border-hover);
-}
-.heatmap-container .heatmap-grid .days-container .day-cell.level-1 {
-  background-color: #9be9a8;
-}
-.heatmap-container .heatmap-grid .days-container .day-cell.level-1.month-hover {
-  background-color: #adf0b9;
-}
-.heatmap-container .heatmap-grid .days-container .day-cell.level-2 {
-  background-color: #40c463;
-}
-.heatmap-container .heatmap-grid .days-container .day-cell.level-2.month-hover {
-  background-color: #52d375;
-}
-.heatmap-container .heatmap-grid .days-container .day-cell.level-3 {
-  background-color: #30a14e;
-}
-.heatmap-container .heatmap-grid .days-container .day-cell.level-3.month-hover {
-  background-color: #42b360;
-}
-.heatmap-container .heatmap-grid .days-container .day-cell.level-4 {
-  background-color: #216e39;
-}
-.heatmap-container .heatmap-grid .days-container .day-cell.level-4.month-hover {
-  background-color: #338a4b;
-}
-
-.module-container.calendar-module {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-.module-container.calendar-module .module-header {
-  display: none;
-}
-.module-container.calendar-module .module-content {
-  padding: 0;
-}
-
-.module-container.calendar-module .module-content .calendar-module {
-  position: relative;
-}
-
-.right-column .module-container.calendar-module:hover .notes-section {
-  transform: translateX(-100%);
-}
-.right-column .module-container.calendar-module .notes-section.active {
-  transform: translateX(-100%);
-}
-
-.left-column .module-container.calendar-module:hover .notes-section {
-  transform: translateX(100%);
-}
-.left-column .module-container.calendar-module .notes-section.active {
-  transform: translateX(100%);
-}
-
-.center-column .module-container.calendar-module {
-  max-height: 289px;
-}
-.center-column .module-container.calendar-module .calendar-module {
-  display: flex;
-  height: 100%;
-  position: relative;
-  flex-direction: row;
-}
-.center-column .module-container.calendar-module .calendar-module .calendar-section {
-  width: 50%;
-}
-.center-column .module-container.calendar-module .calendar-module .notes-section {
-  width: 50%;
-  position: relative;
-}
-
-.module-container.calendar-module {
-  position: relative;
-}
-.module-container.calendar-module .calendar-container {
-  width: auto;
-  position: relative;
-}
-.module-container.calendar-module .notes-section {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  padding: 10px;
-  background: var(--background-primary);
-  border-radius: 0 8px 8px 0;
-  border: 1px solid var(--background-modifier-border);
-  border-bottom: none;
-  z-index: 1;
-  transition: all 0.2s ease;
-}
-.module-container.calendar-module .notes-section .date-title {
-  display: flex;
-  height: 30px;
-  justify-content: center;
-  align-items: center;
-  color: var(--interactive-accent);
-  border-bottom: 1px solid var(--background-modifier-border);
-}
-.module-container.calendar-module .notes-section .notes-list {
-  height: calc(100% - 30px);
-  display: flex;
-  font-size: 14px;
-  gap: 7px;
-  margin-top: 7px;
-  flex-direction: column;
-  overflow-y: auto;
-}
-.module-container.calendar-module .notes-section .note-item {
-  display: flex;
-  padding: 4px;
-  cursor: pointer;
-  border-radius: 4px;
-}
-.module-container.calendar-module .notes-section .note-item:hover {
-  background-color: var(--background-modifier-hover);
-}
-
-.dynamic-module {
-  height: 100%;
-  overflow-y: auto;
-  padding: 1rem;
-}
-.dynamic-module .timeline-layout {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-.dynamic-module .timeline-container {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-.dynamic-module .timeline-item {
-  display: flex;
-  gap: 1rem;
-  position: relative;
-  padding-left: 2rem;
-}
-.dynamic-module .timeline-item .time-point {
-  position: absolute;
-  left: 0;
-  top: 0.5rem;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background-color: var(--interactive-accent);
-  z-index: 2;
-}
-.dynamic-module .timeline-item .time-line {
-  position: absolute;
-  left: 5px;
-  top: 1rem;
-  bottom: -1.5rem;
-  width: 2px;
-  background-color: var(--background-modifier-border);
-}
-.dynamic-module .timeline-item .time-display {
-  min-width: 80px;
-  color: var(--text-muted);
-  font-size: 0.9em;
-  padding-top: 0.25rem;
-}
-.dynamic-module .timeline-item .dynamic-card {
-  flex: 1;
-  background-color: var(--background-secondary);
-  border: 1px solid var(--background-modifier-border);
-  border-radius: 8px;
-  padding: 1rem;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-.dynamic-module .timeline-item .dynamic-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-.dynamic-module .timeline-item .dynamic-card .card-title {
-  font-size: 1.1em;
-  font-weight: 500;
-  margin-bottom: 0.8rem;
-  color: var(--text-normal);
-}
-.dynamic-module .timeline-item .dynamic-card .card-preview {
-  font-size: 0.9em;
-  color: var(--text-muted);
-  line-height: 1.5;
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-}
-.dynamic-module .timeline-item .dynamic-card .card-preview h1, .dynamic-module .timeline-item .dynamic-card .card-preview h2, .dynamic-module .timeline-item .dynamic-card .card-preview h3, .dynamic-module .timeline-item .dynamic-card .card-preview h4, .dynamic-module .timeline-item .dynamic-card .card-preview h5, .dynamic-module .timeline-item .dynamic-card .card-preview h6 {
-  font-size: 1em;
-  margin: 0.5em 0;
-}
-.dynamic-module .timeline-item .dynamic-card .card-preview p {
-  margin: 0.5em 0;
-}
-.dynamic-module .timeline-item .dynamic-card .card-preview ul, .dynamic-module .timeline-item .dynamic-card .card-preview ol {
-  margin: 0.5em 0;
-  padding-left: 1.5em;
-}
-.dynamic-module .dynamic-loading {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
-  gap: 0.5rem;
-}
-.dynamic-module .dynamic-loading .loading-spinner {
-  width: 20px;
-  height: 20px;
-  border: 2px solid var(--background-modifier-border);
-  border-top-color: var(--interactive-accent);
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-.dynamic-module .dynamic-loading .loading-text {
-  color: var(--text-muted);
-  font-size: 0.9em;
-}
-.dynamic-module .timeline-item:last-child .time-line {
-  display: none;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
 .week-view {
   display: flex;
   flex-direction: column;
@@ -2476,6 +1979,517 @@
   background-color: var(--interactive-accent-hover);
 }
 
+.todo-module {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  height: auto;
+}
+.todo-module .todo-input-area {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.todo-module .todo-input-area .todo-input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 4px;
+  background: var(--background-primary);
+}
+.todo-module .todo-input-area .todo-input:focus {
+  border-color: var(--interactive-accent);
+  outline: none;
+}
+.todo-module .todo-input-area .todo-date-input {
+  width: 130px;
+  padding: 8px 12px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 4px;
+  background: var(--background-primary);
+  cursor: pointer;
+}
+.todo-module .todo-input-area .todo-date-input:focus {
+  border-color: var(--interactive-accent);
+  outline: none;
+}
+.todo-module .todo-input-area .todo-add-btn {
+  padding: 8px 16px;
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.todo-module .todo-input-area .todo-add-btn:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+.todo-module .todo-tabs {
+  display: flex;
+  gap: 8px;
+  border-bottom: 1px solid var(--background-modifier-border);
+  padding-bottom: 8px;
+}
+.todo-module .todo-tabs .todo-tab {
+  padding: 4px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  color: var(--text-muted);
+  transition: all 0.2s ease;
+}
+.todo-module .todo-tabs .todo-tab:hover {
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+.todo-module .todo-tabs .todo-tab.active {
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+}
+.todo-module .todo-list {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.todo-module .todo-list .todo-item {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0px 8px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+.todo-module .todo-list .todo-item:hover {
+  background: var(--background-primary);
+  border-color: var(--interactive-accent);
+}
+.todo-module .todo-list .todo-item:hover .todo-delete-btn {
+  visibility: visible;
+}
+.todo-module .todo-list .todo-item .todo-checkbox {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+.todo-module .todo-list .todo-item .todo-content {
+  flex: 1;
+  color: var(--text-normal);
+}
+.todo-module .todo-list .todo-item .todo-content.completed {
+  text-decoration: line-through;
+  color: var(--text-muted);
+}
+.todo-module .todo-list .todo-item .todo-due-date {
+  font-size: 0.9em;
+  color: var(--text-muted);
+  padding: 2px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+.todo-module .todo-list .todo-item .todo-due-date.overdue {
+  color: var(--text-error);
+}
+.todo-module .todo-list .todo-item .todo-delete-btn {
+  visibility: hidden;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 12px;
+  padding: 4px;
+  box-sizing: border-box;
+  border-radius: 4px;
+}
+.todo-module .todo-list .todo-item .todo-delete-btn:hover {
+  color: var(--text-error);
+}
+
+.weekly-notes {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.weekly-notes .note-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+  cursor: pointer;
+}
+.weekly-notes .note-item:hover {
+  background-color: var(--background-modifier-hover);
+}
+.weekly-notes .note-item .note-title {
+  flex: 1;
+  margin-right: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.weekly-notes .note-item .note-date {
+  font-size: 0.9em;
+  color: var(--text-muted);
+  transition: all 0.2s ease;
+}
+
+.stats-module .stats-container {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-evenly;
+}
+.stats-module .stats-container .stat-card {
+  text-align: center;
+  display: flex;
+  gap: 5px;
+  padding: 8px;
+  flex-direction: column;
+}
+.stats-module .stats-container .stat-card .stat-label {
+  color: var(--text-muted);
+  font-size: 0.8em;
+}
+.stats-module .stats-container .stat-card .stat-value {
+  font-size: 1.3em;
+  font-weight: bold;
+  color: var(--text-accent);
+}
+
+.heatmap-container {
+  padding: 16px;
+  max-width: 100%;
+  overflow-x: auto;
+}
+.heatmap-container .heatmap-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  position: relative;
+  width: fit-content;
+}
+.heatmap-container .heatmap-grid .month-labels {
+  display: flex;
+  margin-bottom: 4px;
+  flex-direction: row;
+  justify-content: space-between;
+  flex-wrap: nowrap;
+}
+.heatmap-container .heatmap-grid .month-labels .month-label {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.8em;
+  cursor: pointer;
+  opacity: 0.2;
+  transition: all 0.2s ease;
+}
+.heatmap-container .heatmap-grid .month-labels .month-label:hover {
+  color: var(--text-normal);
+  opacity: 1;
+}
+.heatmap-container .heatmap-grid .month-labels .month-label.highlight {
+  color: var(--text-normal);
+  font-weight: 800;
+  opacity: 1;
+}
+.heatmap-container .heatmap-grid .week-labels {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding-top: 4px;
+}
+.heatmap-container .heatmap-grid .week-labels .week-label {
+  height: 10px;
+  color: var(--text-muted);
+  font-size: 0.8em;
+  text-align: left;
+  transition: all 0.2s ease;
+  opacity: 0.2;
+}
+.heatmap-container .heatmap-grid .week-labels .week-label.highlight {
+  color: var(--text-normal);
+  font-weight: 800;
+  opacity: 1;
+}
+.heatmap-container .heatmap-grid .days-container {
+  padding-left: 20px;
+  display: grid;
+  grid-template-rows: repeat(7, 1fr);
+  grid-auto-flow: column;
+  gap: 2px;
+  width: fit-content;
+}
+.heatmap-container .heatmap-grid .days-container .day-cell {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+.heatmap-container .heatmap-grid .days-container .day-cell:hover {
+  border: 1px solid var(--text-normal);
+  transform: scale(1.5);
+}
+.heatmap-container .heatmap-grid .days-container .day-cell.month-hover {
+  filter: brightness(1.1);
+}
+.heatmap-container .heatmap-grid .days-container .day-cell.level-0 {
+  background-color: var(--background-modifier-border);
+}
+.heatmap-container .heatmap-grid .days-container .day-cell.level-0.month-hover {
+  background-color: var(--background-modifier-border-hover);
+}
+.heatmap-container .heatmap-grid .days-container .day-cell.level-1 {
+  background-color: #9be9a8;
+}
+.heatmap-container .heatmap-grid .days-container .day-cell.level-1.month-hover {
+  background-color: #adf0b9;
+}
+.heatmap-container .heatmap-grid .days-container .day-cell.level-2 {
+  background-color: #40c463;
+}
+.heatmap-container .heatmap-grid .days-container .day-cell.level-2.month-hover {
+  background-color: #52d375;
+}
+.heatmap-container .heatmap-grid .days-container .day-cell.level-3 {
+  background-color: #30a14e;
+}
+.heatmap-container .heatmap-grid .days-container .day-cell.level-3.month-hover {
+  background-color: #42b360;
+}
+.heatmap-container .heatmap-grid .days-container .day-cell.level-4 {
+  background-color: #216e39;
+}
+.heatmap-container .heatmap-grid .days-container .day-cell.level-4.month-hover {
+  background-color: #338a4b;
+}
+
+.module-container.calendar-module {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.module-container.calendar-module .module-header {
+  display: none;
+}
+.module-container.calendar-module .module-content {
+  padding: 0;
+}
+
+.module-container.calendar-module .module-content .calendar-module {
+  position: relative;
+}
+
+.right-column .module-container.calendar-module:hover .notes-section {
+  transform: translateX(-100%);
+}
+.right-column .module-container.calendar-module .notes-section.active {
+  transform: translateX(-100%);
+}
+
+.left-column .module-container.calendar-module:hover .notes-section {
+  transform: translateX(100%);
+}
+.left-column .module-container.calendar-module .notes-section.active {
+  transform: translateX(100%);
+}
+
+.center-column .module-container.calendar-module {
+  max-height: 289px;
+}
+.center-column .module-container.calendar-module .calendar-module {
+  display: flex;
+  height: 100%;
+  position: relative;
+  flex-direction: row;
+}
+.center-column .module-container.calendar-module .calendar-module .calendar-section {
+  width: 50%;
+}
+.center-column .module-container.calendar-module .calendar-module .notes-section {
+  width: 50%;
+  position: relative;
+}
+
+.module-container.calendar-module {
+  position: relative;
+}
+.module-container.calendar-module .calendar-container {
+  width: auto;
+  position: relative;
+}
+.module-container.calendar-module .notes-section {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  padding: 10px;
+  background: var(--background-primary);
+  border-radius: 0 8px 8px 0;
+  border: 1px solid var(--background-modifier-border);
+  border-bottom: none;
+  z-index: 1;
+  transition: all 0.2s ease;
+}
+.module-container.calendar-module .notes-section .date-title {
+  display: flex;
+  height: 30px;
+  justify-content: center;
+  align-items: center;
+  color: var(--interactive-accent);
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+.module-container.calendar-module .notes-section .notes-list {
+  height: calc(100% - 30px);
+  display: flex;
+  font-size: 14px;
+  gap: 7px;
+  margin-top: 7px;
+  flex-direction: column;
+  overflow-y: auto;
+}
+.module-container.calendar-module .notes-section .note-item {
+  display: flex;
+  padding: 4px;
+  cursor: pointer;
+  border-radius: 4px;
+}
+.module-container.calendar-module .notes-section .note-item:hover {
+  background-color: var(--background-modifier-hover);
+}
+
+.module-container.dynamic-module {
+  background-color: transparent;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+}
+.module-container.dynamic-module .module-header {
+  display: none;
+}
+.module-container.dynamic-module .module-content {
+  padding: 0;
+  background-color: transparent;
+}
+
+.dynamic-module {
+  height: 100%;
+  overflow-y: auto;
+}
+.dynamic-module .timeline-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.dynamic-module .timeline-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+.dynamic-module .timeline-item {
+  display: flex;
+  gap: 1rem;
+  position: relative;
+  padding-left: 2rem;
+  flex-direction: column;
+}
+.dynamic-module .timeline-item .time-point {
+  position: absolute;
+  left: 0;
+  top: 0.5rem;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: var(--interactive-accent);
+  z-index: 2;
+}
+.dynamic-module .timeline-item .time-line {
+  position: absolute;
+  left: 5px;
+  top: 1rem;
+  bottom: -1.5rem;
+  width: 2px;
+  background-color: var(--background-modifier-border);
+}
+.dynamic-module .timeline-item .time-display {
+  min-width: 80px;
+  color: var(--text-muted);
+  font-size: 0.9em;
+  padding-top: 0.25rem;
+}
+.dynamic-module .timeline-item .dynamic-card {
+  flex: 1;
+  background-color: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 8px;
+  padding: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.dynamic-module .timeline-item .dynamic-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+.dynamic-module .timeline-item .dynamic-card .card-title {
+  font-size: 1.1em;
+  font-weight: 500;
+  margin-bottom: 0.8rem;
+  color: var(--text-normal);
+}
+.dynamic-module .timeline-item .dynamic-card .card-preview {
+  font-size: 0.9em;
+  color: var(--text-muted);
+  line-height: 1.5;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+}
+.dynamic-module .timeline-item .dynamic-card .card-preview h1, .dynamic-module .timeline-item .dynamic-card .card-preview h2, .dynamic-module .timeline-item .dynamic-card .card-preview h3, .dynamic-module .timeline-item .dynamic-card .card-preview h4, .dynamic-module .timeline-item .dynamic-card .card-preview h5, .dynamic-module .timeline-item .dynamic-card .card-preview h6 {
+  font-size: 1em;
+  margin: 0.5em 0;
+}
+.dynamic-module .timeline-item .dynamic-card .card-preview p {
+  margin: 0.5em 0;
+}
+.dynamic-module .timeline-item .dynamic-card .card-preview ul, .dynamic-module .timeline-item .dynamic-card .card-preview ol {
+  margin: 0.5em 0;
+  padding-left: 1.5em;
+}
+.dynamic-module .dynamic-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  gap: 0.5rem;
+}
+.dynamic-module .dynamic-loading .loading-spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--background-modifier-border);
+  border-top-color: var(--interactive-accent);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+.dynamic-module .dynamic-loading .loading-text {
+  color: var(--text-muted);
+  font-size: 0.9em;
+}
+.dynamic-module .timeline-item:last-child .time-line {
+  display: none;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
 .card-view-container {
   display: flex;
   flex-direction: column;
