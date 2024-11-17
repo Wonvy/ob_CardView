@@ -605,7 +605,7 @@ var CardView = class extends import_obsidian2.ItemView {
       const title = (_a = titleInput == null ? void 0 : titleInput.value) == null ? void 0 : _a.trim();
       const content = noteInput.value.trim();
       if (!content) {
-        new import_obsidian2.Notice("\u8BF7\u8F93\u5165\u7B14\u8BB0\u5BB9");
+        new import_obsidian2.Notice("\u8BF7\u8F93\u5165\u7B14\u8BB0\u5185\u5BB9");
         return;
       }
       try {
@@ -908,7 +908,7 @@ ${content}` : content;
           this.createMonthView();
           break;
         case "week":
-          statusMessage = "\u5207\u6362\u5230\u5468\u89C6\u56FE";
+          statusMessage = "\u5207\u6362\u5468\u89C6\u56FE";
           this.createWeekView();
           break;
       }
@@ -950,7 +950,7 @@ ${content}` : content;
       this.loadingIndicator.style.display = "flex";
       await this.loadNextPage();
       this.setupInfiniteScroll();
-      console.log("\u7B14\u8BB0\u52A0\u5B8C\u6210");
+      console.log("\u7B14\u8BB0\u52A0\u8F7D\u5B8C\u6210");
     } catch (error) {
       console.error("loadNotes \u9519\u8BEF:", error);
       new import_obsidian2.Notice("\u52A0\u8F7D\u7B14\u8BB0\u5931\u8D25\uFF0C\u8BF7\u68C0\u67E5\u63A7\u5236\u53F0\u83B7\u53D6\u8BE6\u7EC6\u4FE1\u606F");
@@ -984,7 +984,7 @@ ${content}` : content;
           try {
             return await this.createNoteCard(file);
           } catch (error) {
-            console.error("\u521B\u5EFA\u5361\u7247\u5931:", file.path, error);
+            console.error("\u521B\u5EFA\u5361\u7247\u5931\u8D25:", file.path, error);
             return null;
           }
         })
@@ -1005,12 +1005,12 @@ ${content}` : content;
       this.currentPage++;
     } catch (error) {
       console.error("loadNextPage \u9519\u8BEF:", error);
-      this.updateLoadingStatus("\u52A0\u5931\u8D25");
+      this.updateLoadingStatus("\u52A0\u8F7D\u5931\u8D25");
       new import_obsidian2.Notice("\u52A0\u8F7D\u7B14\u8BB0\u5931\u8D25");
     } finally {
       this.isLoading = false;
       if (!this.hasMoreNotes) {
-        this.updateLoadingStatus("\u52A0\u8F7D\u6210");
+        this.updateLoadingStatus("\u52A0\u8F7D\u5B8C\u6210");
         this.loadingIndicator.style.display = "none";
       } else {
         this.loadingIndicator.style.display = "flex";
@@ -1134,7 +1134,7 @@ ${content}` : content;
       });
       const openButton = header.createDiv("note-open-button");
       openButton.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>`;
-      openButton.setAttribute("title", "\u5728\u65B0\u6807\u7B7E\u9875\u4E2D\u5F00");
+      openButton.setAttribute("title", "\u5728\u65B0\u6807\u7B7E\u9875\u4E2D\u6253\u5F00");
       openButton.style.opacity = "0";
       const cardContent = card.createDiv("note-card-content");
       const title = cardContent.createDiv("note-title");
@@ -1313,7 +1313,7 @@ ${content}` : content;
   }
   // 笔记-创建
   async createNewNote(date) {
-    const baseFileName = date ? date.toLocaleDateString() : "\u672A\u547D";
+    const baseFileName = date ? date.toLocaleDateString() : "\u672A\u547D\u540D";
     let fileName = baseFileName;
     let counter = 1;
     while (this.app.vault.getAbstractFileByPath(`${fileName}.md`)) {
@@ -1447,10 +1447,10 @@ ${content}` : content;
       }
     }
   }
-  // 时间轴-滚动听
+  // 时间轴-滚动监听
   setupTimelineScroll(container) {
     try {
-      console.log("\u8BBE\u7F6E\u65F6\u95F4\u8F74\u6EDA\u76D1\u542C...");
+      console.log("\u8BBE\u7F6E\u65F6\u95F4\u8F74\u6EDA\u52A8\u76D1\u542C...");
       const observer = new IntersectionObserver(
         (entries) => {
           entries.forEach((entry) => {
@@ -1475,7 +1475,7 @@ ${content}` : content;
           this.loadTimelinePage(container);
         }
       });
-      console.log("\u5DF2\u6DFB\u52A0\u65F6\u8F74\u6EDA\u52A8\u4E8B\u4EF6\u76D1\u542C");
+      console.log("\u5DF2\u6DFB\u52A0\u65F6\u95F4\u8F74\u6EDA\u52A8\u4E8B\u4EF6\u76D1\u542C");
     } catch (error) {
       console.error("\u8BBE\u7F6E\u65F6\u95F4\u8F74\u6EDA\u52A8\u76D1\u542C\u5931\u8D25:", error);
     }
@@ -1496,7 +1496,7 @@ ${content}` : content;
     this.loadingIndicator.style.display = "none";
     await this.loadNextPage();
     this.setupInfiniteScroll();
-    this.updateLoadingStatus("\u5237\u89C6\u56FE...");
+    this.updateLoadingStatus("\u5237\u65B0\u89C6\u56FE...");
   }
   // 卡片-选择
   handleCardSelection(path, event) {
@@ -1533,7 +1533,7 @@ ${content}` : content;
     }
     this.lastSelectedNote = path;
   }
-  // 清除择
+  // 清除选择
   clearSelection() {
     this.selectedNotes.clear();
     this.container.querySelectorAll(".note-card.selected").forEach((card) => {
@@ -1563,7 +1563,7 @@ ${content}` : content;
         });
       });
       menu.addItem((item) => {
-        item.setTitle(`\u79FB\u52A8 ${files.length} \u4E2A\u6587`).setIcon("move").onClick(() => {
+        item.setTitle(`\u79FB\u52A8 ${files.length} \u4E2A\u6587\u4EF6`).setIcon("move").onClick(() => {
           const modal = new EnhancedFileSelectionModal(
             this.app,
             files,
@@ -1580,7 +1580,7 @@ ${content}` : content;
           const confirm = await new ConfirmModal(
             this.app,
             "\u786E\u8BA4\u5220\u9664",
-            `\u662F\u5426\u786E\u5B9A\u8981\u5220\u9664\u9009\u4E2D\u7684 ${files.length} \u4E2A\u4EF6\uFF1F`
+            `\u662F\u5426\u786E\u5B9A\u8981\u5220\u9664\u9009\u4E2D\u7684 ${files.length} \u4E2A\u6587\u4EF6\uFF1F`
           ).show();
           if (confirm) {
             try {
@@ -1607,7 +1607,7 @@ ${content}` : content;
     }
     menu.showAtMouseEvent(event);
   }
-  // 卡片-调整大
+  // 卡片-调整大小
   adjustCardSize(delta) {
     const adjustment = delta > 0 ? -10 : 10;
     const newSize = Math.max(
@@ -1620,7 +1620,7 @@ ${content}` : content;
       this.plugin.saveCardWidth(newSize);
     }
   }
-  // 卡-调整高度
+  // 卡片-调整高度
   adjustCardHeight(delta) {
     var _a, _b;
     const adjustment = delta > 0 ? -10 : 10;
@@ -1643,7 +1643,7 @@ ${content}` : content;
       }
     });
   }
-  // 片-新高度
+  // 卡片-新高度
   updateCardHeight(height) {
     this.cardHeight = height;
     this.container.querySelectorAll(".note-card").forEach((card) => {
@@ -1731,7 +1731,7 @@ ${content}` : content;
     const regex = new RegExp(`(${escapedSearchTerm})`, "gi");
     return text.replace(regex, '<span class="search-highlight">$1</span>');
   }
-  // 搜索=文件内
+  // 搜索-文件内容
   async fileContentContainsSearch(file) {
     if (!this.currentSearchTerm || this.currentSearchTerm.trim() === "") {
       return true;
@@ -1760,7 +1760,7 @@ ${content}` : content;
       this.refreshView();
     }, 200));
   }
-  // 令-创建按钮
+  // 命令-创建按钮
   createCommandButton(toolbar) {
     const commandContainer = toolbar.createDiv("command-container");
     const commandBtn = commandContainer.createEl("button", {
@@ -1779,7 +1779,7 @@ ${content}` : content;
       this.deleteEmptyNotes();
     });
     const batchRenameItem = menu.createDiv("command-menu-item");
-    batchRenameItem.setText("\u6279\u91CF\u91CD\u540D");
+    batchRenameItem.setText("\u6279\u91CF\u91CD\u547D\u540D");
     batchRenameItem.addEventListener("click", () => {
       menu.style.display = "none";
       console.log("\u6279\u91CF\u91CD\u547D\u540D\u529F\u80FD\u5B9E\u73B0");
@@ -1832,7 +1832,7 @@ ${emptyNotes.map((file) => file.basename).join("\n")}`
   // 月历-创建月视图
   async createMonthView() {
     if (this.currentLoadingView !== "month") {
-      console.log("\u4E2D\u65AD\u6708\u5386\u89C6\u56FE\u8F7D\uFF1A\u89C6\u56FE\u5DF2\u5207\u6362");
+      console.log("\u4E2D\u65AD\u6708\u5386\u89C6\u56FE\u52A0\u8F7D\uFF1A\u89C6\u56FE\u5DF2\u5207\u6362");
       return;
     }
     try {
@@ -1886,7 +1886,7 @@ ${emptyNotes.map((file) => file.basename).join("\n")}`
     this.currentDate = new Date(this.currentDate.getFullYear(), month);
     this.updateMonthView();
   }
-  // 月历-更新��视图
+  // 月历-更新视图
   updateMonthView() {
     const monthView = this.container.querySelector(".month-view");
     if (!monthView) return;
@@ -1993,7 +1993,7 @@ ${emptyNotes.map((file) => file.basename).join("\n")}`
   // 列表-创建视图
   async createListView() {
     if (this.currentLoadingView !== "list") {
-      console.log("\u4E2D\u5217\u8868\u89C6\u56FE\u52A0\u8F7D\uFF1A\u89C6\u56FE\u5DF2\u6362");
+      console.log("\u4E2D\u5217\u8868\u89C6\u56FE\u52A0\u8F7D\uFF1A\u89C6\u56FE\u5DF2\u5207\u6362");
       return;
     }
     try {
@@ -2002,7 +2002,7 @@ ${emptyNotes.map((file) => file.basename).join("\n")}`
       files.forEach((file) => {
         var _a;
         const pathParts = file.path.split("/");
-        const rootFolder = pathParts.length > 1 ? pathParts[0] : "\u6839\u5F55";
+        const rootFolder = pathParts.length > 1 ? pathParts[0] : "\u6839\u76EE\u5F55";
         const subFolder = pathParts.length > 2 ? pathParts[1] : "";
         if (!folderStructure.has(rootFolder)) {
           folderStructure.set(rootFolder, /* @__PURE__ */ new Map());
@@ -2055,7 +2055,7 @@ ${emptyNotes.map((file) => file.basename).join("\n")}`
       }
     }
   }
-  // 列表-显文件夹内容
+  // 列表-显示文件夹内容
   showFolderContent(container, notes) {
     container.empty();
     notes.sort((a, b) => b.stat.mtime - a.stat.mtime);
@@ -2221,12 +2221,8 @@ ${content}` : content;
         const file = await this.createQuickNote(finalContent, [], fileName);
         if (file) {
           this.clearQuickNoteInputs(titleInput != null ? titleInput : null, input, tags, tagsContainer != null ? tagsContainer : null, tagInput != null ? tagInput : null);
-          tagsContainer == null ? void 0 : tagsContainer.querySelectorAll(".tag-item").forEach((item) => {
-            item.removeClass("active");
-            item.addClass("inactive");
-          });
           await this.refreshView();
-          new import_obsidian2.Notice("\u7B14\u521B\u5EFA\u6210\u529F");
+          new import_obsidian2.Notice("\u7B14\u8BB0\u521B\u5EFA\u6210\u529F");
         }
       } catch (error) {
         console.error("\u521B\u5EFA\u7B14\u8BB0\u5931\u8D25:", error);
@@ -2276,7 +2272,7 @@ ${content}` : content;
       });
     }
   }
-  // 速笔记-清理入
+  // 快速笔记-清理输入
   clearQuickNoteInputs(titleInput, contentInput, tags, tagsContainer, tagInput) {
     var _a;
     if (titleInput) {
@@ -2381,7 +2377,7 @@ ${content}` : content;
     const saved = localStorage.getItem("recent-tags");
     return saved ? JSON.parse(saved) : [];
   }
-  // 快速笔-最小化
+  // 快速笔记-最小化
   minimizeQuickNote(element) {
     const workspaceLeafContent = this.containerEl.closest(".workspace-leaf-content");
     if (!workspaceLeafContent) return;
@@ -2478,7 +2474,7 @@ ${content}` : content;
       this.intersectionObserver.observe(element);
     }
   }
-  // 笔记内容-载
+  // 笔记内容-加载
   async loadNoteContent(container, file) {
     if (this.loadedNotes.has(file.path)) return;
     try {
@@ -2558,7 +2554,7 @@ ${content}` : content;
       this.setupTimelineScroll(timelineContainer);
       this.updateCardLayout();
     } catch (error) {
-      console.error("\u521B\u5EFA\u65F6\u8F74\u89C6\u56FE\u5931\u8D25:", error);
+      console.error("\u521B\u5EFA\u65F6\u95F4\u8F74\u89C6\u56FE\u5931\uFFFD\uFFFD\uFFFD:", error);
       new import_obsidian2.Notice("\u521B\u5EFA\u65F6\u95F4\u8F74\u89C6\u56FE\u5931\u8D25");
       this.updateLoadingStatus("\u521B\u5EFA\u65F6\u95F4\u89C6\u56FE\u5931\u8D25");
     }
@@ -2595,7 +2591,7 @@ ${content}` : content;
     const currentSettings = this.cardSettings[this.currentView];
     const basicSettings = settingsPanel.createDiv("settings-section");
     basicSettings.createEl("h3", { text: "\u57FA\u672C\u8BBE\u7F6E" });
-    const showDateOption = this.createCheckboxOption(basicSettings, "\u663E\u793A\u671F", currentSettings.showDate);
+    const showDateOption = this.createCheckboxOption(basicSettings, "\u663E\u793A\u65E5\u671F", currentSettings.showDate);
     showDateOption.addEventListener("change", (e) => {
       currentSettings.showDate = e.target.checked;
       const dateElements = this.container.querySelectorAll(".note-date");
@@ -2623,7 +2619,7 @@ ${content}` : content;
     });
     const layoutSettings = settingsPanel.createDiv("settings-section");
     layoutSettings.createEl("h3", { text: "\u5E03\u5C40\u8BBE\u7F6E" });
-    this.createSliderOption(layoutSettings, "\u5361\u7247\u9AD8", currentSettings.cardHeight, 200, 500, 10, (value) => {
+    this.createSliderOption(layoutSettings, "\u5361\u7247\u9AD8\u5EA6", currentSettings.cardHeight, 200, 500, 10, (value) => {
       currentSettings.cardHeight = value;
       this.container.querySelectorAll(".note-card").forEach((card) => {
         if (card instanceof HTMLElement) {
@@ -2704,7 +2700,7 @@ ${content}` : content;
       }
     });
   }
-  // 创建选框选项
+  // 创建复选框选项
   createCheckboxOption(container, label, defaultChecked) {
     const settingItem = container.createDiv("setting-item");
     const checkbox = document.createElement("input");
@@ -2766,7 +2762,7 @@ ${content}` : content;
       }
     );
   }
-  // 创建滑块选
+  // 创建滑块选项
   createSliderOption(container, label, defaultValue, min, max, step, onChange) {
     const settingItem = container.createDiv("setting-item");
     settingItem.createEl("label", { text: label });
@@ -2834,7 +2830,7 @@ ${content}` : content;
       return;
     }
     try {
-      console.log("\u5F00\u59CB\u521B\u5EFA\u5468\u56FE");
+      console.log("\u5F00\u59CB\u521B\u5EFA\u5468\u89C6\u56FE");
       this.container.empty();
       const weekContainer = this.container.createDiv("week-view");
       const header = weekContainer.createDiv("week-header");
@@ -2892,7 +2888,7 @@ ${content}` : content;
         ...weekDates.slice(1),
         // 周一到周六
         weekDates[0]
-        // 周
+        // 周日
       ];
       reorderedDates.forEach(async (date) => {
         const dayNotes = notesContainer.createDiv("day-notes-column");
@@ -2918,7 +2914,7 @@ ${content}` : content;
     this.currentWeek = this.getWeekNumber(today);
     this.createWeekView();
   }
-  // 修改获取指定日期的笔记方法加日期范围查
+  // 修改获取指定日期的笔记方法，添加日期范围查询
   async getNotesForDate(date) {
     const files = this.app.vault.getMarkdownFiles();
     return files.filter((file) => {
@@ -2969,7 +2965,7 @@ ${content}` : content;
     const getWeeksInYear = (year) => {
       const lastDay = new Date(year, 11, 31);
       const weekNum = this.getWeekNumber(lastDay);
-      console.log(`${year}\u5E74\u7684\u603B\u5468\u6570:`, weekNum);
+      console.log(`${year}\uFFFD\uFFFD\uFFFD\u7684\u603B\u5468\u6570:`, weekNum);
       return weekNum;
     };
     if (newWeek < 1) {
@@ -3020,7 +3016,7 @@ ${content}` : content;
       console.log("\u5468\u4E2D\u95F4\u65E5\u671F:", middleDate);
       return middleDate.getMonth() + 1;
     } catch (error) {
-      console.error("\u83B7\u53D6\u6708\u4EFD\u5931:", error);
+      console.error("\u83B7\u53D6\u6708\u4EFD\u5931\u8D25:", error);
       return 1;
     }
   }
@@ -3425,6 +3421,9 @@ ${content}` : content;
         case "todo":
           await this.renderTodoModule(container);
           break;
+        case "dynamic":
+          await this.renderDynamicModule(container);
+          break;
         default:
           console.warn("Unknown module type:", module2.type);
           container.createDiv("module-error").setText(`Unknown module type: ${module2.type}`);
@@ -3779,7 +3778,7 @@ ${content}` : content;
     const titleInput = inputContainer.createEl("input", {
       cls: "quick-note-title",
       attr: {
-        placeholder: "\u8F93\u5165\u7B14\u6807\u9898...",
+        placeholder: "\u8F93\u5165\u7B14\u8BB0\u6807\u9898...",
         type: "text"
       }
     });
@@ -3827,7 +3826,7 @@ ${content}` : content;
     const sendButton = inputContainer.createEl("button", {
       cls: "quick-note-send",
       attr: {
-        "title": "\u9001\u8BB0"
+        "title": "\u53D1\u9001"
       }
     });
     sendButton.innerHTML = `
@@ -3860,7 +3859,7 @@ ${content}` : content;
         const file = await this.createQuickNote(finalContent, [], fileName);
         if (file) {
           this.clearQuickNoteInputs(titleInput, noteInput, tags, tagsContainer, tagInput);
-          new import_obsidian2.Notice("\uFFFD\uFFFD\uFFFD\u8BB0\u521B\u5EFA\u6210\u529F");
+          new import_obsidian2.Notice("\u7B14\u8BB0\u521B\u5EFA\u6210\u529F");
         }
       } catch (error) {
         console.error("\u521B\u5EFA\u7B14\u8BB0\u5931\u8D25:", error);
@@ -4000,7 +3999,7 @@ ${content}` : content;
       });
     });
   }
-  // 在 CardView 类中添以下方法
+  // 在 CardView 类中添加以下方法
   // 显示网格对齐指示器
   showGridSnapIndicator(module2, width) {
     let indicator = this.container.querySelector(".grid-snap-indicator");
@@ -4021,6 +4020,95 @@ ${content}` : content;
     const indicator = this.container.querySelector(".grid-snap-indicator");
     if (indicator instanceof HTMLElement) {
       indicator.style.display = "none";
+    }
+  }
+  // 在 CardView 类中添加
+  async renderDynamicModule(container) {
+    const dynamicContainer = container.createDiv("dynamic-module");
+    const timelineLayout = dynamicContainer.createDiv("timeline-layout");
+    const timelineContainer = timelineLayout.createDiv("timeline-container");
+    let isLoading = false;
+    let hasMore = true;
+    let currentPage = 1;
+    const pageSize = 10;
+    const loadingIndicator = timelineContainer.createDiv("dynamic-loading");
+    loadingIndicator.style.display = "none";
+    loadingIndicator.innerHTML = `
+            <div class="loading-spinner"></div>
+            <div class="loading-text">\u52A0\u8F7D\u4E2D...</div>
+        `;
+    const loadDynamicContent = async () => {
+      if (isLoading || !hasMore) return;
+      try {
+        isLoading = true;
+        loadingIndicator.style.display = "flex";
+        const files = this.app.vault.getMarkdownFiles().sort((a, b) => b.stat.mtime - a.stat.mtime);
+        const start = (currentPage - 1) * pageSize;
+        const end = start + pageSize;
+        const pageFiles = files.slice(start, end);
+        hasMore = end < files.length;
+        for (const file of pageFiles) {
+          const timelineItem = timelineContainer.createDiv("timeline-item");
+          timelineItem.createDiv("time-point");
+          if (hasMore) timelineItem.createDiv("time-line");
+          const timeDisplay = timelineItem.createDiv("time-display");
+          const mtime = new Date(file.stat.mtime);
+          timeDisplay.setText(this.getRelativeTime(file.stat.mtime));
+          timeDisplay.setAttribute("title", mtime.toLocaleString());
+          const dynamicCard = timelineItem.createDiv("dynamic-card");
+          dynamicCard.createDiv("card-title").setText(file.basename);
+          const previewContent = dynamicCard.createDiv("card-preview");
+          previewContent.setText("\u52A0\u8F7D\u4E2D...");
+          this.loadDynamicCardPreview(file, previewContent);
+          dynamicCard.addEventListener("click", () => {
+            openInAppropriateLeaf(this.app, file);
+          });
+        }
+        currentPage++;
+      } catch (error) {
+        console.error("\u52A0\u8F7D\u52A8\u6001\u5185\u5BB9\u5931\u8D25:", error);
+      } finally {
+        isLoading = false;
+        loadingIndicator.style.display = hasMore ? "flex" : "none";
+      }
+    };
+    await loadDynamicContent();
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && !isLoading && hasMore) {
+            loadDynamicContent();
+          }
+        });
+      },
+      {
+        root: dynamicContainer,
+        threshold: 0.1
+      }
+    );
+    observer.observe(loadingIndicator);
+    dynamicContainer.addEventListener("scroll", () => {
+      const { scrollTop, scrollHeight, clientHeight } = dynamicContainer;
+      if (scrollHeight - scrollTop - clientHeight < 100 && !isLoading && hasMore) {
+        loadDynamicContent();
+      }
+    });
+  }
+  // 添加加载预览内容的方法
+  async loadDynamicCardPreview(file, container) {
+    try {
+      const content = await this.app.vault.cachedRead(file);
+      const previewContent = content.slice(0, 200) + (content.length > 200 ? "..." : "");
+      await import_obsidian2.MarkdownRenderer.render(
+        this.app,
+        previewContent,
+        container,
+        file.path,
+        this
+      );
+    } catch (error) {
+      console.error("\u52A0\u8F7D\u9884\u89C8\u5185\u5BB9\u5931\u8D25:", error);
+      container.setText("\u52A0\u8F7D\u5931\u8D25");
     }
   }
 };
@@ -4139,6 +4227,15 @@ var DEFAULT_HOME_MODULES = [
     order: 5,
     columns: 1,
     position: "right"
+  },
+  {
+    id: "dynamic",
+    name: "\u52A8\u6001",
+    type: "dynamic",
+    visible: true,
+    order: 6,
+    columns: 2,
+    position: "center"
   }
 ];
 
