@@ -2267,6 +2267,8 @@
 }
 
 .module-container.calendar-module {
+  position: sticky !important;
+  top: 0 !important;
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -2360,6 +2362,10 @@
 }
 .module-container.calendar-module .notes-section .note-item:hover {
   background-color: var(--background-modifier-hover);
+}
+
+.card-container[data-view=home] .center-column {
+  max-height: max-content;
 }
 
 .module-container.dynamic-module {
