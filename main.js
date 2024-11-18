@@ -1475,7 +1475,7 @@ ${content}` : content;
       container.addEventListener("scroll", () => {
         const { scrollTop, scrollHeight, clientHeight } = container;
         if (scrollHeight - scrollTop - clientHeight < 100 && !this.timelineIsLoading && this.timelineHasMore) {
-          console.log("\u6EDA\u52A8\u89E6\u53D1\u65F6\u8F74\u52A0\u8F7D\u66F4\u591A");
+          console.log("\u6EDA\u52A8\u53D1\u65F6\u8F74\u52A0\u8F7D\u66F4\u591A");
           this.loadTimelinePage(container);
         }
       });
@@ -2943,7 +2943,7 @@ ${content}` : content;
     this.currentWeek = this.getWeekNumber(today);
     this.createWeekView();
   }
-  // 修改获取指定日期的笔记方法，添加日���范围查询
+  // 修改获取指定日期的笔记方法，添加日范围查询
   async getNotesForDate(date) {
     const files = this.app.vault.getMarkdownFiles();
     return files.filter((file) => {
@@ -3095,7 +3095,7 @@ ${content}` : content;
     } catch (error) {
       console.error("\u521B\u5EFA\u4E3B\u9875\u89C6\u56FE\u5931\u8D25:", error);
       console.error(error.stack);
-      new import_obsidian2.Notice("\u521B\u5EFA\u4E3B\u9875\u89C6\u56FE\u5931\u8D25");
+      new import_obsidian2.Notice("\u521B\u5EFA\u9875\u89C6\u56FE\u5931\u8D25");
     }
   }
   // 创建单个模块
@@ -4155,7 +4155,6 @@ ${content}` : content;
   }
 };
 var RandomCardsModal = class extends import_obsidian2.Modal {
-  // 添加 Component 实例
   constructor(app, files) {
     super(app);
     this.files = files;
@@ -4166,34 +4165,78 @@ var RandomCardsModal = class extends import_obsidian2.Modal {
     contentEl.empty();
     contentEl.addClass("random-cards-modal");
     contentEl.createEl("h3", { text: "\u968F\u673A\u5361\u7247" });
+    const backdrop = document.createElement("div");
+    backdrop.className = "modal-backdrop";
+    document.body.appendChild(backdrop);
     const cardsContainer = contentEl.createDiv("random-cards-container");
-    for (const file of this.files) {
-      const card = cardsContainer.createDiv("random-card");
-      const title = card.createDiv("card-title");
-      title.setText(file.basename);
-      const preview = card.createDiv("card-preview");
-      try {
-        const content = await this.app.vault.read(file);
-        await import_obsidian2.MarkdownRenderer.render(
-          this.app,
-          content.slice(0, 200) + (content.length > 200 ? "..." : ""),
-          preview,
-          file.path,
-          this.component
-          // 使用 component 实例而不是 this
-        );
-      } catch (error) {
-        preview.setText("\u52A0\u8F7D\u5931\u8D25");
+    const card1 = cardsContainer.createDiv("random-card source-card");
+    await this.createCardContent(card1, this.files[0]);
+    const plusOperator = cardsContainer.createDiv("operator");
+    plusOperator.setText("+");
+    const card2 = cardsContainer.createDiv("random-card source-card");
+    await this.createCardContent(card2, this.files[1]);
+    const equalsOperator = cardsContainer.createDiv("operator");
+    equalsOperator.setText("=");
+    const inputCard = cardsContainer.createDiv("random-card input-card");
+    const titleInput = inputCard.createEl("input", {
+      type: "text",
+      placeholder: "\u8F93\u5165\u7B14\u8BB0\u6807\u9898...",
+      cls: "input-title"
+    });
+    const contentInput = inputCard.createEl("textarea", {
+      placeholder: "\u8F93\u5165\u4F60\u7684\u60F3\u6CD5...",
+      cls: "input-content"
+    });
+    const saveBtn = inputCard.createEl("button", {
+      text: "\u4FDD\u5B58\u7B14\u8BB0",
+      cls: "save-btn"
+    });
+    saveBtn.addEventListener("click", async () => {
+      const title = titleInput.value.trim();
+      const content = contentInput.value.trim();
+      if (!content) {
+        new import_obsidian2.Notice("\u8BF7\u8F93\u5165\u7B14\u8BB0\u5185\u5BB9");
+        return;
       }
-      card.addEventListener("click", () => {
-        openInAppropriateLeaf(this.app, file);
-        this.close();
-      });
-    }
-    const refreshBtn = contentEl.createEl("button", {
-      text: "\u6362\u4E00\u6362",
+      try {
+        const references = this.files.map((file2) => {
+          return `> [!cite]- ${file2.basename}
+> ![[${file2.basename}]]
+`;
+        }).join("\n");
+        const finalContent = `# ${title || "\u7075\u611F\u7B14\u8BB0"}
+
+${content}
+
+## \u7075\u611F\u6765\u6E90
+
+${references}`;
+        const fileName = title || (/* @__PURE__ */ new Date()).toLocaleString("zh-CN", {
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit"
+        }).replace(/[\/:]/g, "-");
+        const file = await this.app.vault.create(
+          `${fileName}.md`,
+          finalContent
+        );
+        if (file) {
+          new import_obsidian2.Notice("\u7B14\u8BB0\u521B\u5EFA\u6210\u529F");
+          this.close();
+          await openInAppropriateLeaf(this.app, file);
+        }
+      } catch (error) {
+        console.error("\u521B\u5EFA\u7B14\u8BB0\u5931\u8D25:", error);
+        new import_obsidian2.Notice("\u521B\u5EFA\u7B14\u8BB0\u5931\u8D25");
+      }
+    });
+    const buttonContainer = contentEl.createDiv("button-container");
+    const refreshBtn = buttonContainer.createEl("button", {
       cls: "refresh-btn"
     });
+    refreshBtn.setText("\u6362\u4E00\u6362");
     refreshBtn.addEventListener("click", () => {
       var _a;
       this.close();
@@ -4203,10 +4246,36 @@ var RandomCardsModal = class extends import_obsidian2.Modal {
       }
     });
   }
+  // 添加一个辅助方法来创建卡片内容
+  async createCardContent(card, file) {
+    const title = card.createDiv("card-title");
+    title.setText(file.basename);
+    const preview = card.createDiv("card-preview");
+    try {
+      const content = await this.app.vault.read(file);
+      await import_obsidian2.MarkdownRenderer.render(
+        this.app,
+        content.slice(0, 200) + (content.length > 200 ? "..." : ""),
+        preview,
+        file.path,
+        this.component
+      );
+    } catch (error) {
+      preview.setText("\u52A0\u8F7D\u5931\u8D25");
+    }
+    card.addEventListener("click", () => {
+      openInAppropriateLeaf(this.app, file);
+    });
+  }
   onClose() {
     const { contentEl } = this;
     contentEl.empty();
     this.component.unload();
+    this.app.workspace.trigger("modal-hide", this);
+    const backdrop = document.querySelector(".modal-backdrop");
+    if (backdrop) {
+      backdrop.remove();
+    }
   }
 };
 var ModuleManagerModal = class extends import_obsidian2.Modal {

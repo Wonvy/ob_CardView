@@ -1300,7 +1300,7 @@ export class CardView extends ItemView {
             // 确保加载指示始终在底部
             if (this.hasMoreNotes) {
                 this.container.appendChild(this.loadingIndicator);
-                // 设置加载指示器的最小高度，确保可以触发滚动
+                // 设置加载指示器的最��高度，确保可以触发滚动
                 this.loadingIndicator.style.minHeight = '100px';
             }
             
@@ -1863,7 +1863,7 @@ export class CardView extends ItemView {
                             const notesList = dateGroup.createDiv('timeline-notes-list');
                             const notes = notesByDate.get(date) || [];
                             
-                            // 批量创建卡片的占位符
+                            // ���量创建卡片的占位符
                             const cardPromises = notes.map(async (file) => {
                                 const placeholder = document.createElement('div');
                                 placeholder.className = 'note-card-placeholder';
@@ -1943,7 +1943,7 @@ export class CardView extends ItemView {
             container.addEventListener('scroll', () => {
                 const { scrollTop, scrollHeight, clientHeight } = container;
                 if (scrollHeight - scrollTop - clientHeight < 100 && !this.timelineIsLoading && this.timelineHasMore) {
-                    console.log('滚动触发时轴加载更多');
+                    console.log('滚动发时轴加载更多');
                     this.loadTimelinePage(container);
                 }
             });
@@ -2658,7 +2658,7 @@ export class CardView extends ItemView {
             if (dayNotes.length > 0) {
                 const notesList = dateCell.createDiv('day-notes');
                 
-                // 显示所有��记
+                // 显示所有记
                 dayNotes.forEach(note => {
                     const noteItem = notesList.createDiv('day-note-item');
                     noteItem.setText(note.basename);
@@ -3838,7 +3838,7 @@ export class CardView extends ItemView {
             text: '+'
         });
 
-        // 更新值的函数
+        // 更新值的数
         const updateValue = (value: number) => {
             // 确保值在范围内
             value = Math.max(min, Math.min(max, value));
@@ -3982,7 +3982,7 @@ export class CardView extends ItemView {
                 weekDates[0]           // 周日
             ];
             
-            // 为每一天创建笔记列表
+            // 为每一天创建笔记列
             reorderedDates.forEach(async date => {
                 const dayNotes = notesContainer.createDiv('day-notes-column');
                 const notes = await this.getNotesForDate(date);
@@ -4012,7 +4012,7 @@ export class CardView extends ItemView {
         this.createWeekView();
     }
 
-    // 修改获取指定日期的笔记方法，添加日���范围查询
+    // 修改获取指定日期的笔记方法，添加日范围查询
     private async getNotesForDate(date: Date): Promise<TFile[]> {
         const files = this.app.vault.getMarkdownFiles();
         return files.filter(file => {
@@ -4227,7 +4227,7 @@ export class CardView extends ItemView {
         } catch (error: any) {
             console.error('创建主页视图失败:', error);
             console.error(error.stack);  // 添加错误堆栈信息
-            new Notice('创建主页视图失败');
+            new Notice('创建页视图失败');
         }
     }
 
@@ -5254,7 +5254,7 @@ export class CardView extends ItemView {
             // 保存更新
             this.saveModuleSettings();
 
-            // 重新渲染主页视图并保持编模式
+            // 重新渲染主页视图并保持编式
             this.createHomeView().then(() => {
                 // 重新应用编辑模式
                 const modules = this.container.querySelectorAll('.module-container');
@@ -5752,15 +5752,14 @@ export class CardView extends ItemView {
 }
 
 
-// 在 CardView 类外部添加 RandomCardsModal 类
+// 模块管理-随机卡片
 class RandomCardsModal extends Modal {
     private files: TFile[];
-    private component: Component;  // 添加 Component 实例
+    private component: Component;
 
     constructor(app: App, files: TFile[]) {
         super(app);
         this.files = files;
-        // 创建一个简单的 Component 实例
         this.component = new Component();
     }
 
@@ -5769,62 +5768,156 @@ class RandomCardsModal extends Modal {
         contentEl.empty();
         contentEl.addClass('random-cards-modal');
         
+
         // 创建标题
         contentEl.createEl('h3', { text: '随机卡片' });
+
+        // 创建模糊背景
+        const backdrop = document.createElement('div');
+        backdrop.className = 'modal-backdrop'; // 添加模糊背景类
+        document.body.appendChild(backdrop);
         
         // 创建卡片容器
         const cardsContainer = contentEl.createDiv('random-cards-container');
         
-        // 创建卡片
-        for (const file of this.files) {
-            const card = cardsContainer.createDiv('random-card');
-            
-            // 添加标题
-            const title = card.createDiv('card-title');
-            title.setText(file.basename);
-            
-            // 添加内容预览
-            const preview = card.createDiv('card-preview');
-            try {
-                const content = await this.app.vault.read(file);
-                await MarkdownRenderer.render(
-                    this.app,
-                    content.slice(0, 200) + (content.length > 200 ? '...' : ''),
-                    preview,
-                    file.path,
-                    this.component  // 使用 component 实例而不是 this
-                );
-            } catch (error) {
-                preview.setText('加载失败');
-            }
-            
-            // 添加点击事件
-            card.addEventListener('click', () => {
-                openInAppropriateLeaf(this.app, file);
-                this.close();
-            });
-        }
+        // 创建第一张随机卡片
+        const card1 = cardsContainer.createDiv('random-card source-card');
+        await this.createCardContent(card1, this.files[0]);
         
-        // 添加刷新按钮
-        const refreshBtn = contentEl.createEl('button', {
-            text: '换一换',
+        // 添加加号 - 修改这里
+        const plusOperator = cardsContainer.createDiv('operator');
+        plusOperator.setText('+');
+        
+        // 创建第二张随机卡片
+        const card2 = cardsContainer.createDiv('random-card source-card');
+        await this.createCardContent(card2, this.files[1]);
+        
+        // 添加等号 - 修改这里
+        const equalsOperator = cardsContainer.createDiv('operator');
+        equalsOperator.setText('=');
+        
+        // 创建输入卡片
+        const inputCard = cardsContainer.createDiv('random-card input-card');
+        // 添加标题输入框
+        const titleInput = inputCard.createEl('input', {
+            type: 'text',
+            placeholder: '输入笔记标题...',
+            cls: 'input-title'
+        });
+
+        // 添加内容输入框
+        const contentInput = inputCard.createEl('textarea', {
+            placeholder: '输入你的想法...',
+            cls: 'input-content'
+        });
+
+        // 添加保存按钮
+        const saveBtn = inputCard.createEl('button', {
+            text: '保存笔记',
+            cls: 'save-btn'
+        });
+
+        // 保存按钮点击事件
+        saveBtn.addEventListener('click', async () => {
+            const title = titleInput.value.trim();
+            const content = contentInput.value.trim();
+            
+            if (!content) {
+                new Notice('请输入笔记内容');
+                return;
+            }
+
+            try {
+                // 构建笔记内容，包含引用
+                const references = this.files.map(file => {
+                    return `> [!cite]- ${file.basename}\n> ![[${file.basename}]]\n`;
+                }).join('\n');
+
+                const finalContent = `# ${title || '灵感笔记'}\n\n${content}\n\n## 灵感来源\n\n${references}`;
+                
+                // 创建笔记
+                const fileName = title || new Date().toLocaleString('zh-CN', {
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                }).replace(/[\/:]/g, '-');
+
+                const file = await this.app.vault.create(
+                    `${fileName}.md`,
+                    finalContent
+                );
+
+                if (file) {
+                    new Notice('笔记创建成功');
+                    this.close();
+                    // 打开新创建的笔记
+                    await openInAppropriateLeaf(this.app, file);
+                }
+            } catch (error) {
+                console.error('创建笔记失败:', error);
+                new Notice('创建笔记失败');
+            }
+        });
+
+        // 创建按钮容器
+        const buttonContainer = contentEl.createDiv('button-container');
+
+        // 添加换一换按钮
+        const refreshBtn = buttonContainer.createEl('button', {
             cls: 'refresh-btn'
         });
+
+        refreshBtn.setText('换一换');
+
         refreshBtn.addEventListener('click', () => {
             this.close();
-            // 重新打开一个新的随机卡片弹窗
             const cardView = this.app.workspace.getLeavesOfType('card-view')[0]?.view as CardView;
             if (cardView) {
-                (cardView as any).showRandomCards();  // 使用类型断言来避免访问私有方法的错误
+                (cardView as any).showRandomCards();
             }
+        });
+    }
+
+    // 添加一个辅助方法来创建卡片内容
+    private async createCardContent(card: HTMLElement, file: TFile) {
+
+        // 添加标题
+        const title = card.createDiv('card-title');
+        title.setText(file.basename);
+        
+        // 添加内容预览
+        const preview = card.createDiv('card-preview');
+        try {
+            const content = await this.app.vault.read(file);
+            await MarkdownRenderer.render(
+                this.app,
+                content.slice(0, 200) + (content.length > 200 ? '...' : ''),
+                preview,
+                file.path,
+                this.component
+            );
+        } catch (error) {
+            preview.setText('加载失败');
+        }
+        
+        // 添加点击事件
+        card.addEventListener('click', () => {
+            openInAppropriateLeaf(this.app, file);
         });
     }
 
     onClose() {
         const { contentEl } = this;
         contentEl.empty();
-        // 清理 component
         this.component.unload();
+        this.app.workspace.trigger('modal-hide', this); // 触发隐藏事件
+        // 移除模糊背景
+        const backdrop = document.querySelector('.modal-backdrop');
+        if (backdrop) {
+            backdrop.remove();
+        }
     }
 }
 
@@ -5856,7 +5949,7 @@ class ModuleManagerModal extends Modal {
         this.modules.forEach((module, index) => {
             const moduleItem = moduleList.createDiv('module-item');
             
-            // 添加拖动手柄
+            // 加拖动手柄
             moduleItem.createDiv('drag-handle').innerHTML = '⋮⋮';
             
             // 添加可见性切换
