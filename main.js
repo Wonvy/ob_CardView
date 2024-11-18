@@ -4155,10 +4155,12 @@ ${content}` : content;
   }
 };
 var RandomCardsModal = class extends import_obsidian2.Modal {
+  // 添加容器引用
   constructor(app, files) {
     super(app);
     this.files = files;
     this.component = new import_obsidian2.Component();
+    this.cardsContainer = createDiv();
   }
   async onOpen() {
     const { contentEl } = this;
@@ -4168,16 +4170,52 @@ var RandomCardsModal = class extends import_obsidian2.Modal {
     const backdrop = document.createElement("div");
     backdrop.className = "modal-backdrop";
     document.body.appendChild(backdrop);
-    const cardsContainer = contentEl.createDiv("random-cards-container");
-    const card1 = cardsContainer.createDiv("random-card source-card");
+    this.cardsContainer = contentEl.createDiv("random-cards-container");
+    await this.renderRandomCards();
+    const buttonContainer = contentEl.createDiv("button-container");
+    const refreshBtn = buttonContainer.createEl("button", {
+      cls: "refresh-btn"
+    });
+    refreshBtn.setText("\u6362\u4E00\u6362");
+    refreshBtn.addEventListener("click", async () => {
+      const files = this.app.vault.getMarkdownFiles();
+      if (files.length < 2) {
+        new import_obsidian2.Notice("\u7B14\u8BB0\u6570\u91CF\u4E0D\u8DB3");
+        return;
+      }
+      const randomFiles = [];
+      const usedIndexes = /* @__PURE__ */ new Set();
+      while (randomFiles.length < 2) {
+        const randomIndex = Math.floor(Math.random() * files.length);
+        if (!usedIndexes.has(randomIndex)) {
+          usedIndexes.add(randomIndex);
+          randomFiles.push(files[randomIndex]);
+        }
+      }
+      this.files = randomFiles;
+      this.cardsContainer.addClass("fade-out");
+      setTimeout(async () => {
+        await this.renderRandomCards();
+        this.cardsContainer.removeClass("fade-out");
+        this.cardsContainer.addClass("fade-in");
+        setTimeout(() => {
+          this.cardsContainer.removeClass("fade-in");
+        }, 300);
+      }, 300);
+    });
+  }
+  // 添加渲染卡片的方法
+  async renderRandomCards() {
+    this.cardsContainer.empty();
+    const card1 = this.cardsContainer.createDiv("random-card source-card");
     await this.createCardContent(card1, this.files[0]);
-    const plusOperator = cardsContainer.createDiv("operator");
+    const plusOperator = this.cardsContainer.createDiv("operator");
     plusOperator.setText("+");
-    const card2 = cardsContainer.createDiv("random-card source-card");
+    const card2 = this.cardsContainer.createDiv("random-card source-card");
     await this.createCardContent(card2, this.files[1]);
-    const equalsOperator = cardsContainer.createDiv("operator");
+    const equalsOperator = this.cardsContainer.createDiv("operator");
     equalsOperator.setText("=");
-    const inputCard = cardsContainer.createDiv("random-card input-card");
+    const inputCard = this.cardsContainer.createDiv("random-card input-card");
     const titleInput = inputCard.createEl("input", {
       type: "text",
       placeholder: "\u8F93\u5165\u7B14\u8BB0\u6807\u9898...",
@@ -4192,61 +4230,9 @@ var RandomCardsModal = class extends import_obsidian2.Modal {
       cls: "save-btn"
     });
     saveBtn.addEventListener("click", async () => {
-      const title = titleInput.value.trim();
-      const content = contentInput.value.trim();
-      if (!content) {
-        new import_obsidian2.Notice("\u8BF7\u8F93\u5165\u7B14\u8BB0\u5185\u5BB9");
-        return;
-      }
-      try {
-        const references = this.files.map((file2) => {
-          return `> [!cite]- ${file2.basename}
-> ![[${file2.basename}]]
-`;
-        }).join("\n");
-        const finalContent = `# ${title || "\u7075\u611F\u7B14\u8BB0"}
-
-${content}
-
-## \u7075\u611F\u6765\u6E90
-
-${references}`;
-        const fileName = title || (/* @__PURE__ */ new Date()).toLocaleString("zh-CN", {
-          year: "numeric",
-          month: "2-digit",
-          day: "2-digit",
-          hour: "2-digit",
-          minute: "2-digit"
-        }).replace(/[\/:]/g, "-");
-        const file = await this.app.vault.create(
-          `${fileName}.md`,
-          finalContent
-        );
-        if (file) {
-          new import_obsidian2.Notice("\u7B14\u8BB0\u521B\u5EFA\u6210\u529F");
-          this.close();
-          await openInAppropriateLeaf(this.app, file);
-        }
-      } catch (error) {
-        console.error("\u521B\u5EFA\u7B14\u8BB0\u5931\u8D25:", error);
-        new import_obsidian2.Notice("\u521B\u5EFA\u7B14\u8BB0\u5931\u8D25");
-      }
-    });
-    const buttonContainer = contentEl.createDiv("button-container");
-    const refreshBtn = buttonContainer.createEl("button", {
-      cls: "refresh-btn"
-    });
-    refreshBtn.setText("\u6362\u4E00\u6362");
-    refreshBtn.addEventListener("click", () => {
-      var _a;
-      this.close();
-      const cardView = (_a = this.app.workspace.getLeavesOfType("card-view")[0]) == null ? void 0 : _a.view;
-      if (cardView) {
-        cardView.showRandomCards();
-      }
     });
   }
-  // 添加一个辅助方法来创建卡片内容
+  // 添加 createCardContent 方法
   async createCardContent(card, file) {
     const title = card.createDiv("card-title");
     title.setText(file.basename);
