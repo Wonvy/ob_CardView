@@ -89,14 +89,18 @@ function getWeekDates(year, week) {
 function getEndOfWeek() {
   const date = /* @__PURE__ */ new Date();
   const day = date.getDay();
-  const diff = date.getDate() - day + (day === 0 ? 0 : 7);
-  return new Date(date.setDate(diff));
+  const diff = date.getDate() + (day === 0 ? 0 : 7 - day);
+  const sunday = new Date(date.setDate(diff));
+  sunday.setHours(23, 59, 59, 999);
+  return sunday;
 }
 function getStartOfWeek() {
   const date = /* @__PURE__ */ new Date();
   const day = date.getDay();
   const diff = date.getDate() - day + (day === 0 ? -6 : 1);
-  return new Date(date.setDate(diff));
+  const monday = new Date(date.setDate(diff));
+  monday.setHours(0, 0, 0, 0);
+  return monday;
 }
 
 // ts/models.ts
@@ -1784,6 +1788,12 @@ ${content}` : content;
       menu.style.display = "none";
       console.log("\u6279\u91CF\u91CD\u547D\u540D\u529F\u80FD\u5B9E\u73B0");
     });
+    const randomCardsItem = menu.createDiv("command-menu-item");
+    randomCardsItem.setText("\u968F\u673A\u5361\u7247");
+    randomCardsItem.addEventListener("click", () => {
+      menu.style.display = "none";
+      this.showRandomCards();
+    });
     let isMenuVisible = false;
     commandBtn.addEventListener("click", (e) => {
       e.stopPropagation();
@@ -1796,6 +1806,25 @@ ${content}` : content;
         menu.style.display = "none";
       }
     });
+  }
+  // 添加 showRandomCards 方法
+  async showRandomCards() {
+    const files = this.app.vault.getMarkdownFiles();
+    if (files.length < 2) {
+      new import_obsidian2.Notice("\u7B14\u8BB0\u6570\u91CF\u4E0D\u8DB3");
+      return;
+    }
+    const randomFiles = [];
+    const usedIndexes = /* @__PURE__ */ new Set();
+    while (randomFiles.length < 2) {
+      const randomIndex = Math.floor(Math.random() * files.length);
+      if (!usedIndexes.has(randomIndex)) {
+        usedIndexes.add(randomIndex);
+        randomFiles.push(files[randomIndex]);
+      }
+    }
+    const modal = new RandomCardsModal(this.app, randomFiles);
+    modal.open();
   }
   // 命令-删除空白笔记
   async deleteEmptyNotes() {
@@ -2554,7 +2583,7 @@ ${content}` : content;
       this.setupTimelineScroll(timelineContainer);
       this.updateCardLayout();
     } catch (error) {
-      console.error("\u521B\u5EFA\u65F6\u95F4\u8F74\u89C6\u56FE\u5931\uFFFD\uFFFD\uFFFD:", error);
+      console.error("\u521B\u5EFA\u65F6\u95F4\u8F74\u89C6\u56FE\u5931:", error);
       new import_obsidian2.Notice("\u521B\u5EFA\u65F6\u95F4\u8F74\u89C6\u56FE\u5931\u8D25");
       this.updateLoadingStatus("\u521B\u5EFA\u65F6\u95F4\u89C6\u56FE\u5931\u8D25");
     }
@@ -2914,7 +2943,7 @@ ${content}` : content;
     this.currentWeek = this.getWeekNumber(today);
     this.createWeekView();
   }
-  // 修改获取指定日期的笔记方法，添加日期范围查询
+  // 修改获取指定日期的笔记方法，添加日���范围查询
   async getNotesForDate(date) {
     const files = this.app.vault.getMarkdownFiles();
     return files.filter((file) => {
@@ -2965,7 +2994,7 @@ ${content}` : content;
     const getWeeksInYear = (year) => {
       const lastDay = new Date(year, 11, 31);
       const weekNum = this.getWeekNumber(lastDay);
-      console.log(`${year}\uFFFD\uFFFD\uFFFD\u7684\u603B\u5468\u6570:`, weekNum);
+      console.log(`${year}\u7684\u603B\u5468\u6570:`, weekNum);
       return weekNum;
     };
     if (newWeek < 1) {
@@ -3210,13 +3239,26 @@ ${content}` : content;
     const weeklyContainer = container.createDiv("weekly-notes");
     const weekStart = getStartOfWeek();
     const weekEnd = getEndOfWeek();
+    console.log("Week range:", {
+      start: weekStart.toISOString(),
+      end: weekEnd.toISOString()
+    });
     const notes = this.app.vault.getMarkdownFiles().filter((file) => {
       const mtime = new Date(file.stat.mtime);
       return mtime >= weekStart && mtime <= weekEnd;
     }).sort((a, b) => b.stat.mtime - a.stat.mtime).slice(0, 10);
+    console.log("Found weekly notes:", notes.length);
+    if (notes.length === 0) {
+      weeklyContainer.createDiv("empty-message").setText("\u672C\u5468\u8FD8\u6CA1\u6709\u7B14\u8BB0");
+      return;
+    }
     for (const note of notes) {
       const noteItem = weeklyContainer.createDiv("note-item");
-      noteItem.createEl("span", { text: note.basename, cls: "note-title" });
+      const titleContainer = noteItem.createDiv("note-title-container");
+      const noteTitle = titleContainer.createEl("span", {
+        text: note.basename,
+        cls: "note-title"
+      });
       const dateContainer = noteItem.createEl("span", { cls: "note-date" });
       const relativeTime = this.getRelativeTime(note.stat.mtime);
       dateContainer.setText(relativeTime);
@@ -4110,6 +4152,61 @@ ${content}` : content;
       console.error("\u52A0\u8F7D\u9884\u89C8\u5185\u5BB9\u5931\u8D25:", error);
       container.setText("\u52A0\u8F7D\u5931\u8D25");
     }
+  }
+};
+var RandomCardsModal = class extends import_obsidian2.Modal {
+  // 添加 Component 实例
+  constructor(app, files) {
+    super(app);
+    this.files = files;
+    this.component = new import_obsidian2.Component();
+  }
+  async onOpen() {
+    const { contentEl } = this;
+    contentEl.empty();
+    contentEl.addClass("random-cards-modal");
+    contentEl.createEl("h3", { text: "\u968F\u673A\u5361\u7247" });
+    const cardsContainer = contentEl.createDiv("random-cards-container");
+    for (const file of this.files) {
+      const card = cardsContainer.createDiv("random-card");
+      const title = card.createDiv("card-title");
+      title.setText(file.basename);
+      const preview = card.createDiv("card-preview");
+      try {
+        const content = await this.app.vault.read(file);
+        await import_obsidian2.MarkdownRenderer.render(
+          this.app,
+          content.slice(0, 200) + (content.length > 200 ? "..." : ""),
+          preview,
+          file.path,
+          this.component
+          // 使用 component 实例而不是 this
+        );
+      } catch (error) {
+        preview.setText("\u52A0\u8F7D\u5931\u8D25");
+      }
+      card.addEventListener("click", () => {
+        openInAppropriateLeaf(this.app, file);
+        this.close();
+      });
+    }
+    const refreshBtn = contentEl.createEl("button", {
+      text: "\u6362\u4E00\u6362",
+      cls: "refresh-btn"
+    });
+    refreshBtn.addEventListener("click", () => {
+      var _a;
+      this.close();
+      const cardView = (_a = this.app.workspace.getLeavesOfType("card-view")[0]) == null ? void 0 : _a.view;
+      if (cardView) {
+        cardView.showRandomCards();
+      }
+    });
+  }
+  onClose() {
+    const { contentEl } = this;
+    contentEl.empty();
+    this.component.unload();
   }
 };
 var ModuleManagerModal = class extends import_obsidian2.Modal {

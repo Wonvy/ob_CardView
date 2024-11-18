@@ -111,8 +111,10 @@ export function createFolderTree(container: HTMLElement, folders: FolderItem[], 
 export function getEndOfWeek(): Date {
     const date = new Date();
     const day = date.getDay();
-    const diff = date.getDate() - day + (day === 0 ? 0 : 7); // 调整周日
-    return new Date(date.setDate(diff));
+    const diff = date.getDate() + (day === 0 ? 0 : 7 - day); // 调整周日的情况
+    const sunday = new Date(date.setDate(diff));
+    sunday.setHours(23, 59, 59, 999);
+    return sunday;
 }
 
 
@@ -120,6 +122,8 @@ export function getEndOfWeek(): Date {
 export function  getStartOfWeek(): Date {
     const date = new Date();
     const day = date.getDay();
-    const diff = date.getDate() - day + (day === 0 ? -6 : 1); // 调整周日
-    return new Date(date.setDate(diff));
+    const diff = date.getDate() - day + (day === 0 ? -6 : 1); // 调整周日的情况
+    const monday = new Date(date.setDate(diff));
+    monday.setHours(0, 0, 0, 0);
+    return monday;
 }

@@ -8,6 +8,7 @@ import {
     TFolder,
     App,
     Notice,
+    Component
 } from 'obsidian';
 
 import CardViewPlugin from './main';
@@ -1597,7 +1598,7 @@ export class CardView extends ItemView {
             if (this.cardSettings.card.showContent) {
                 // 创建笔记内容
                 const noteContent = cardContent.createDiv('note-content');
-                // ... 内容加载逻辑 ...
+                // ... 内容加载辑 ...
             }
 
             // 添加键菜单事件监听
@@ -2388,6 +2389,14 @@ export class CardView extends ItemView {
             console.log('批量重命名功能实现');
         });
 
+        // 在 createCommandButton 方法中，在 batchRenameItem 后添加
+        const randomCardsItem = menu.createDiv('command-menu-item');
+        randomCardsItem.setText('随机卡片');
+        randomCardsItem.addEventListener('click', () => {
+            menu.style.display = 'none';  // 点击后隐藏菜单
+            this.showRandomCards();
+        });
+
         // 使用点击事件替代鼠标悬停事件
         let isMenuVisible = false;
         
@@ -2406,6 +2415,35 @@ export class CardView extends ItemView {
             }
         });
     }
+
+    // 添加 showRandomCards 方法
+    private async showRandomCards() {
+        // 获取所有笔记文件
+        const files = this.app.vault.getMarkdownFiles();
+        
+        // 如果笔记数量少于2，显示提示
+        if (files.length < 2) {
+            new Notice('笔记数量不足');
+            return;
+        }
+        
+        // 随机选择2个不同的笔记
+        const randomFiles: TFile[] = [];
+        const usedIndexes = new Set<number>();
+        
+        while (randomFiles.length < 2) {
+            const randomIndex = Math.floor(Math.random() * files.length);
+            if (!usedIndexes.has(randomIndex)) {
+                usedIndexes.add(randomIndex);
+                randomFiles.push(files[randomIndex]);
+            }
+        }
+        
+        // 创建弹窗显示随机卡片
+        const modal = new RandomCardsModal(this.app, randomFiles);
+        modal.open();
+    }
+
 
     // 命令-删除空白笔记
     private async deleteEmptyNotes() {
@@ -2620,7 +2658,7 @@ export class CardView extends ItemView {
             if (dayNotes.length > 0) {
                 const notesList = dateCell.createDiv('day-notes');
                 
-                // 显示所有笔记
+                // 显示所有��记
                 dayNotes.forEach(note => {
                     const noteItem = notesList.createDiv('day-note-item');
                     noteItem.setText(note.basename);
@@ -3475,7 +3513,7 @@ export class CardView extends ItemView {
             this.updateCardLayout();
             
         } catch (error) {
-            console.error('创建时间轴视图失���:', error);
+            console.error('创建时间轴视图失:', error);
             new Notice('创建时间轴视图失败');
             this.updateLoadingStatus('创建时间视图失败');
         }
@@ -3974,7 +4012,7 @@ export class CardView extends ItemView {
         this.createWeekView();
     }
 
-    // 修改获取指定日期的笔记方法，添加日期范围查询
+    // 修改获取指定日期的笔记方法，添加日���范围查询
     private async getNotesForDate(date: Date): Promise<TFile[]> {
         const files = this.app.vault.getMarkdownFiles();
         return files.filter(file => {
@@ -4047,7 +4085,7 @@ export class CardView extends ItemView {
         const getWeeksInYear = (year: number) => {
             const lastDay = new Date(year, 11, 31);
             const weekNum = this.getWeekNumber(lastDay);
-            console.log(`${year}���的总周数:`, weekNum);
+            console.log(`${year}的总周数:`, weekNum);
             return weekNum;
         };
         
@@ -4410,20 +4448,44 @@ export class CardView extends ItemView {
     private async renderWeeklyNotes(container: HTMLElement) {
         console.log('Rendering weekly notes module...');
         const weeklyContainer = container.createDiv('weekly-notes');
-        const weekStart = getStartOfWeek();
-        const weekEnd = getEndOfWeek();
         
+        // 获取本周的开始和结束日期
+        const weekStart = getStartOfWeek(); // 周一
+        const weekEnd = getEndOfWeek();   // 周日
+        
+        console.log('Week range:', {
+            start: weekStart.toISOString(),
+            end: weekEnd.toISOString()
+        });
+        
+        // 获取本周的笔记
         const notes = this.app.vault.getMarkdownFiles()
             .filter(file => {
                 const mtime = new Date(file.stat.mtime);
+                // 检查笔记的修改时间是否在本周范围内
                 return mtime >= weekStart && mtime <= weekEnd;
             })
-            .sort((a, b) => b.stat.mtime - a.stat.mtime)
-            .slice(0, 10);
+            .sort((a, b) => b.stat.mtime - a.stat.mtime) // 按修改时间降序排序
+            .slice(0, 10); // 只显示最近的10条
 
+        console.log('Found weekly notes:', notes.length);
+
+        if (notes.length === 0) {
+            // 如果没有笔记，显示提示信息
+            weeklyContainer.createDiv('empty-message').setText('本周还没有笔记');
+            return;
+        }
+
+        // 创建笔记列表
         for (const note of notes) {
             const noteItem = weeklyContainer.createDiv('note-item');
-            noteItem.createEl('span', { text: note.basename, cls: 'note-title' });
+            
+            // 创建笔记标题
+            const titleContainer = noteItem.createDiv('note-title-container');
+            const noteTitle = titleContainer.createEl('span', { 
+                text: note.basename,
+                cls: 'note-title' 
+            });
             
             // 创建日期容器
             const dateContainer = noteItem.createEl('span', { cls: 'note-date' });
@@ -4451,6 +4513,7 @@ export class CardView extends ItemView {
                 dateContainer.setText(relativeTime);
             });
             
+            // 添加点击事件
             noteItem.addEventListener('click', () => {
                 openInAppropriateLeaf(this.app, note);
             });
@@ -5688,6 +5751,83 @@ export class CardView extends ItemView {
 
 }
 
+
+// 在 CardView 类外部添加 RandomCardsModal 类
+class RandomCardsModal extends Modal {
+    private files: TFile[];
+    private component: Component;  // 添加 Component 实例
+
+    constructor(app: App, files: TFile[]) {
+        super(app);
+        this.files = files;
+        // 创建一个简单的 Component 实例
+        this.component = new Component();
+    }
+
+    async onOpen() {
+        const { contentEl } = this;
+        contentEl.empty();
+        contentEl.addClass('random-cards-modal');
+        
+        // 创建标题
+        contentEl.createEl('h3', { text: '随机卡片' });
+        
+        // 创建卡片容器
+        const cardsContainer = contentEl.createDiv('random-cards-container');
+        
+        // 创建卡片
+        for (const file of this.files) {
+            const card = cardsContainer.createDiv('random-card');
+            
+            // 添加标题
+            const title = card.createDiv('card-title');
+            title.setText(file.basename);
+            
+            // 添加内容预览
+            const preview = card.createDiv('card-preview');
+            try {
+                const content = await this.app.vault.read(file);
+                await MarkdownRenderer.render(
+                    this.app,
+                    content.slice(0, 200) + (content.length > 200 ? '...' : ''),
+                    preview,
+                    file.path,
+                    this.component  // 使用 component 实例而不是 this
+                );
+            } catch (error) {
+                preview.setText('加载失败');
+            }
+            
+            // 添加点击事件
+            card.addEventListener('click', () => {
+                openInAppropriateLeaf(this.app, file);
+                this.close();
+            });
+        }
+        
+        // 添加刷新按钮
+        const refreshBtn = contentEl.createEl('button', {
+            text: '换一换',
+            cls: 'refresh-btn'
+        });
+        refreshBtn.addEventListener('click', () => {
+            this.close();
+            // 重新打开一个新的随机卡片弹窗
+            const cardView = this.app.workspace.getLeavesOfType('card-view')[0]?.view as CardView;
+            if (cardView) {
+                (cardView as any).showRandomCards();  // 使用类型断言来避免访问私有方法的错误
+            }
+        });
+    }
+
+    onClose() {
+        const { contentEl } = this;
+        contentEl.empty();
+        // 清理 component
+        this.component.unload();
+    }
+}
+
 // 模块管理-弹窗
 class ModuleManagerModal extends Modal {
     private modules: HomeModule[];
@@ -5846,4 +5986,6 @@ export const DEFAULT_HOME_MODULES: HomeModule[] = [
         position: 'center'
     }
 ];
+
+
 
