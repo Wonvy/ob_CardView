@@ -11,6 +11,7 @@ interface CardViewPluginSettings {
     minCardHeight: number;
     maxCardHeight: number;
     homeModules: HomeModule[];
+    cardTheme: 'light' | 'dark' | 'colorful';
 }
 
 const DEFAULT_SETTINGS: CardViewPluginSettings = {
@@ -22,7 +23,8 @@ const DEFAULT_SETTINGS: CardViewPluginSettings = {
     cardHeight: 280,
     minCardHeight: 200,
     maxCardHeight: 800,
-    homeModules: []
+    homeModules: [],
+    cardTheme: 'light'
 }
 
 class CardViewSettingTab extends PluginSettingTab {
@@ -36,6 +38,24 @@ class CardViewSettingTab extends PluginSettingTab {
     display(): void {
         const { containerEl } = this;
         containerEl.empty();
+
+        new Setting(containerEl)
+            .setName('卡片主题')
+            .setDesc('选择卡片的显示主题')
+            .addDropdown(dropdown => {
+                dropdown
+                    .addOption('light', '亮色主题')
+                    .addOption('dark', '暗色主题')
+                    .addOption('colorful', '彩色主题')
+                    .setValue(this.plugin.settings.cardTheme)
+                    .onChange(async (value) => {
+                        if (value === 'light' || value === 'dark' || value === 'colorful') {
+                            this.plugin.settings.cardTheme = value;
+                            await this.plugin.saveSettings();
+                            this.plugin.updateCardTheme(value);
+                        }
+                    });
+            });
 
         new Setting(containerEl)
             .setName('默认视图')
@@ -298,5 +318,14 @@ export default class CardViewPlugin extends Plugin {
     async saveHomeModules(modules: HomeModule[]) {
         this.settings.homeModules = modules;
         await this.saveSettings();
+    }
+
+    updateCardTheme(theme: 'light' | 'dark' | 'colorful') {
+        this.app.workspace.getLeavesOfType(VIEW_TYPE_CARD).forEach(leaf => {
+            const view = leaf.view as CardView;
+            if (view) {
+                view.updateCardTheme(theme);
+            }
+        });
     }
 }

@@ -2620,6 +2620,31 @@ ${content}` : content;
     const currentSettings = this.cardSettings[this.currentView];
     const basicSettings = settingsPanel.createDiv("settings-section");
     basicSettings.createEl("h3", { text: "\u57FA\u672C\u8BBE\u7F6E" });
+    const themeContainer = basicSettings.createDiv("setting-item");
+    themeContainer.createEl("label", { text: "\u5361\u7247\u4E3B\u9898" });
+    const themeSelect = themeContainer.createEl("select", {
+      cls: "dropdown"
+    });
+    const themes = [
+      { value: "light", label: "\u4EAE\u8272\u4E3B\u9898" },
+      { value: "dark", label: "\u6697\u8272\u4E3B\u9898" },
+      { value: "colorful", label: "\u5F69\u8272\u4E3B\u9898" }
+    ];
+    themes.forEach((theme) => {
+      const option = themeSelect.createEl("option", {
+        value: theme.value,
+        text: theme.label
+      });
+      if (theme.value === this.plugin.settings.cardTheme) {
+        option.selected = true;
+      }
+    });
+    themeSelect.addEventListener("change", () => {
+      const newTheme = themeSelect.value;
+      this.plugin.settings.cardTheme = newTheme;
+      this.plugin.saveSettings();
+      this.updateCardTheme(newTheme);
+    });
     const showDateOption = this.createCheckboxOption(basicSettings, "\u663E\u793A\u65E5\u671F", currentSettings.showDate);
     showDateOption.addEventListener("change", (e) => {
       currentSettings.showDate = e.target.checked;
@@ -4153,6 +4178,10 @@ ${content}` : content;
       container.setText("\u52A0\u8F7D\u5931\u8D25");
     }
   }
+  updateCardTheme(theme) {
+    this.container.removeClass("theme-light", "theme-dark", "theme-colorful");
+    this.container.addClass(`theme-${theme}`);
+  }
 };
 var RandomCardsModal = class extends import_obsidian2.Modal {
   // 添加容器引用
@@ -4401,7 +4430,8 @@ var DEFAULT_SETTINGS = {
   cardHeight: 280,
   minCardHeight: 200,
   maxCardHeight: 800,
-  homeModules: []
+  homeModules: [],
+  cardTheme: "light"
 };
 var CardViewSettingTab = class extends import_obsidian3.PluginSettingTab {
   constructor(app, plugin) {
@@ -4411,6 +4441,15 @@ var CardViewSettingTab = class extends import_obsidian3.PluginSettingTab {
   display() {
     const { containerEl } = this;
     containerEl.empty();
+    new import_obsidian3.Setting(containerEl).setName("\u5361\u7247\u4E3B\u9898").setDesc("\u9009\u62E9\u5361\u7247\u7684\u663E\u793A\u4E3B\u9898").addDropdown((dropdown) => {
+      dropdown.addOption("light", "\u4EAE\u8272\u4E3B\u9898").addOption("dark", "\u6697\u8272\u4E3B\u9898").addOption("colorful", "\u5F69\u8272\u4E3B\u9898").setValue(this.plugin.settings.cardTheme).onChange(async (value) => {
+        if (value === "light" || value === "dark" || value === "colorful") {
+          this.plugin.settings.cardTheme = value;
+          await this.plugin.saveSettings();
+          this.plugin.updateCardTheme(value);
+        }
+      });
+    });
     new import_obsidian3.Setting(containerEl).setName("\u9ED8\u8BA4\u89C6\u56FE").setDesc("\u9009\u62E9\u9ED8\u8BA4\u7684\u89C6\u56FE\u6A21\u5F0F").addDropdown((dropdown) => {
       dropdown.addOption("home", "\u4E3B\u9875\u89C6\u56FE").addOption("card", "\u5361\u7247\u89C6\u56FE").addOption("list", "\u5217\u8868\u89C6\u56FE").addOption("timeline", "\u65F6\u95F4\u8F74\u89C6\u56FE").addOption("month", "\u6708\u89C6\u56FE").addOption("week", "\u5468\u89C6\u56FE").setValue(this.plugin.settings.defaultView);
       dropdown.onChange(async (value) => {
@@ -4577,6 +4616,14 @@ var CardViewPlugin = class extends import_obsidian3.Plugin {
   async saveHomeModules(modules) {
     this.settings.homeModules = modules;
     await this.saveSettings();
+  }
+  updateCardTheme(theme) {
+    this.app.workspace.getLeavesOfType(VIEW_TYPE_CARD).forEach((leaf) => {
+      const view = leaf.view;
+      if (view) {
+        view.updateCardTheme(theme);
+      }
+    });
   }
 };
 //# sourceMappingURL=main.js.map

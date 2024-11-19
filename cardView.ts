@@ -1049,7 +1049,7 @@ export class CardView extends ItemView {
             cls: 'tag-text'
         });
         
-        // 删除按钮
+        // 删除按
         const removeBtn = tagEl.createSpan({
             text: '×',
             cls: 'remove-tag'
@@ -1479,7 +1479,7 @@ export class CardView extends ItemView {
                         // 获取对应层级的文件夹
                         const targetFolder = currentPath ? this.app.vault.getAbstractFileByPath(currentPath) : this.app.vault.getRoot();
                         if (targetFolder && (targetFolder instanceof TFolder || !currentPath)) {
-                            // 在文件浏览器中定位到该文件夹
+                            // 在文件浏览器中定位到该文��夹
                             await (fileExplorer.view as any).revealInFolder(targetFolder);
                         }
                     }
@@ -1492,7 +1492,7 @@ export class CardView extends ItemView {
             openButton.setAttribute('title', '在新标签页中打开');
             openButton.style.opacity = '0';  // 默认隐藏
 
-            // 创建卡片内��容器
+            // 创建卡片内容器
             const cardContent = card.createDiv('note-card-content');
 
             // 处理标题
@@ -1878,7 +1878,7 @@ export class CardView extends ItemView {
                                 const card = await this.createNoteCard(file);
                                 if (card instanceof HTMLElement) {
                                     card.style.width = '100%';
-                                    // 只有在当前视图是时间轴时才替换占位符
+                                    // 只有在当前视是时间轴时才替换占位符
                                     if (this.currentView === 'timeline') {
                                         notesList.replaceChild(card, placeholder);
                                     }
@@ -3561,12 +3561,49 @@ export class CardView extends ItemView {
     private updateSettingsPanel(settingsPanel: HTMLElement) {
         // 清空现有设置
         settingsPanel.empty();
+        
         // 获取当前视图的设置
         const currentSettings = this.cardSettings[this.currentView as keyof typeof this.cardSettings];
 
         // 添加基本设置选项
         const basicSettings = settingsPanel.createDiv('settings-section');
         basicSettings.createEl('h3', { text: '基本设置' });
+
+        // 添加主题设置
+        const themeContainer = basicSettings.createDiv('setting-item');
+        themeContainer.createEl('label', { text: '卡片主题' });
+        
+        // 创建主题选择下拉框
+        const themeSelect = themeContainer.createEl('select', {
+            cls: 'dropdown'
+        });
+        
+        // 添加主题选项
+        const themes = [
+            { value: 'light', label: '亮色主题' },
+            { value: 'dark', label: '暗色主题' },
+            { value: 'colorful', label: '彩色主题' }
+        ];
+        
+        themes.forEach(theme => {
+            const option = themeSelect.createEl('option', {
+                value: theme.value,
+                text: theme.label
+            });
+            
+            // 设置当前主题为选中状态
+            if (theme.value === this.plugin.settings.cardTheme) {
+                option.selected = true;
+            }
+        });
+        
+        // 添加主题切换事件
+        themeSelect.addEventListener('change', () => {
+            const newTheme = themeSelect.value as 'light' | 'dark' | 'colorful';
+            this.plugin.settings.cardTheme = newTheme;
+            this.plugin.saveSettings();
+            this.updateCardTheme(newTheme);
+        });
 
         // 显示日期选项
         const showDateOption = this.createCheckboxOption(basicSettings, '显示日期', currentSettings.showDate);
@@ -4487,7 +4524,7 @@ export class CardView extends ItemView {
                 cls: 'note-title' 
             });
             
-            // 创建日期容器
+            // 创建日���容器
             const dateContainer = noteItem.createEl('span', { cls: 'note-date' });
             
             // 计算相对时间
@@ -5749,6 +5786,12 @@ export class CardView extends ItemView {
         }
     }
 
+    updateCardTheme(theme: 'light' | 'dark' | 'colorful') {
+        // 移除所有主题类
+        this.container.removeClass('theme-light', 'theme-dark', 'theme-colorful');
+        // 添加新主题类
+        this.container.addClass(`theme-${theme}`);
+    }
 }
 
 
@@ -6084,8 +6127,6 @@ export const DEFAULT_HOME_MODULES: HomeModule[] = [
         position: 'center'
     }
 ];
-
-
 
 
 

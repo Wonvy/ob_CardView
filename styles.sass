@@ -633,3 +633,94 @@
     width: auto
   .modal-header
     margin-bottom: 0
+
+// 在卡片容器样式中添加主题相关样式
+.card-container 
+    // ... 其他样式 ...
+    
+    // 亮色主题
+    &.theme-light .note-card
+        background-color: #ffffff
+        border: 1px solid #e0e0e0
+        
+        .note-card-header
+            background-color: #f5f5f5
+            
+        .note-title
+            color: #333333
+            
+        .note-content
+            color: #666666
+            
+    // 暗色主题
+    &.theme-dark .note-card
+        background-color: #2d2d2d
+        border: 1px solid #404040
+        
+        .note-card-header
+            background-color: #363636
+            
+        .note-title
+            color: #e0e0e0
+            
+        .note-content
+            color: #b0b0b0
+            
+    // 彩色主题
+    &.theme-colorful .note-card
+        background: linear-gradient(135deg, var(--background-secondary) 0%, var(--background-primary) 100%)
+        border: 1px solid var(--background-modifier-border)
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1)
+        
+        .note-card-header
+            background: rgba(255, 255, 255, 0.1)
+            -webkit-backdrop-filter: blur(5px)
+            backdrop-filter: blur(5px)
+            
+        .note-title
+            color: var(--text-accent)
+            font-weight: bold
+            
+        .note-content
+            color: var(--text-normal)
+            
+        &:hover
+            transform: translateY(-3px)
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15)
+            
+            .note-card-header
+                background: rgba(255, 255, 255, 0.15)
+
+// 在卡片设置面板中的下拉框样式
+.card-settings-panel
+    .setting-item
+        margin-bottom: 12px
+        
+        label
+            display: block
+            margin-bottom: 6px
+            color: var(--text-muted)
+            font-size: 12px
+        
+        select.dropdown
+            width: 100%
+            padding: 6px 8px
+            border-radius: 4px
+            border: 1px solid var(--background-modifier-border)
+            background-color: var(--background-primary)
+            color: var(--text-normal)
+            font-size: 14px
+            cursor: pointer
+            transition: all 0.2s ease
+            
+            &:hover
+                border-color: var(--interactive-accent)
+            
+            &:focus
+                outline: none
+                border-color: var(--interactive-accent)
+                box-shadow: 0 0 0 2px rgba(var(--interactive-accent-rgb), 0.2)
+            
+            option
+                background-color: var(--background-primary)
+                color: var(--text-normal)
