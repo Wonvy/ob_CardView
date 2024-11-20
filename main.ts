@@ -13,10 +13,12 @@ interface CardViewPluginSettings {
     homeModules: HomeModule[];
     cardTheme: 'light' | 'dark' | 'colorful';
     cardSettings: {
-        card: { showDate: boolean; showContent: boolean; cardGap: number; cardsPerRow: number; cardHeight: number; };
-        list: { showDate: boolean; showContent: boolean; cardGap: number; cardsPerRow: number; cardHeight: number; };
-        timeline: { showDate: boolean; showContent: boolean; cardGap: number; cardsPerRow: number; cardHeight: number; };
-        month: { showDate: boolean; showContent: boolean; cardGap: number; cardsPerRow: number; cardHeight: number; };
+        home: { showDate: boolean; showContent: boolean; cardGap: number; cardsPerRow: number; cardHeight: number; cardWidth: number; };
+        card: { showDate: boolean; showContent: boolean; cardGap: number; cardsPerRow: number; cardHeight: number; cardWidth: number; };
+        list: { showDate: boolean; showContent: boolean; cardGap: number; cardsPerRow: number; cardHeight: number; cardWidth: number; };
+        timeline: { showDate: boolean; showContent: boolean; cardGap: number; cardsPerRow: number; cardHeight: number; cardWidth: number; };
+        month: { showDate: boolean; showContent: boolean; cardGap: number; cardsPerRow: number; cardHeight: number; cardWidth: number; };
+        week: { showDate: boolean; showContent: boolean; cardGap: number; cardsPerRow: number; cardHeight: number; cardWidth: number; };
     };
 }
 
@@ -26,10 +28,12 @@ const DEFAULT_SETTINGS: CardViewPluginSettings = {
     minCardWidth: 280,
     maxCardWidth: 600,
     cardSettings: {
-        card: { showDate: true, showContent: true, cardGap: 10, cardsPerRow: 3, cardHeight: 280 },
-        list: { showDate: true, showContent: true, cardGap: 10, cardsPerRow: 3, cardHeight: 280 },
-        timeline: { showDate: true, showContent: true, cardGap: 10, cardsPerRow: 3, cardHeight: 280 },
-        month: { showDate: true, showContent: true, cardGap: 10, cardsPerRow: 3, cardHeight: 280 },
+        home: { showDate: true, showContent: true, cardGap: 16, cardsPerRow: 4, cardHeight: 280, cardWidth: 280 },
+        card: { showDate: true, showContent: true, cardGap: 16, cardsPerRow: 4, cardHeight: 280, cardWidth: 280 },
+        list: { showDate: true, showContent: true, cardGap: 16, cardsPerRow: 1, cardHeight: 280, cardWidth: 280 },
+        timeline: { showDate: true, showContent: true, cardGap: 16, cardsPerRow: 2, cardHeight: 280, cardWidth: 280 },
+        month: { showDate: true, showContent: true, cardGap: 8, cardsPerRow: 1, cardHeight: 280, cardWidth: 280 },
+        week: { showDate: true, showContent: true, cardGap: 16, cardsPerRow: 2, cardHeight: 280, cardWidth: 280 }
     },
     showTagCount: false,
     cardHeight: 280,

@@ -456,6 +456,28 @@ export class CardView extends ItemView {
         this.homeModules = plugin.settings.homeModules.length > 0 
             ? plugin.settings.homeModules 
             : DEFAULT_HOME_MODULES;
+
+        // 确保每个视图都有默认设置
+        const viewTypes = ['home', 'card', 'list', 'timeline', 'month', 'week'] as const;
+        viewTypes.forEach(viewType => {
+            if (!this.plugin.settings.cardSettings[viewType]) {
+                this.plugin.settings.cardSettings[viewType] = {
+                    showDate: true,
+                    showContent: true,
+                    cardGap: 16,
+                    cardsPerRow: viewType === 'list' ? 1 : 
+                                viewType === 'month' ? 1 : 
+                                viewType === 'timeline' || viewType === 'week' ? 2 : 4,
+                    cardHeight: 280,
+                    cardWidth: 280  // 添加 cardWidth 属性
+                };
+            }
+        });
+
+        // 使用当前视图的设置初始化卡片大小
+        const currentSettings = this.plugin.settings.cardSettings[this.currentView];
+        this.cardSize = currentSettings.cardWidth;
+        this.cardHeight = currentSettings.cardHeight;
     }
 
     /**
@@ -654,7 +676,7 @@ export class CardView extends ItemView {
         
         // 使用存的宽度和高度初始化卡片容器
         this.cardSize = this.plugin.settings.cardWidth;
-        // 删除读取高度的代码，因为cardHeight属性不存
+        // 删除读取高度的代码，因为cardHeight性不存
         // this.container.style.gridTemplateColumns = `repeat(auto-fill, ${this.cardSize}px`;
         
         // 添加滚轮事件监听
@@ -828,7 +850,7 @@ export class CardView extends ItemView {
     }
 
 
-    // 加载标签
+    // 载标签
     private async loadTags() {
         const tagCounts = this.getTagsWithCount();
         this.tagContainer.empty();
@@ -1054,7 +1076,12 @@ export class CardView extends ItemView {
         });
     }
 
-    // 创建视图切换按钮
+    // 获取视图设置
+    private getViewSettings(view: 'home' | 'card' | 'list' | 'timeline' | 'month' | 'week') {
+        return this.plugin.settings.cardSettings[view];
+    }
+
+    // 创建图切换按钮
     private createViewSwitcher(container: HTMLElement) {
         const views = [
             { 
@@ -1135,10 +1162,23 @@ export class CardView extends ItemView {
         this.currentView = view;
         this.currentLoadingView = view;
         
+        // 加载当前视图的设置
+        const currentSettings = this.getViewSettings(view);
+        
         // 清空容器并设置新的视图属性
         this.container.empty();
         this.container.setAttribute('data-view', view);
         
+        // 应用视图设置
+        if (currentSettings) {
+            // 应用卡片间距
+            this.container.style.gap = `${currentSettings.cardGap}px`;
+            
+            // 应用每行卡片数
+            if (view === 'card' || view === 'timeline') {
+                this.updateCardLayout();
+            }
+        }
         
         const contentSection = this.containerEl.querySelector('.content-section');
         if (contentSection) {
@@ -1430,7 +1470,7 @@ export class CardView extends ItemView {
             const header = card.createDiv('note-card-header');
 
             // 添加修改日期
-            if (this.cardSettings[this.currentView as keyof typeof this.cardSettings].showDate) {
+            if (this.plugin.settings.cardSettings[this.currentView as keyof typeof this.plugin.settings.cardSettings].showDate) {
                 const lastModified = header.createDiv('note-date show');
                 lastModified.setText(new Date(file.stat.mtime).toLocaleDateString());
             }
@@ -1479,7 +1519,7 @@ export class CardView extends ItemView {
                         // 获取对应层级的文件夹
                         const targetFolder = currentPath ? this.app.vault.getAbstractFileByPath(currentPath) : this.app.vault.getRoot();
                         if (targetFolder && (targetFolder instanceof TFolder || !currentPath)) {
-                            // 在文件浏览器中定位到该文��夹
+                            // 在文件浏览器中定位到该文夹
                             await (fileExplorer.view as any).revealInFolder(targetFolder);
                         }
                     }
@@ -1513,7 +1553,7 @@ export class CardView extends ItemView {
             try {
                 // 创建笔记内容容器
                 const noteContent = cardContent.createDiv('note-content');
-                if (this.cardSettings[this.currentView as keyof typeof this.cardSettings].showContent) {
+                if (this.plugin.settings.cardSettings[this.currentView as keyof typeof this.plugin.settings.cardSettings].showContent) {
                     noteContent.addClass('show');
                 }
                 noteContent.setAttribute('data-path', file.path);
@@ -1529,7 +1569,7 @@ export class CardView extends ItemView {
                 card.addEventListener('mouseenter', async () => {
                     openButton.style.opacity = '1';
                     // 根据设置决定是否显示/隐藏内容
-                    if (!this.cardSettings.card.showContent) {
+                    if (!this.plugin.settings.cardSettings[this.currentView as keyof typeof this.plugin.settings.cardSettings].showContent) {
                         const noteContent = cardContent.querySelector('.note-content');
                         if (noteContent) {
                             noteContent.addClass('hover-show');
@@ -1560,7 +1600,7 @@ export class CardView extends ItemView {
                 card.addEventListener('mouseleave', () => {
                     openButton.style.opacity = '0';
                     // 根据设置决定是否隐藏内容
-                    if (!this.cardSettings.card.showContent) {
+                    if (!this.plugin.settings.cardSettings[this.currentView as keyof typeof this.plugin.settings.cardSettings].showContent) {
                         const noteContent = cardContent.querySelector('.note-content');
                         if (noteContent) {
                             noteContent.removeClass('hover-show');
@@ -1572,7 +1612,7 @@ export class CardView extends ItemView {
                 openButton.addEventListener('click', async (e) => {
                     e.stopPropagation();
                     await openInAppropriateLeaf(this.app,file);
-                    card.addClass('selected'); // 给该卡片添加selected类
+                    card.addClass('selected'); // 给该卡片添selected类
                     // 移除其他卡片的selected类
                     this.container.querySelectorAll('.note-card').forEach(cardElement => {
                         if (cardElement !== card) {
@@ -1597,10 +1637,10 @@ export class CardView extends ItemView {
             });
 
             // 修改内容显示逻辑
-            if (this.cardSettings.card.showContent) {
+            if (this.plugin.settings.cardSettings[this.currentView as keyof typeof this.plugin.settings.cardSettings].showContent) {
                 // 创建笔记内容
                 const noteContent = cardContent.createDiv('note-content');
-                // ... 内容加载辑 ...
+                // ... 内容加载逻辑 ...
             }
 
             // 添加键菜单事件监听
@@ -1728,7 +1768,7 @@ export class CardView extends ItemView {
 
     // 笔记-创建
     private async createNewNote(date?: Date) {
-            // 获取当前日期作为默认文件名
+            // 获��当前日期作为默认文件名
         const baseFileName = date ? date.toLocaleDateString() : '未命名';
             let fileName = baseFileName;
             let counter = 1;
@@ -1853,7 +1893,7 @@ export class CardView extends ItemView {
                             dateGroup.className = 'timeline-date-group';
                             
                             // 只有在 showDate 为 true 时才添加日期节点
-                            if (this.cardSettings.timeline.showDate) {
+                            if (this.plugin.settings.cardSettings[this.currentView].showDate) {
                                 dateGroup.innerHTML = `
                                     <div class="timeline-date-node">
                                         <div class="timeline-node-circle"></div>
@@ -1865,12 +1905,18 @@ export class CardView extends ItemView {
                             const notesList = dateGroup.createDiv('timeline-notes-list');
                             const notes = notesByDate.get(date) || [];
                             
-                            // 量创建卡片的占位符
+                            // 设置网格布局，应用每行卡片数量设置
+                            const currentSettings = this.plugin.settings.cardSettings[this.currentView];
+                            notesList.style.display = 'grid';
+                            notesList.style.gridTemplateColumns = `repeat(${currentSettings.cardsPerRow}, 1fr)`;
+                            notesList.style.gap = `${currentSettings.cardGap}px`;
+                            
+                            // 创建卡片
                             const cardPromises = notes.map(async (file) => {
                                 const placeholder = document.createElement('div');
                                 placeholder.className = 'note-card-placeholder';
                                 placeholder.style.width = '100%';
-                                placeholder.style.height = '200px'; // 设置固定高度
+                                placeholder.style.height = `${currentSettings.cardHeight}px`;
                                 placeholder.style.backgroundColor = 'var(--background-secondary)';
                                 placeholder.style.borderRadius = '8px';
                                 placeholder.style.marginBottom = '1rem';
@@ -1880,7 +1926,7 @@ export class CardView extends ItemView {
                                 const card = await this.createNoteCard(file);
                                 if (card instanceof HTMLElement) {
                                     card.style.width = '100%';
-                                    // 只有在当前视是时间轴时才替换占位符
+                                    // 只有在当前视图是时间轴时才替换占位符
                                     if (this.currentView === 'timeline') {
                                         notesList.replaceChild(card, placeholder);
                                     }
@@ -2146,8 +2192,13 @@ export class CardView extends ItemView {
         if (newSize !== this.cardSize) {
             this.cardSize = newSize;
             this.updateCardSize(newSize);
-            // 保存新的宽度
-            this.plugin.saveCardWidth(newSize);
+            
+            // 保存到当前视图的设置
+            const currentSettings = this.plugin.settings.cardSettings[this.currentView];
+            if (currentSettings) {
+                currentSettings.cardWidth = newSize; // 现在这个属性存在了
+                this.plugin.saveSettings();
+            }
         }
     }
 
@@ -2162,22 +2213,33 @@ export class CardView extends ItemView {
         if (newHeight !== this.cardHeight) {
             this.cardHeight = newHeight;
             this.updateCardHeight(newHeight);
-            // 使用新添加的方法保存高度
-            this.plugin.saveCardHeight(newHeight);
+            
+            // 保存到当前视图的设置
+            const currentSettings = this.plugin.settings.cardSettings[this.currentView];
+            if (currentSettings) {
+                currentSettings.cardHeight = newHeight;
+                this.plugin.saveSettings();
+            }
         }
     }
 
     // 卡片-更新大小
     public updateCardSize(width: number) {
-        this.cardSize = width;
-        // 更新所有卡片的宽度
-        this.container.querySelectorAll('.note-card').forEach((card: Element) => {
-            if (card instanceof HTMLElement) {
-                card.style.width = `${width}px`;
-            }
-        });
-        // 更新容器的网格宽度
-        // this.container.style.gridTemplateColumns = `repeat(auto-fill, ${width}px)`;
+        const currentSettings = this.plugin.settings.cardSettings[this.currentView];
+        if (currentSettings) {
+            currentSettings.cardWidth = width;
+            this.cardSize = width;
+            
+            // 更新所有卡片的宽度
+            this.container.querySelectorAll('.note-card').forEach((card: Element) => {
+                if (card instanceof HTMLElement) {
+                    card.style.width = `${width}px`;
+                }
+            });
+            
+            // 更新布局
+            this.updateCardLayout();
+        }
     }
 
     // 卡片-新高度
@@ -2262,7 +2324,7 @@ export class CardView extends ItemView {
         // 添加导航事件
         prevBtn.addEventListener('click', () => {
             this.currentDate.setMonth(this.currentDate.getMonth() - 1);
-            titleEl.setText(`${this.currentDate.getFullYear()}年${this.currentDate.getMonth() + 1}月`);
+            titleEl.setText(`${this.currentDate.getFullYear()}年${this.currentDate.getMonth() + 1}`);
             this.renderCalendarContent(this.calendarContainer);
         });
         
@@ -2684,7 +2746,7 @@ export class CardView extends ItemView {
                                 this
                             );
                         } catch (error) {
-                            console.error('预览加载失败:', error);
+                            console.error('预览载失败:', error);
                         }
                     });
                 });
@@ -2756,7 +2818,7 @@ export class CardView extends ItemView {
                 // 创建文件组标题
                 const folderHeader = folderGroup.createDiv('folder-header');
                 
-                // 添加文件夹图标
+                // 添加文件图标
                 const folderIcon = folderHeader.createDiv('folder-icon');
                 folderIcon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>`;
                 
@@ -3036,7 +3098,7 @@ export class CardView extends ItemView {
             try {
                 // 获取所有添加的标签
                 const tagItems = tagsContainer?.querySelectorAll('.tag-item.active') ?? [];
-                const tagTexts = Array.from(tagItems).map(item => item.textContent?.replace('×', '').trim() ?? '');
+                const tagTexts = Array.from(tagItems).map(item => item.textContent?.replace('', '').trim() ?? '');
                 
                 // 构建笔记内容，只包含活跃的标签
                 const tagsContent = tagTexts.map(tag => `#${tag}`).join(' ');
@@ -3110,7 +3172,7 @@ export class CardView extends ItemView {
                         // 添加点击切换状态事件
                         tagItem?.addEventListener('click', (e) => {
                             if (e.target !== removeBtn) {
-                                tagItem.toggleClass('active', !tagItem.hasClass('active')); // 添加第二个参数
+                                tagItem.toggleClass('active', !tagItem.hasClass('active')); // 添加第二个��数
                                 tagItem.toggleClass('inactive', tagItem.hasClass('active')); // 添加第二个参数
                             }
                         });
@@ -3417,7 +3479,8 @@ export class CardView extends ItemView {
         try {
             container.empty(); // 清除加载占位符
             
-            const content = await this.app.vault.read(file);
+            // 使用 cachedRead 替代 read
+            const content = await this.app.vault.cachedRead(file);
             await MarkdownRenderer.render(
                 this.app,
                 content,
@@ -3561,11 +3624,10 @@ export class CardView extends ItemView {
 
     // 卡片设置面板
     private updateSettingsPanel(settingsPanel: HTMLElement) {
-        // 清空现有设置
         settingsPanel.empty();
         
         // 获取当前视图的设置
-        const currentSettings = this.cardSettings[this.currentView as keyof typeof this.cardSettings];
+        const currentSettings = this.plugin.settings.cardSettings[this.currentView as keyof typeof this.plugin.settings.cardSettings];
 
         // 添加基本设置选项
         const basicSettings = settingsPanel.createDiv('settings-section');
@@ -3611,12 +3673,15 @@ export class CardView extends ItemView {
         // 显示日期选项
         const showDateOption = this.createCheckboxOption(basicSettings, '显示日期', currentSettings.showDate);
        
-        showDateOption.addEventListener('change', (e) => {
-            currentSettings.showDate = (e.target as HTMLInputElement).checked;
+        showDateOption.addEventListener('change', async (e) => {
+            const checked = (e.target as HTMLInputElement).checked;
+            currentSettings.showDate = checked;
+            await this.plugin.saveSettings(); // 保存到插件设置
+            
+            // 更新视图
             const dateElements = this.container.querySelectorAll('.note-date');
             dateElements.forEach(element => {
-                // 如果显示日期，则显示，否则隐藏
-                if (currentSettings.showDate) {
+                if (checked) {
                     element.removeClass('hide');
                     element.addClass('show');
                 } else {
@@ -3624,14 +3689,14 @@ export class CardView extends ItemView {
                     element.addClass('hide');
                 }
             });
- 
         });
 
         // 显示内容选项
         const showContentOption = this.createCheckboxOption(basicSettings, '显示笔记内容', currentSettings.showContent);
-        showContentOption.addEventListener('change', (e) => {
+        showContentOption.addEventListener('change', async (e) => {
             currentSettings.showContent = (e.target as HTMLInputElement).checked;
-            // 所有视图统一处理笔记内容显示/隐藏
+            await this.plugin.saveSettings(); // 保存更改
+            
             const contentElements = this.container.querySelectorAll('.note-content');
             contentElements.forEach(element => {
                 if (currentSettings.showContent) {
@@ -3647,9 +3712,10 @@ export class CardView extends ItemView {
         layoutSettings.createEl('h3', { text: '布局设置' });
 
         // 卡片高度设置
-        this.createSliderOption(layoutSettings, '卡片高度', currentSettings.cardHeight, 200, 500, 10, (value) => {
+        this.createSliderOption(layoutSettings, '卡片高度', currentSettings.cardHeight, 200, 500, 10, async (value) => {
             currentSettings.cardHeight = value;
-            // 统一处理所有卡片高度调整
+            await this.plugin.saveSettings(); // 存更改
+            
             this.container.querySelectorAll('.note-card').forEach((card: Element) => {
                 if (card instanceof HTMLElement) {
                     card.style.height = `${value}px`;
@@ -3658,13 +3724,14 @@ export class CardView extends ItemView {
         });
 
         // 卡片间距设置
-        this.createSliderOption(layoutSettings, '卡片间距', currentSettings.cardGap, 0, 40, 4, (value) => {
+        this.createSliderOption(layoutSettings, '卡片间距', currentSettings.cardGap, 0, 40, 4, async (value) => {
             currentSettings.cardGap = value;
+            await this.plugin.saveSettings(); // 保存到插件设置
+            
+            // 更新视图
             if (this.currentView === 'card') {
-                // 卡片视图新间距
                 this.container.style.gap = `${value}px`;
             } else if (this.currentView === 'timeline') {
-                // 时间轴视图更新笔记列表的间距
                 const notesLists = this.container.querySelectorAll('.timeline-notes-list');
                 notesLists.forEach(list => {
                     if (list instanceof HTMLElement) {
@@ -3675,34 +3742,6 @@ export class CardView extends ItemView {
         });
 
         // 每行卡片数量设置
-        const updateCardsPerRow = (value: number) => {
-
-            cardsPerRowInput.value = value.toString();// 更新输入框的值
-            currentSettings.cardsPerRow = value; // 更新设置
-            
-            if (this.currentView === 'card') {
-                // 只更新网格布局
-                const containerWidth = this.container.offsetWidth;
-                const totalGap = value >= 0 ? currentSettings.cardGap : 0; // 确保不小于0
-                // 大列数
-                const maxColumns = Math.floor(containerWidth / (180 + totalGap));
-                console.log('containerWidth', containerWidth);
-                console.log('totalGap', totalGap);
-                console.log('maxColumns', maxColumns);
-                // 如果宽度小于150px，则repeat取最大的数
-                const repeatValue = value > maxColumns ? maxColumns : value;
-                this.container.style.gridTemplateColumns = `repeat(${repeatValue}, minmax(150px, 1fr))`;
-            } else if (this.currentView === 'timeline') {
-                // 更新间轴视图的卡片布局
-                const notesLists = this.container.querySelectorAll('.timeline-notes-list');
-                notesLists.forEach(list => {
-                    if (list instanceof HTMLElement) {
-                        list.style.gridTemplateColumns = `repeat(${value}, 1fr)`;
-                    }
-                });
-            }
-        };
-
         const cardsPerRowContainer = layoutSettings.createDiv('setting-item');
         cardsPerRowContainer.createEl('label', { text: '每行卡片数量' });
         
@@ -3728,23 +3767,40 @@ export class CardView extends ItemView {
             text: '+'
         });
 
+        // 更新每行卡片数量的函数
+        const updateCardsPerRow = async (value: number) => {
+            // 确保值在合理范围内
+            const validValue = Math.max(1, Math.min(12, value));
+            
+            // 更新输入框的值
+            cardsPerRowInput.value = validValue.toString();
+            
+            // 更新设置
+            currentSettings.cardsPerRow = validValue;
+            await this.plugin.saveSettings();
+            
+            // 更新视图布局
+            this.updateCardLayout();
+        };
+
         // 减少按钮事件
         decreaseBtn.addEventListener('click', () => {
-            const currentValue = parseInt(cardsPerRowInput.value) || 4; // 默认值为4
-            if (currentValue > 0) { // 只有当值大于0才减少
-                updateCardsPerRow(Math.max(1, currentValue - 1)); // 确保不小于0
-            }
+            const currentValue = parseInt(cardsPerRowInput.value) || currentSettings.cardsPerRow;
+            updateCardsPerRow(currentValue - 1);
         });
 
+        // 增加按钮事件
         increaseBtn.addEventListener('click', () => {
-            const currentValue = parseInt(cardsPerRowInput.value) || 4;
+            const currentValue = parseInt(cardsPerRowInput.value) || currentSettings.cardsPerRow;
             updateCardsPerRow(currentValue + 1);
         });
 
         // 输入框事件
         cardsPerRowInput.addEventListener('change', (e) => {
             const value = parseInt((e.target as HTMLInputElement).value);
-            updateCardsPerRow(isNaN(value) ? 4 : value);
+            if (!isNaN(value)) {
+                updateCardsPerRow(value);
+            }
         });
 
         // 添加滚轮支持
@@ -3752,7 +3808,7 @@ export class CardView extends ItemView {
             e.preventDefault(); // 防止页面滚动
             if (document.activeElement === cardsPerRowInput) { // 只在输入框获得焦点时响应
                 const delta = e.deltaY > 0 ? -1 : 1; // 向上滚动增加，向下滚动减少
-                const currentValue = parseInt(cardsPerRowInput.value) || 4;
+                const currentValue = parseInt(cardsPerRowInput.value) || currentSettings.cardsPerRow;
                 updateCardsPerRow(currentValue + delta);
             }
         });
@@ -3781,7 +3837,7 @@ export class CardView extends ItemView {
         const container = this.container;
         if (!container) return;
 
-        const currentSettings = this.cardSettings[this.currentView as keyof typeof this.cardSettings];
+        const currentSettings = this.getViewSettings(this.currentView);
 
         // 更新容器样式
         container.style.gap = `${currentSettings.cardGap}px`;
@@ -3793,33 +3849,32 @@ export class CardView extends ItemView {
             }
         });
 
-        // 计算每行最大可能的卡片数量
-        const containerWidth = container.offsetWidth - (2 * 16); // 减去容器的padding
-        console.log('Container width:', containerWidth);
-
-        // 使用设置中的每行卡片数量
-        const columns = currentSettings.cardsPerRow;
-        console.log('Cards per row setting:', columns);
-
-        if (columns > 0) {
-            // 计算实际卡片宽度
-            const totalGap = currentSettings.cardGap * (columns - 1);
-            const availableWidth = containerWidth - totalGap;
-            const cardWidth = Math.floor(availableWidth / columns);
-            
-            console.log('Calculated values:', {
-                totalGap,
-                availableWidth,
-                cardWidth,
-                columns
+        if (this.currentView === 'timeline') {
+            // 为时间轴视图更新每个日期组的笔记列表布局
+            const notesLists = container.querySelectorAll('.timeline-notes-list');
+            notesLists.forEach(list => {
+                if (list instanceof HTMLElement) {
+                    list.style.display = 'grid';
+                    list.style.gridTemplateColumns = `repeat(${currentSettings.cardsPerRow}, 1fr)`;
+                    list.style.gap = `${currentSettings.cardGap}px`;
+                }
             });
+        } else {
+            // 其他视图的布局处理保持不变
+            const containerWidth = container.offsetWidth - (2 * 16);
+            const columns = currentSettings.cardsPerRow;
 
-            // 设置网格布局
-            container.style.gridTemplateColumns = `repeat(${columns}, minmax(200px, 1fr))`;
-            container.style.gridGap = `${currentSettings.cardGap}px`;
-            container.style.padding = '16px';
-            container.style.boxSizing = 'border-box';
-            container.style.width = '100%';
+            if (columns > 0) {
+                const totalGap = currentSettings.cardGap * (columns - 1);
+                const availableWidth = containerWidth - totalGap;
+                const cardWidth = Math.floor(availableWidth / columns);
+
+                container.style.gridTemplateColumns = `repeat(${columns}, minmax(200px, 1fr))`;
+                container.style.gridGap = `${currentSettings.cardGap}px`;
+                container.style.padding = '16px';
+                container.style.boxSizing = 'border-box';
+                container.style.width = '100%';
+            }
         }
     }
 
@@ -4013,7 +4068,7 @@ export class CardView extends ItemView {
             const weekdays = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
             weekdays.forEach((day, index) => {
                 const dayHeader = daysHeader.createDiv('week-day-header');
-                // 调整日期索引，将周日对应的日期放到最后
+                // 调整日期索引，��周日对应的日期放���最后
                 const dateIndex = index === 6 ? 0 : index + 1;
                 const date = weekDates[dateIndex];
                 dayHeader.innerHTML = `
@@ -4199,7 +4254,7 @@ export class CardView extends ItemView {
             // 使用周中间的日期（周四）来确定月份
             const middleDate = weekDates[3];
             console.log('周中间日期:', middleDate);
-            return middleDate.getMonth() + 1; // JavaScript 月份从 0 开始，所以要加 1
+            return middleDate.getMonth() + 1; // JavaScript 月份 0 开始，所以要加 1
         } catch (error) {
             console.error('获取月份失败:', error);
             return 1; // 返回默认值
@@ -4384,7 +4439,7 @@ export class CardView extends ItemView {
         let currentMonthStartCol = 0;
         let currentCol = 0;
 
-        // 创建所有日期格子
+        // 创建所有日期格
         const allDayCells: HTMLElement[] = [];
         let currentYear = iterDate.getFullYear();
 
@@ -4536,7 +4591,7 @@ export class CardView extends ItemView {
                 cls: 'note-title' 
             });
             
-            // 创建日���容器
+            // 创建日容器
             const dateContainer = noteItem.createEl('span', { cls: 'note-date' });
             
             // 计算相对时间
@@ -4608,7 +4663,7 @@ export class CardView extends ItemView {
         container.empty(); // 清空容器
         const moduleContainer = container.createDiv('calendar-module');
         
-        // 创建左右布局
+        // 建左右布局
         const calendarSection = moduleContainer.createDiv('calendar-section');
         const notesSection = moduleContainer.createDiv('notes-section');
         
@@ -4622,7 +4677,7 @@ export class CardView extends ItemView {
         const prevBtn = header.createEl('button', { cls: 'calendar-nav-btn' });
         prevBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>';
         
-        // 显示年月
+        // 显示年
         const titleEl = header.createDiv('calendar-title');
         titleEl.setText(`${this.currentDate.getFullYear()}年${this.currentDate.getMonth() + 1}月`);
         
@@ -4855,7 +4910,7 @@ export class CardView extends ItemView {
             // 启用编辑模式
             modules.forEach(module => {
                 if (module instanceof HTMLElement) {
-                    // 先移除可能存在的旧控件
+                    // 先移除可能存在的旧控
                     module.querySelectorAll('.module-drag-handle, .module-controls').forEach(el => el.remove());
                     
                     module.classList.add('editable');
@@ -4911,7 +4966,7 @@ export class CardView extends ItemView {
             // 移除所有占位符和标记
             this.container.querySelectorAll('.module-placeholder, .drop-marker').forEach(el => el.remove());
 
-            // 重新渲染主页视图，但不进入编辑模式
+            // 重渲染主页视图，但不进入编辑模式
             this.createHomeView();
         }
 
@@ -5066,7 +5121,7 @@ export class CardView extends ItemView {
                     dropTarget = column;
                     column.classList.add('drop-target');
 
-                    // 获取列中的所有模块
+                    // 获取列中的所模块
                     const modules = Array.from(column.children).filter(child => 
                         child.classList.contains('module-container') && 
                         child !== module && 
@@ -5158,7 +5213,7 @@ export class CardView extends ItemView {
                         // 然后移动模块到目标位置
                         targetColumn.insertBefore(module, placeholder);
 
-                        // 更新位置和列数
+                        // 更位置和列数
                         moduleConfig.position = newPosition;
                         moduleConfig.columns = newPosition === 'center' ? 2 : 1;
 
@@ -5437,7 +5492,7 @@ export class CardView extends ItemView {
                 const tagItems = tagsContainer.querySelectorAll('.tag-item');
                 const tagTexts = Array.from(tagItems).map(item => item.textContent?.replace('×', '').trim() ?? '');
                 
-                // 构建笔记内容包含标签
+                // 构建笔内容包含标签
                 const tagsContent = tagTexts.map(tag => `#${tag}`).join(' ');
                 const finalContent = tagsContent ? `${tagsContent}\n\n${content}` : content;
                 
@@ -5733,6 +5788,7 @@ export class CardView extends ItemView {
                     const previewContent = dynamicCard.createDiv('card-preview');
                     previewContent.setText('加载中...');
                     
+                    // 加载预览内容
                     this.loadDynamicCardPreview(file, previewContent);
                     
                     // 添加点击事件
@@ -5836,7 +5892,7 @@ class RandomCardsModal extends Modal {
         // 创建卡片容器并保存引用
         this.cardsContainer = contentEl.createDiv('random-cards-container');
         
-        // 初始化卡片
+        // 始化卡片
         await this.renderRandomCards();
 
         // 创建按钮容器
@@ -6057,6 +6113,8 @@ class ModuleManagerModal extends Modal {
         }
     }
 
+
+
     // 添加预览更新方法
     private updatePreview() {
         this.previewContainer.empty();
@@ -6072,6 +6130,8 @@ class ModuleManagerModal extends Modal {
             });
     }
 }
+
+
 
 // 默认主页模块配置
 export const DEFAULT_HOME_MODULES: HomeModule[] = [

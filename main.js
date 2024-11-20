@@ -409,6 +409,23 @@ var CardView = class extends import_obsidian2.ItemView {
     this.currentWeek = this.getWeekNumber(today);
     console.log("\u521D\u59CB\u5316\u5468\u89C6 - \u5E74\u4EFD:", this.currentYear, "\u5468\u6570:", this.currentWeek);
     this.homeModules = plugin.settings.homeModules.length > 0 ? plugin.settings.homeModules : DEFAULT_HOME_MODULES;
+    const viewTypes = ["home", "card", "list", "timeline", "month", "week"];
+    viewTypes.forEach((viewType) => {
+      if (!this.plugin.settings.cardSettings[viewType]) {
+        this.plugin.settings.cardSettings[viewType] = {
+          showDate: true,
+          showContent: true,
+          cardGap: 16,
+          cardsPerRow: viewType === "list" ? 1 : viewType === "month" ? 1 : viewType === "timeline" || viewType === "week" ? 2 : 4,
+          cardHeight: 280,
+          cardWidth: 280
+          // 添加 cardWidth 属性
+        };
+      }
+    });
+    const currentSettings = this.plugin.settings.cardSettings[this.currentView];
+    this.cardSize = currentSettings.cardWidth;
+    this.cardHeight = currentSettings.cardHeight;
   }
   /**
    * 获取视图类型
@@ -656,7 +673,7 @@ ${content}` : content;
     });
     return tagCounts;
   }
-  // 加载标签
+  // 载标签
   async loadTags() {
     const tagCounts = this.getTagsWithCount();
     this.tagContainer.empty();
@@ -807,7 +824,11 @@ ${content}` : content;
       this.refreshView();
     });
   }
-  // 创建视图切换按钮
+  // 获取视图设置
+  getViewSettings(view) {
+    return this.plugin.settings.cardSettings[view];
+  }
+  // 创建图切换按钮
   createViewSwitcher(container) {
     const views = [
       {
@@ -875,8 +896,15 @@ ${content}` : content;
     }
     this.currentView = view;
     this.currentLoadingView = view;
+    const currentSettings = this.getViewSettings(view);
     this.container.empty();
     this.container.setAttribute("data-view", view);
+    if (currentSettings) {
+      this.container.style.gap = `${currentSettings.cardGap}px`;
+      if (view === "card" || view === "timeline") {
+        this.updateCardLayout();
+      }
+    }
     const contentSection = this.containerEl.querySelector(".content-section");
     if (contentSection) {
       contentSection.removeClass("view-home", "view-card", "view-list", "view-timeline", "view-month", "view-week");
@@ -1094,7 +1122,7 @@ ${content}` : content;
       card.addClass("note-card");
       card.setAttribute("data-path", file.path);
       const header = card.createDiv("note-card-header");
-      if (this.cardSettings[this.currentView].showDate) {
+      if (this.plugin.settings.cardSettings[this.currentView].showDate) {
         const lastModified = header.createDiv("note-date show");
         lastModified.setText(new Date(file.stat.mtime).toLocaleDateString());
       }
@@ -1148,7 +1176,7 @@ ${content}` : content;
       }
       try {
         const noteContent = cardContent.createDiv("note-content");
-        if (this.cardSettings[this.currentView].showContent) {
+        if (this.plugin.settings.cardSettings[this.currentView].showContent) {
           noteContent.addClass("show");
         }
         noteContent.setAttribute("data-path", file.path);
@@ -1157,7 +1185,7 @@ ${content}` : content;
         this.observeNoteContent(noteContent, file);
         card.addEventListener("mouseenter", async () => {
           openButton.style.opacity = "1";
-          if (!this.cardSettings.card.showContent) {
+          if (!this.plugin.settings.cardSettings[this.currentView].showContent) {
             const noteContent2 = cardContent.querySelector(".note-content");
             if (noteContent2) {
               noteContent2.addClass("hover-show");
@@ -1182,7 +1210,7 @@ ${content}` : content;
         });
         card.addEventListener("mouseleave", () => {
           openButton.style.opacity = "0";
-          if (!this.cardSettings.card.showContent) {
+          if (!this.plugin.settings.cardSettings[this.currentView].showContent) {
             const noteContent2 = cardContent.querySelector(".note-content");
             if (noteContent2) {
               noteContent2.removeClass("hover-show");
@@ -1209,7 +1237,7 @@ ${content}` : content;
       card.addEventListener("mouseleave", () => {
         openButton.style.opacity = "0";
       });
-      if (this.cardSettings.card.showContent) {
+      if (this.plugin.settings.cardSettings[this.currentView].showContent) {
         const noteContent = cardContent.createDiv("note-content");
       }
       card.addEventListener("contextmenu", (e) => {
@@ -1397,7 +1425,7 @@ ${content}` : content;
             for (const date of batchDates) {
               const dateGroup = document.createElement("div");
               dateGroup.className = "timeline-date-group";
-              if (this.cardSettings.timeline.showDate) {
+              if (this.plugin.settings.cardSettings[this.currentView].showDate) {
                 dateGroup.innerHTML = `
                                     <div class="timeline-date-node">
                                         <div class="timeline-node-circle"></div>
@@ -1407,11 +1435,15 @@ ${content}` : content;
               }
               const notesList = dateGroup.createDiv("timeline-notes-list");
               const notes = notesByDate.get(date) || [];
+              const currentSettings = this.plugin.settings.cardSettings[this.currentView];
+              notesList.style.display = "grid";
+              notesList.style.gridTemplateColumns = `repeat(${currentSettings.cardsPerRow}, 1fr)`;
+              notesList.style.gap = `${currentSettings.cardGap}px`;
               const cardPromises = notes.map(async (file) => {
                 const placeholder = document.createElement("div");
                 placeholder.className = "note-card-placeholder";
                 placeholder.style.width = "100%";
-                placeholder.style.height = "200px";
+                placeholder.style.height = `${currentSettings.cardHeight}px`;
                 placeholder.style.backgroundColor = "var(--background-secondary)";
                 placeholder.style.borderRadius = "8px";
                 placeholder.style.marginBottom = "1rem";
@@ -1615,7 +1647,11 @@ ${content}` : content;
     if (newSize !== this.cardSize) {
       this.cardSize = newSize;
       this.updateCardSize(newSize);
-      this.plugin.saveCardWidth(newSize);
+      const currentSettings = this.plugin.settings.cardSettings[this.currentView];
+      if (currentSettings) {
+        currentSettings.cardWidth = newSize;
+        this.plugin.saveSettings();
+      }
     }
   }
   // 卡片-调整高度
@@ -1629,17 +1665,26 @@ ${content}` : content;
     if (newHeight !== this.cardHeight) {
       this.cardHeight = newHeight;
       this.updateCardHeight(newHeight);
-      this.plugin.saveCardHeight(newHeight);
+      const currentSettings = this.plugin.settings.cardSettings[this.currentView];
+      if (currentSettings) {
+        currentSettings.cardHeight = newHeight;
+        this.plugin.saveSettings();
+      }
     }
   }
   // 卡片-更新大小
   updateCardSize(width) {
-    this.cardSize = width;
-    this.container.querySelectorAll(".note-card").forEach((card) => {
-      if (card instanceof HTMLElement) {
-        card.style.width = `${width}px`;
-      }
-    });
+    const currentSettings = this.plugin.settings.cardSettings[this.currentView];
+    if (currentSettings) {
+      currentSettings.cardWidth = width;
+      this.cardSize = width;
+      this.container.querySelectorAll(".note-card").forEach((card) => {
+        if (card instanceof HTMLElement) {
+          card.style.width = `${width}px`;
+        }
+      });
+      this.updateCardLayout();
+    }
   }
   // 卡片-新高度
   updateCardHeight(height) {
@@ -1690,7 +1735,7 @@ ${content}` : content;
     titleEl.setAttribute("title", "\u6EDA\u52A8\u9F20\u6807\u6EDA\u8F6E\u5207\u6362\u6708\u4EFD");
     prevBtn.addEventListener("click", () => {
       this.currentDate.setMonth(this.currentDate.getMonth() - 1);
-      titleEl.setText(`${this.currentDate.getFullYear()}\u5E74${this.currentDate.getMonth() + 1}\u6708`);
+      titleEl.setText(`${this.currentDate.getFullYear()}\u5E74${this.currentDate.getMonth() + 1}`);
       this.renderCalendarContent(this.calendarContainer);
     });
     nextBtn.addEventListener("click", () => {
@@ -1985,7 +2030,7 @@ ${emptyNotes.map((file) => file.basename).join("\n")}`
                 this
               );
             } catch (error) {
-              console.error("\u9884\u89C8\u52A0\u8F7D\u5931\u8D25:", error);
+              console.error("\u9884\u89C8\u8F7D\u5931\u8D25:", error);
             }
           });
         });
@@ -2230,7 +2275,7 @@ ${emptyNotes.map((file) => file.basename).join("\n")}`
         const tagItems = (_b2 = tagsContainer == null ? void 0 : tagsContainer.querySelectorAll(".tag-item.active")) != null ? _b2 : [];
         const tagTexts = Array.from(tagItems).map((item) => {
           var _a3, _b3;
-          return (_b3 = (_a3 = item.textContent) == null ? void 0 : _a3.replace("\xD7", "").trim()) != null ? _b3 : "";
+          return (_b3 = (_a3 = item.textContent) == null ? void 0 : _a3.replace("", "").trim()) != null ? _b3 : "";
         });
         const tagsContent = tagTexts.map((tag) => `#${tag}`).join(" ");
         const finalContent = tagsContent ? `${tagsContent}
@@ -2502,7 +2547,7 @@ ${content}` : content;
     if (this.loadedNotes.has(file.path)) return;
     try {
       container.empty();
-      const content = await this.app.vault.read(file);
+      const content = await this.app.vault.cachedRead(file);
       await import_obsidian2.MarkdownRenderer.render(
         this.app,
         content,
@@ -2611,7 +2656,7 @@ ${content}` : content;
   // 卡片设置面板
   updateSettingsPanel(settingsPanel) {
     settingsPanel.empty();
-    const currentSettings = this.cardSettings[this.currentView];
+    const currentSettings = this.plugin.settings.cardSettings[this.currentView];
     const basicSettings = settingsPanel.createDiv("settings-section");
     basicSettings.createEl("h3", { text: "\u57FA\u672C\u8BBE\u7F6E" });
     const themeContainer = basicSettings.createDiv("setting-item");
@@ -2640,11 +2685,13 @@ ${content}` : content;
       this.updateCardTheme(newTheme);
     });
     const showDateOption = this.createCheckboxOption(basicSettings, "\u663E\u793A\u65E5\u671F", currentSettings.showDate);
-    showDateOption.addEventListener("change", (e) => {
-      currentSettings.showDate = e.target.checked;
+    showDateOption.addEventListener("change", async (e) => {
+      const checked = e.target.checked;
+      currentSettings.showDate = checked;
+      await this.plugin.saveSettings();
       const dateElements = this.container.querySelectorAll(".note-date");
       dateElements.forEach((element) => {
-        if (currentSettings.showDate) {
+        if (checked) {
           element.removeClass("hide");
           element.addClass("show");
         } else {
@@ -2654,8 +2701,9 @@ ${content}` : content;
       });
     });
     const showContentOption = this.createCheckboxOption(basicSettings, "\u663E\u793A\u7B14\u8BB0\u5185\u5BB9", currentSettings.showContent);
-    showContentOption.addEventListener("change", (e) => {
+    showContentOption.addEventListener("change", async (e) => {
       currentSettings.showContent = e.target.checked;
+      await this.plugin.saveSettings();
       const contentElements = this.container.querySelectorAll(".note-content");
       contentElements.forEach((element) => {
         if (currentSettings.showContent) {
@@ -2667,16 +2715,18 @@ ${content}` : content;
     });
     const layoutSettings = settingsPanel.createDiv("settings-section");
     layoutSettings.createEl("h3", { text: "\u5E03\u5C40\u8BBE\u7F6E" });
-    this.createSliderOption(layoutSettings, "\u5361\u7247\u9AD8\u5EA6", currentSettings.cardHeight, 200, 500, 10, (value) => {
+    this.createSliderOption(layoutSettings, "\u5361\u7247\u9AD8\u5EA6", currentSettings.cardHeight, 200, 500, 10, async (value) => {
       currentSettings.cardHeight = value;
+      await this.plugin.saveSettings();
       this.container.querySelectorAll(".note-card").forEach((card) => {
         if (card instanceof HTMLElement) {
           card.style.height = `${value}px`;
         }
       });
     });
-    this.createSliderOption(layoutSettings, "\u5361\u7247\u95F4\u8DDD", currentSettings.cardGap, 0, 40, 4, (value) => {
+    this.createSliderOption(layoutSettings, "\u5361\u7247\u95F4\u8DDD", currentSettings.cardGap, 0, 40, 4, async (value) => {
       currentSettings.cardGap = value;
+      await this.plugin.saveSettings();
       if (this.currentView === "card") {
         this.container.style.gap = `${value}px`;
       } else if (this.currentView === "timeline") {
@@ -2688,27 +2738,6 @@ ${content}` : content;
         });
       }
     });
-    const updateCardsPerRow = (value) => {
-      cardsPerRowInput.value = value.toString();
-      currentSettings.cardsPerRow = value;
-      if (this.currentView === "card") {
-        const containerWidth = this.container.offsetWidth;
-        const totalGap = value >= 0 ? currentSettings.cardGap : 0;
-        const maxColumns = Math.floor(containerWidth / (180 + totalGap));
-        console.log("containerWidth", containerWidth);
-        console.log("totalGap", totalGap);
-        console.log("maxColumns", maxColumns);
-        const repeatValue = value > maxColumns ? maxColumns : value;
-        this.container.style.gridTemplateColumns = `repeat(${repeatValue}, minmax(150px, 1fr))`;
-      } else if (this.currentView === "timeline") {
-        const notesLists = this.container.querySelectorAll(".timeline-notes-list");
-        notesLists.forEach((list) => {
-          if (list instanceof HTMLElement) {
-            list.style.gridTemplateColumns = `repeat(${value}, 1fr)`;
-          }
-        });
-      }
-    };
     const cardsPerRowContainer = layoutSettings.createDiv("setting-item");
     cardsPerRowContainer.createEl("label", { text: "\u6BCF\u884C\u5361\u7247\u6570\u91CF" });
     const controlGroup = cardsPerRowContainer.createDiv("setting-control-group");
@@ -2725,25 +2754,32 @@ ${content}` : content;
       cls: "cards-per-row-btn increase",
       text: "+"
     });
+    const updateCardsPerRow = async (value) => {
+      const validValue = Math.max(1, Math.min(12, value));
+      cardsPerRowInput.value = validValue.toString();
+      currentSettings.cardsPerRow = validValue;
+      await this.plugin.saveSettings();
+      this.updateCardLayout();
+    };
     decreaseBtn.addEventListener("click", () => {
-      const currentValue = parseInt(cardsPerRowInput.value) || 4;
-      if (currentValue > 0) {
-        updateCardsPerRow(Math.max(1, currentValue - 1));
-      }
+      const currentValue = parseInt(cardsPerRowInput.value) || currentSettings.cardsPerRow;
+      updateCardsPerRow(currentValue - 1);
     });
     increaseBtn.addEventListener("click", () => {
-      const currentValue = parseInt(cardsPerRowInput.value) || 4;
+      const currentValue = parseInt(cardsPerRowInput.value) || currentSettings.cardsPerRow;
       updateCardsPerRow(currentValue + 1);
     });
     cardsPerRowInput.addEventListener("change", (e) => {
       const value = parseInt(e.target.value);
-      updateCardsPerRow(isNaN(value) ? 4 : value);
+      if (!isNaN(value)) {
+        updateCardsPerRow(value);
+      }
     });
     cardsPerRowInput.addEventListener("wheel", (e) => {
       e.preventDefault();
       if (document.activeElement === cardsPerRowInput) {
         const delta = e.deltaY > 0 ? -1 : 1;
-        const currentValue = parseInt(cardsPerRowInput.value) || 4;
+        const currentValue = parseInt(cardsPerRowInput.value) || currentSettings.cardsPerRow;
         updateCardsPerRow(currentValue + delta);
       }
     });
@@ -2764,32 +2800,35 @@ ${content}` : content;
   updateCardLayout() {
     const container = this.container;
     if (!container) return;
-    const currentSettings = this.cardSettings[this.currentView];
+    const currentSettings = this.getViewSettings(this.currentView);
     container.style.gap = `${currentSettings.cardGap}px`;
     container.querySelectorAll(".note-card").forEach((card) => {
       if (card instanceof HTMLElement) {
         card.style.height = `${currentSettings.cardHeight}px`;
       }
     });
-    const containerWidth = container.offsetWidth - 2 * 16;
-    console.log("Container width:", containerWidth);
-    const columns = currentSettings.cardsPerRow;
-    console.log("Cards per row setting:", columns);
-    if (columns > 0) {
-      const totalGap = currentSettings.cardGap * (columns - 1);
-      const availableWidth = containerWidth - totalGap;
-      const cardWidth = Math.floor(availableWidth / columns);
-      console.log("Calculated values:", {
-        totalGap,
-        availableWidth,
-        cardWidth,
-        columns
+    if (this.currentView === "timeline") {
+      const notesLists = container.querySelectorAll(".timeline-notes-list");
+      notesLists.forEach((list) => {
+        if (list instanceof HTMLElement) {
+          list.style.display = "grid";
+          list.style.gridTemplateColumns = `repeat(${currentSettings.cardsPerRow}, 1fr)`;
+          list.style.gap = `${currentSettings.cardGap}px`;
+        }
       });
-      container.style.gridTemplateColumns = `repeat(${columns}, minmax(200px, 1fr))`;
-      container.style.gridGap = `${currentSettings.cardGap}px`;
-      container.style.padding = "16px";
-      container.style.boxSizing = "border-box";
-      container.style.width = "100%";
+    } else {
+      const containerWidth = container.offsetWidth - 2 * 16;
+      const columns = currentSettings.cardsPerRow;
+      if (columns > 0) {
+        const totalGap = currentSettings.cardGap * (columns - 1);
+        const availableWidth = containerWidth - totalGap;
+        const cardWidth = Math.floor(availableWidth / columns);
+        container.style.gridTemplateColumns = `repeat(${columns}, minmax(200px, 1fr))`;
+        container.style.gridGap = `${currentSettings.cardGap}px`;
+        container.style.padding = "16px";
+        container.style.boxSizing = "border-box";
+        container.style.width = "100%";
+      }
     }
   }
   // 设置观察器
@@ -4426,10 +4465,12 @@ var DEFAULT_SETTINGS = {
   minCardWidth: 280,
   maxCardWidth: 600,
   cardSettings: {
-    card: { showDate: true, showContent: true, cardGap: 10, cardsPerRow: 3, cardHeight: 280 },
-    list: { showDate: true, showContent: true, cardGap: 10, cardsPerRow: 3, cardHeight: 280 },
-    timeline: { showDate: true, showContent: true, cardGap: 10, cardsPerRow: 3, cardHeight: 280 },
-    month: { showDate: true, showContent: true, cardGap: 10, cardsPerRow: 3, cardHeight: 280 }
+    home: { showDate: true, showContent: true, cardGap: 16, cardsPerRow: 4, cardHeight: 280, cardWidth: 280 },
+    card: { showDate: true, showContent: true, cardGap: 16, cardsPerRow: 4, cardHeight: 280, cardWidth: 280 },
+    list: { showDate: true, showContent: true, cardGap: 16, cardsPerRow: 1, cardHeight: 280, cardWidth: 280 },
+    timeline: { showDate: true, showContent: true, cardGap: 16, cardsPerRow: 2, cardHeight: 280, cardWidth: 280 },
+    month: { showDate: true, showContent: true, cardGap: 8, cardsPerRow: 1, cardHeight: 280, cardWidth: 280 },
+    week: { showDate: true, showContent: true, cardGap: 16, cardsPerRow: 2, cardHeight: 280, cardWidth: 280 }
   },
   showTagCount: false,
   cardHeight: 280,
