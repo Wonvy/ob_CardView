@@ -86,6 +86,23 @@ function getWeekDates(year, week) {
   console.log("\u751F\u6210\u7684\u65E5\u671F\u8303\u56F4:", dates.map((d) => d.toISOString()));
   return dates;
 }
+function createFolderTree(container, folders, selectFolder) {
+  folders.forEach((folder) => {
+    const item = container.createDiv({
+      cls: "folder-item"
+    });
+    item.style.paddingLeft = `${folder.level * 20 + 10}px`;
+    const icon = item.createSpan({
+      cls: "folder-icon"
+    });
+    icon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>`;
+    const nameSpan = item.createSpan({
+      cls: "folder-name"
+    });
+    nameSpan.textContent = folder.name;
+    item.addEventListener("click", () => selectFolder(item, folder.path));
+  });
+}
 function getEndOfWeek() {
   const date = /* @__PURE__ */ new Date();
   const day = date.getDay();
@@ -183,7 +200,7 @@ var EnhancedFileSelectionModal = class extends import_obsidian2.Modal {
     const { contentEl } = this;
     contentEl.empty();
     contentEl.createEl("h3", {
-      text: `\u52A8 ${this.files.length} \u4E2A\u6587\u4EF6`
+      text: `\u79FB\u52A8 ${this.files.length} \u4E2A\u6587\u4EF6`
     });
     if (this.recentFolders.length > 0) {
       const recentSection = contentEl.createDiv("recent-folders-section");
@@ -197,8 +214,12 @@ var EnhancedFileSelectionModal = class extends import_obsidian2.Modal {
     }
     const folderList = contentEl.createDiv("folder-list");
     const folders = this.getFoldersWithHierarchy();
-    this.createFolderTree(folderList, folders);
+    createFolderTree(folderList, folders, this.selectFolder);
     const buttonContainer = contentEl.createDiv("modal-button-container");
+    const cancelButton = buttonContainer.createEl("button", {
+      text: "\u53D6\u6D88"
+    });
+    cancelButton.addEventListener("click", () => this.close());
     const confirmButton = buttonContainer.createEl("button", {
       text: "\u786E\u8BA4\u79FB\u52A8",
       cls: "mod-cta"
@@ -208,10 +229,6 @@ var EnhancedFileSelectionModal = class extends import_obsidian2.Modal {
         this.moveFiles(this.selectedFolder);
       }
     });
-    const cancelButton = buttonContainer.createEl("button", {
-      text: "\u53D6"
-    });
-    cancelButton.addEventListener("click", () => this.close());
   }
   // 取文件夹层次结构
   getFoldersWithHierarchy() {
@@ -240,24 +257,6 @@ var EnhancedFileSelectionModal = class extends import_obsidian2.Modal {
     });
     return folders.sort((a, b) => a.path.localeCompare(b.path));
   }
-  // 创建文件夹树
-  createFolderTree(container, folders) {
-    folders.forEach((folder) => {
-      const item = container.createDiv({
-        cls: "folder-item"
-      });
-      item.style.paddingLeft = `${folder.level * 20 + 10}px`;
-      const icon = item.createSpan({
-        cls: "folder-icon"
-      });
-      icon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>`;
-      const nameSpan = item.createSpan({
-        cls: "folder-name"
-      });
-      nameSpan.textContent = folder.name;
-      item.addEventListener("click", () => this.selectFolder(item, folder.path));
-    });
-  }
   // 选择文件夹
   selectFolder(element, path) {
     this.contentEl.querySelectorAll(".folder-item").forEach((item) => {
@@ -285,41 +284,9 @@ var EnhancedFileSelectionModal = class extends import_obsidian2.Modal {
   }
 };
 var CardView = class extends import_obsidian2.ItemView {
-  // 构造函数
+  // 
   constructor(leaf, plugin) {
     super(leaf);
-    // 卡片视图-参数
-    this.cardSettings = {
-      card: {
-        showDate: true,
-        showContent: true,
-        cardGap: 16,
-        cardsPerRow: 4,
-        cardHeight: 280
-        // 默认高度
-      },
-      list: {
-        showDate: true,
-        showContent: true,
-        cardGap: 16,
-        cardsPerRow: 1,
-        cardHeight: 280
-      },
-      timeline: {
-        showDate: true,
-        showContent: true,
-        cardGap: 16,
-        cardsPerRow: 2,
-        cardHeight: 280
-      },
-      month: {
-        showDate: true,
-        showContent: true,
-        cardGap: 8,
-        cardsPerRow: 1,
-        cardHeight: 280
-      }
-    };
     this.scrollTimeout = null;
     this.homeModules = [
       {
@@ -379,11 +346,8 @@ var CardView = class extends import_obsidian2.ItemView {
     this.cardSize = 280;
     this.cardHeight = 280;
     this.calendarContainer = createDiv();
-    this.isCalendarVisible = false;
     this.currentDate = /* @__PURE__ */ new Date();
     this.currentFilter = { type: "none" };
-    this.monthViewContainer = createDiv();
-    this.isMonthViewVisible = false;
     this.loadedNotes = /* @__PURE__ */ new Set();
     this.currentPage = 1;
     this.pageSize = 20;
@@ -400,7 +364,6 @@ var CardView = class extends import_obsidian2.ItemView {
     this.statusRight = createDiv("status-right");
     this.loadingStatus = createDiv("status-item");
     this.currentLoadingView = null;
-    this.weekViewContainer = createDiv();
     this.currentWeek = this.getWeekNumber(/* @__PURE__ */ new Date());
     this.currentYear = (/* @__PURE__ */ new Date()).getFullYear();
     this.setupIntersectionObserver();
@@ -427,24 +390,15 @@ var CardView = class extends import_obsidian2.ItemView {
     this.cardSize = currentSettings.cardWidth;
     this.cardHeight = currentSettings.cardHeight;
   }
-  /**
-   * 获取视图类型
-   * @returns 视图类型标识符
-   */
+  // 获取视图类型
   getViewType() {
     return VIEW_TYPE_CARD;
   }
-  /**
-   * 获取视图显示文本
-   * @returns 示在标签页上的文本
-   */
+  // 获取视图显示文本
   getDisplayText() {
     return "\u5361\u7247\u89C6\u56FE";
   }
-  /**
-   * 视图打开时的初始化函数
-   * 创建标签过滤器、视图切换按钮和容器
-   */
+  // 视图打开时初始化
   async onOpen() {
     const { containerEl } = this;
     containerEl.empty();
@@ -453,15 +407,16 @@ var CardView = class extends import_obsidian2.ItemView {
     const contentSection = mainLayout.createDiv("content-section");
     const toolbar = contentSection.createDiv("card-view-toolbar");
     const leftTools = toolbar.createDiv("toolbar-left");
+    const centerTools = toolbar.createDiv("toolbar-center");
     const newNoteBtn = leftTools.createEl("button", {
       cls: "new-note-button"
     });
     newNoteBtn.innerHTML = `
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-plus"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-            <span>\u65B0\u5EFA\u7B14\u8BB0</span>
+            <span>\u65B0\u7B14\u8BB0</span>
         `;
     newNoteBtn.addEventListener("click", () => this.createNewNote());
-    const viewSwitcher = leftTools.createDiv("view-switcher");
+    const viewSwitcher = centerTools.createDiv("view-switcher");
     this.createViewSwitcher(viewSwitcher);
     const searchContainer = toolbar.createDiv("search-container");
     this.createCommandButton(searchContainer);
@@ -673,33 +628,12 @@ ${content}` : content;
     });
     return tagCounts;
   }
-  // 载标签
+  // 加载标签
   async loadTags() {
     const tagCounts = this.getTagsWithCount();
     this.tagContainer.empty();
     const leftArea = this.tagContainer.createDiv("filter-toolbar-left");
     const buttonGroup = leftArea.createDiv("filter-toolbar-buttons");
-    const homeButtons = buttonGroup.createDiv("home-view-buttons");
-    homeButtons.setAttribute("data-views", "home");
-    const manageBtn = homeButtons.createEl("button", {
-      cls: "module-manage-btn",
-      text: "\u7BA1\u7406\u5E03\u5C40"
-    });
-    manageBtn.addEventListener("click", () => {
-      this.showModuleManager();
-    });
-    const editBtn = homeButtons.createEl("button", {
-      cls: "module-edit-btn",
-      text: "\u7F16\u8F91\u5E03\u5C40"
-    });
-    let isEditMode = false;
-    editBtn.addEventListener("click", () => {
-      isEditMode = !isEditMode;
-      this.container.toggleClass("edit-mode", isEditMode);
-      editBtn.setText(isEditMode ? "\u5B8C\u6210\u7F16\u8F91" : "\u7F16\u8F91\u5E03\u5C40");
-      editBtn.toggleClass("active", isEditMode);
-      this.toggleModuleEditing(isEditMode);
-    });
     const cardButtons = buttonGroup.createDiv("card-view-buttons");
     cardButtons.setAttribute("data-views", "card,list,timeline,month,week");
     const calendarBtn = cardButtons.createEl("button", {
@@ -724,13 +658,13 @@ ${content}` : content;
     const tagButtons = buttonGroup.createDiv("tag-view-buttons");
     tagButtons.setAttribute("data-views", "card,list,timeline,month,week");
     const dropdownContainer = tagButtons.createDiv("tag-dropdown-container");
-    const dropdown = dropdownContainer.createEl("select", {
+    const dropdown = dropdownContainer.createEl("button", {
       cls: "tag-dropdown"
     });
-    dropdown.createEl("option", {
-      text: "\u6807\u7B7E",
-      value: ""
-    });
+    dropdown.innerHTML = `
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>
+            <span>\u6807\u7B7E</span>
+        `;
     const dropdownPanel = dropdownContainer.createDiv("dropdown-panel");
     dropdownPanel.style.display = "none";
     Array.from(tagCounts.entries()).sort(([a], [b]) => a.localeCompare(b)).forEach(([tag, count]) => {
@@ -791,6 +725,27 @@ ${content}` : content;
       this.addSelectedTag(tag, selectedTagsContainer);
     });
     const rightArea = this.tagContainer.createDiv("filter-toolbar-right");
+    const homeButtons = rightArea.createDiv("home-view-buttons");
+    homeButtons.setAttribute("data-views", "home");
+    const manageBtn = homeButtons.createEl("button", {
+      cls: "module-manage-btn",
+      text: "\u7BA1\u7406\u5E03\u5C40"
+    });
+    manageBtn.addEventListener("click", () => {
+      this.showModuleManager();
+    });
+    const editBtn = homeButtons.createEl("button", {
+      cls: "module-edit-btn",
+      text: "\u7F16\u8F91\u5E03\u5C40"
+    });
+    let isEditMode = false;
+    editBtn.addEventListener("click", () => {
+      isEditMode = !isEditMode;
+      this.container.toggleClass("edit-mode", isEditMode);
+      editBtn.setText(isEditMode ? "\u5B8C\u6210\u7F16\u8F91" : "\u7F16\u8F91\u5E03\u5C40");
+      editBtn.toggleClass("active", isEditMode);
+      this.toggleModuleEditing(isEditMode);
+    });
     const cardSettings = rightArea.createDiv("card-settings-container");
     cardSettings.setAttribute("data-views", "card,list,timeline");
     this.createCardSettings(cardSettings);
@@ -834,37 +789,37 @@ ${content}` : content;
       {
         id: "home",
         icon: "home",
-        text: "\u4E3B\u9875\u89C6\u56FE",
+        text: "\u4E3B\u9875",
         svg: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>'
       },
       {
         id: "card",
         icon: "grid",
-        text: "\u5361\u7247\u89C6\u56FE",
+        text: "\u5361\u7247",
         svg: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>'
       },
       {
         id: "list",
         icon: "list",
-        text: "\u5217\u8868\u89C6\u56FE",
+        text: "\u76EE\u5F55",
         svg: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>'
       },
       {
         id: "timeline",
         icon: "clock",
-        text: "\u65F6\u95F4\u8F74\u89C6\u56FE",
+        text: "\u65F6\u95F4\u7EBF",
         svg: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>'
       },
       {
         id: "month",
         icon: "calendar",
-        text: "\u6708\u5386\u89C6\u56FE",
+        text: "\u672C\u6708",
         svg: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>'
       },
       {
         id: "week",
         icon: "calendar",
-        text: "\u5468\u89C6\u56FE",
+        text: "\u672C\u5468",
         svg: '<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>'
       }
     ];
@@ -988,6 +943,7 @@ ${content}` : content;
   }
   // 加载下一页
   async loadNextPage() {
+    console.log("\u52A0\u8F7D\u4E0B\u4E00\u9875...");
     if (this.currentView !== "card") {
       console.log("\u4E2D\u65AD\u5361\u7247\u52A0\u8F7D\uFF1A\u89C6\u56FE\u5DF2\u5207\u6362");
       return;
@@ -1121,6 +1077,7 @@ ${content}` : content;
       const card = document.createElement("div");
       card.addClass("note-card");
       card.setAttribute("data-path", file.path);
+      card.setAttribute("draggable", "true");
       const header = card.createDiv("note-card-header");
       if (this.plugin.settings.cardSettings[this.currentView].showDate) {
         const lastModified = header.createDiv("note-date show");
@@ -1128,7 +1085,7 @@ ${content}` : content;
       }
       const folderPath = header.createDiv("note-folder");
       const folder = file.parent ? file.parent.path : "\u6839\u76EE\u5F55";
-      const pathParts = folder === "\u76EE" ? ["\u6839\u76EE\u5F55"] : folder.split("/");
+      const pathParts = folder === "\u6839\u76EE\u5F55" ? ["\u6839\u76EE\u5F55"] : folder.split("/");
       pathParts.forEach((part, index) => {
         if (index > 0) {
           folderPath.createSpan({ text: " / ", cls: "folder-separator" });
@@ -1240,6 +1197,12 @@ ${content}` : content;
       if (this.plugin.settings.cardSettings[this.currentView].showContent) {
         const noteContent = cardContent.createDiv("note-content");
       }
+      card.addEventListener("dragstart", (e) => {
+        if (e.dataTransfer) {
+          e.dataTransfer.setData("text/plain", file.path);
+          e.dataTransfer.effectAllowed = "copyMove";
+        }
+      });
       card.addEventListener("contextmenu", (e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -2252,7 +2215,7 @@ ${emptyNotes.map((file) => file.basename).join("\n")}`
   refreshTags() {
     this.loadTags();
   }
-  // 滚同步
+  // 滚动同步
   setupScrollSync() {
     const cardContainer = this.container;
     const previewContainer = this.previewContainer;
@@ -2273,7 +2236,7 @@ ${emptyNotes.map((file) => file.basename).join("\n")}`
       }, 150);
     });
   }
-  // 快速记-设置事件
+  // 快速笔记-设置事件
   setupQuickNoteEvents(input, toolbar, tagSuggestions) {
     var _a, _b, _c;
     const titleInput = (_a = input.parentElement) == null ? void 0 : _a.querySelector(".quick-note-title");
@@ -2829,6 +2792,11 @@ ${content}` : content;
     const cardsPerRowInput = controlGroup.createEl("input", {
       type: "number",
       value: currentSettings.cardsPerRow.toString(),
+      attr: {
+        min: 1,
+        max: 6,
+        step: "1"
+      },
       placeholder: "\u81EA\u52A8"
     });
     const increaseBtn = controlGroup.createEl("button", {
@@ -2865,7 +2833,7 @@ ${content}` : content;
       }
     });
   }
-  // 
+  // 创建复选框选项
   createCheckboxOption(container, label, defaultChecked) {
     const settingItem = container.createDiv("setting-item");
     const checkbox = document.createElement("input");
@@ -4185,29 +4153,6 @@ ${content}` : content;
       });
     });
   }
-  // 在 CardView 类中添加以下方法
-  // 显示网格对齐指示器
-  showGridSnapIndicator(module2, width) {
-    let indicator = this.container.querySelector(".grid-snap-indicator");
-    if (!indicator) {
-      indicator = this.container.createDiv("grid-snap-indicator");
-    }
-    const rect = module2.getBoundingClientRect();
-    if (indicator instanceof HTMLElement) {
-      indicator.style.top = `${rect.top}px`;
-      indicator.style.left = `${rect.left}px`;
-      indicator.style.width = `${width}px`;
-      indicator.style.height = `${rect.height}px`;
-      indicator.style.display = "block";
-    }
-  }
-  // 隐藏网格对齐指示器
-  hideGridSnapIndicator() {
-    const indicator = this.container.querySelector(".grid-snap-indicator");
-    if (indicator instanceof HTMLElement) {
-      indicator.style.display = "none";
-    }
-  }
   // 在 CardView 类中添加
   async renderDynamicModule(container) {
     const dynamicContainer = container.createDiv("dynamic-module");
@@ -4297,6 +4242,7 @@ ${content}` : content;
       container.setText("\u52A0\u8F7D\u5931\u8D25");
     }
   }
+  // 更新卡片主题
   updateCardTheme(theme) {
     this.container.removeClass("theme-light", "theme-dark", "theme-colorful");
     this.container.addClass(`theme-${theme}`);

@@ -215,6 +215,7 @@
 }
 
 .calendar-toggle-button.toolbar-button {
+  gap: 6px;
   position: relative;
 }
 .calendar-toggle-button.toolbar-button .calendar-container {
@@ -371,12 +372,10 @@
   align-items: center;
   flex: 1;
 }
-.filter-toolbar .filter-toolbar-left .filter-toolbar-buttons {
-  display: flex;
-  gap: 10px;
-  flex-direction: row;
+.filter-toolbar .filter-toolbar-left {
+  justify-content: flex-start;
 }
-.filter-toolbar .filter-toolbar-left .filter-toolbar-buttons .home-view-buttons {
+.filter-toolbar .filter-toolbar-left .filter-toolbar-buttons {
   display: flex;
   gap: 10px;
   flex-direction: row;
@@ -386,8 +385,19 @@
   gap: 10px;
   flex-direction: row;
 }
+.filter-toolbar .filter-toolbar-left .selected-tags-container {
+  display: flex;
+  flex-direction: row;
+  gap: 7px;
+}
 .filter-toolbar .filter-toolbar-right {
+  justify-content: flex-end;
   margin-left: 16px;
+}
+.filter-toolbar .filter-toolbar-right .home-view-buttons {
+  display: flex;
+  gap: 10px;
+  flex-direction: row;
 }
 .filter-toolbar .card-settings-container {
   position: relative;
@@ -424,10 +434,8 @@
 }
 .filter-toolbar .tag-dropdown-container {
   position: relative;
-  min-width: 120px;
 }
 .filter-toolbar .tag-dropdown-container .tag-dropdown {
-  width: 100%;
   padding: 6px 18px;
   border: 1px solid var(--background-modifier-border);
   border-radius: 4px;
@@ -439,16 +447,6 @@
   display: flex;
   align-items: center;
   gap: 6px;
-}
-.filter-toolbar .tag-dropdown-container .tag-dropdown::before {
-  content: "";
-  display: inline-block;
-  width: 16px;
-  height: 16px;
-  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>');
-  background-repeat: no-repeat;
-  background-position: center;
-  opacity: 0.5;
 }
 .filter-toolbar .tag-dropdown-container:hover .tag-dropdown {
   border-bottom-left-radius: 0;
@@ -490,18 +488,6 @@
   align-items: center;
   justify-content: space-between;
   transition: all 0.2s ease;
-}
-.filter-toolbar .tag-dropdown-container .dropdown-panel .dropdown-option::before {
-  content: "";
-  display: inline-block;
-  width: 16px;
-  height: 16px;
-  margin-right: 6px;
-  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>');
-  background-repeat: no-repeat;
-  background-position: center;
-  opacity: 0.5;
-  transition: opacity 0.2s ease;
 }
 .filter-toolbar .tag-dropdown-container .dropdown-panel .dropdown-option:hover {
   background-color: var(--background-modifier-hover);
@@ -1584,7 +1570,6 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 24px;
 }
 .month-view .month-header .year-group {
   display: flex;
@@ -2551,18 +2536,18 @@
   width: 16px;
   height: 16px;
 }
-.card-view-toolbar .toolbar-left .view-switcher {
+.card-view-toolbar .toolbar-center .view-switcher {
   display: flex;
-  gap: 0.5rem;
+  gap: 0.7rem;
   padding: 0;
   border-left: 1px solid var(--background-modifier-border);
   margin-left: 1rem;
   padding-left: 1rem;
 }
-.card-view-toolbar .toolbar-left .view-switcher .view-switch-btn {
+.card-view-toolbar .toolbar-center .view-switcher .view-switch-btn {
   background-color: transparent;
   color: var(--text-muted);
-  border: none;
+  border: 0;
   column-gap: 5px;
   border-radius: 4px;
   padding: 6px;
@@ -2572,24 +2557,24 @@
   justify-content: center;
   transition: all 0.2s ease;
 }
-.card-view-toolbar .toolbar-left .view-switcher .view-switch-btn:hover {
+.card-view-toolbar .toolbar-center .view-switcher .view-switch-btn:hover {
   background-color: var(--background-modifier-hover);
   color: var(--text-normal);
 }
-.card-view-toolbar .toolbar-left .view-switcher .view-switch-btn.active {
+.card-view-toolbar .toolbar-center .view-switcher .view-switch-btn.active {
   background-color: var(--interactive-accent);
   color: var(--text-on-accent);
 }
-.card-view-toolbar .toolbar-left .view-switcher .view-switch-btn svg {
+.card-view-toolbar .toolbar-center .view-switcher .view-switch-btn svg {
   width: 18px;
   height: 18px;
 }
-.card-view-toolbar .toolbar-left .view-switcher .view-switch-btn .view-switch-icon {
+.card-view-toolbar .toolbar-center .view-switcher .view-switch-btn .view-switch-icon {
   display: flex;
   align-items: center;
   justify-content: center;
 }
-.card-view-toolbar .toolbar-left .view-switcher .view-switch-btn .view-switch-text {
+.card-view-toolbar .toolbar-center .view-switcher .view-switch-btn .view-switch-text {
   font-size: 0.9em;
 }
 
@@ -2616,7 +2601,7 @@
   border-radius: 8px;
   border: 1px solid var(--background-modifier-border);
   cursor: pointer;
-  transition: all 0.3s ease-in-out;
+  transition: all 0.1s ease-in-out;
   opacity: 1;
   transform: scale(1);
   overflow: hidden;

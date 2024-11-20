@@ -16,23 +16,29 @@
     flex: 1
 
   .filter-toolbar-left
+    justify-content: flex-start
     .filter-toolbar-buttons
       display: flex
       gap: 10px
       flex-direction: row
 
-      .home-view-buttons
-        display: flex
-        gap: 10px
-        flex-direction: row
-
       .card-view-buttons
         display: flex
         gap: 10px
         flex-direction: row
+        
+    .selected-tags-container
+      display: flex
+      flex-direction: row
+      gap: 7px
 
   .filter-toolbar-right
+    justify-content: flex-end
     margin-left: 16px
+    .home-view-buttons
+      display: flex
+      gap: 10px
+      flex-direction: row
 
   .card-settings-container
     position: relative
@@ -69,10 +75,9 @@
 
   .tag-dropdown-container
     position: relative
-    min-width: 120px
 
     .tag-dropdown
-      width: 100%
+      // width: 100%
       padding: 6px 18px
       border: 1px solid var(--background-modifier-border)
       border-radius: 4px
@@ -84,16 +89,6 @@
       display: flex
       align-items: center
       gap: 6px
-
-      &::before
-        content: ''
-        display: inline-block
-        width: 16px
-        height: 16px
-        background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>')
-        background-repeat: no-repeat
-        background-position: center
-        opacity: 0.5
 
     &:hover
       .tag-dropdown
@@ -136,18 +131,6 @@
         align-items: center
         justify-content: space-between
         transition: all 0.2s ease
-
-        &::before
-          content: ''
-          display: inline-block
-          width: 16px
-          height: 16px
-          margin-right: 6px
-          background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>')
-          background-repeat: no-repeat
-          background-position: center
-          opacity: 0.5
-          transition: opacity 0.2s ease
 
         &:hover
           background-color: var(--background-modifier-hover)
