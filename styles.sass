@@ -724,3 +724,73 @@
             option
                 background-color: var(--background-primary)
                 color: var(--text-normal)
+
+// 合并笔记对话框样式
+.merge-notes-modal 
+  .notes-list 
+    margin: 1rem 0
+    border: 1px solid var(--background-modifier-border)
+    border-radius: 4px
+    overflow: hidden
+
+    .note-item 
+      display: flex
+      align-items: center
+      background: var(--background-primary)
+      border-bottom: 1px solid var(--background-modifier-border)
+      cursor: default
+      -webkit-user-select: none
+      user-select: none
+      transition: all 0.2s ease
+      position: relative
+
+      &:last-child 
+        border-bottom: none
+
+      &.dragging 
+        opacity: 0.5
+        background: var(--background-modifier-hover)
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1)
+        position: relative
+        z-index: 1000
+
+      .drag-handle 
+        color: var(--text-muted)
+        cursor: grab
+        padding: 0.5rem
+        border-radius: 4px
+        
+        &:hover
+          background: var(--background-modifier-hover)
+          cursor: grab
+        
+        &:active
+          cursor: grabbing
+        
+        svg
+          display: block
+          width: 16px
+          height: 16px
+
+      .order-number 
+        min-width: 2rem
+        text-align: center
+        color: var(--text-muted)
+        font-size: 0.9em
+        font-weight: 500
+
+      .note-info 
+        flex: 1
+        display: flex
+        flex-direction: row
+        justify-content: space-between
+
+        .note-name 
+          font-weight: 500
+
+        .note-path 
+          font-size: 0.8em
+          color: var(--text-muted)
+
+      &:hover 
+        background: var(--background-modifier-hover)

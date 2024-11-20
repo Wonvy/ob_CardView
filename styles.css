@@ -1685,6 +1685,7 @@
   display: grid;
   height: 100%;
   grid-template-columns: repeat(7, 1fr);
+  grid-auto-rows: 1fr;
   gap: 1px;
   flex: 1;
   background-color: var(--background-modifier-border);
@@ -3155,6 +3156,75 @@
 .card-settings-panel .setting-item select.dropdown option {
   background-color: var(--background-primary);
   color: var(--text-normal);
+}
+
+.merge-notes-modal .notes-list {
+  margin: 1rem 0;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.merge-notes-modal .notes-list .note-item {
+  display: flex;
+  align-items: center;
+  background: var(--background-primary);
+  border-bottom: 1px solid var(--background-modifier-border);
+  cursor: default;
+  -webkit-user-select: none;
+  user-select: none;
+  transition: all 0.2s ease;
+  position: relative;
+}
+.merge-notes-modal .notes-list .note-item:last-child {
+  border-bottom: none;
+}
+.merge-notes-modal .notes-list .note-item.dragging {
+  opacity: 0.5;
+  background: var(--background-modifier-hover);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  position: relative;
+  z-index: 1000;
+}
+.merge-notes-modal .notes-list .note-item .drag-handle {
+  color: var(--text-muted);
+  cursor: grab;
+  padding: 0.5rem;
+  border-radius: 4px;
+}
+.merge-notes-modal .notes-list .note-item .drag-handle:hover {
+  background: var(--background-modifier-hover);
+  cursor: grab;
+}
+.merge-notes-modal .notes-list .note-item .drag-handle:active {
+  cursor: grabbing;
+}
+.merge-notes-modal .notes-list .note-item .drag-handle svg {
+  display: block;
+  width: 16px;
+  height: 16px;
+}
+.merge-notes-modal .notes-list .note-item .order-number {
+  min-width: 2rem;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.9em;
+  font-weight: 500;
+}
+.merge-notes-modal .notes-list .note-item .note-info {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+.merge-notes-modal .notes-list .note-item .note-info .note-name {
+  font-weight: 500;
+}
+.merge-notes-modal .notes-list .note-item .note-info .note-path {
+  font-size: 0.8em;
+  color: var(--text-muted);
+}
+.merge-notes-modal .notes-list .note-item:hover {
+  background: var(--background-modifier-hover);
 }
 
 /*# sourceMappingURL=styles.css.map */

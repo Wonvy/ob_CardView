@@ -391,7 +391,7 @@ export class CardView extends ItemView {
         },
         {
             id: 'calendar',
-            name: '日历',
+            name: '日',
             type: 'calendar',
             visible: true,
             order: 4,
@@ -608,7 +608,7 @@ export class CardView extends ItemView {
         const noteInput = inputContainer.createEl('textarea', {
             cls: 'quick-note-input',
             attr: {
-                placeholder: '输入笔内容，按 Enter 发送...'
+                placeholder: '输入笔内容，按 Enter 送...'
             }
         });
 
@@ -660,7 +660,7 @@ export class CardView extends ItemView {
         // 创建标签建议容器
         const tagSuggestions = inputContainer.createDiv('tag-suggestions');
 
-        // 添加事件处理
+        // 添加事件���理
         this.setupQuickNoteEvents(noteInput, quickNoteToolbar, tagSuggestions);
 
         // 初始搜索处理
@@ -1169,7 +1169,7 @@ export class CardView extends ItemView {
         this.container.empty();
         this.container.setAttribute('data-view', view);
         
-        // 应用视图设置
+        // 应用视图设
         if (currentSettings) {
             // 应用卡片间距
             this.container.style.gap = `${currentSettings.cardGap}px`;
@@ -1203,7 +1203,7 @@ export class CardView extends ItemView {
                     this.createListView();
                     break;
                 case 'timeline':
-                    statusMessage = '切换时间轴视图 - 按日期分组';
+                    statusMessage = '切换间轴视图 - 日期分组';
                     this.createTimelineView();
                     break;
                 case 'month':
@@ -1647,7 +1647,16 @@ export class CardView extends ItemView {
             card.addEventListener('contextmenu', (e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                this.showContextMenu(e, [file]); // 传入当前文件
+                // 获取所有选中的文件，如果当前卡片未选中，则只包含当前卡片
+                let selectedFiles = this.getSelectedFiles();
+                if (selectedFiles.length === 0 || !this.selectedNotes.has(file.path)) {
+                    selectedFiles = [file];
+                    // 更新选中状态
+                    this.clearSelection();
+                    this.selectedNotes.add(file.path);
+                    card.addClass('selected');
+                }
+                this.showContextMenu(e, selectedFiles);
             });
 
             // 
@@ -1683,7 +1692,7 @@ export class CardView extends ItemView {
             this.previewContainer.removeClass('collapsed');
             previewWrapper?.removeClass('collapsed');
             // 恢复预览栏宽度
-            const width = '300px';  // 默认宽度
+            const width = '300px';  // 默认度
             if (previewWrapper instanceof HTMLElement) {
                 previewWrapper.style.width = width;
             }
@@ -1768,12 +1777,12 @@ export class CardView extends ItemView {
 
     // 笔记-创建
     private async createNewNote(date?: Date) {
-            // 获��当前日期作为默认文件名
+            // 获当前日期作为默认文件名
         const baseFileName = date ? date.toLocaleDateString() : '未命名';
             let fileName = baseFileName;
             let counter = 1;
 
-            // 检查文件名是否已存在
+            // 检查文件名是否存在
             while (this.app.vault.getAbstractFileByPath(`${fileName}.md`)) {
             const file = this.app.vault.getAbstractFileByPath(`${fileName}.md`);
             if (file instanceof TFile && file.stat.size === 0) {
@@ -2030,7 +2039,7 @@ export class CardView extends ItemView {
         // 重新设置无限滚动
         this.setupInfiniteScroll();
         
-        this.updateLoadingStatus('刷新视图...');
+        this.updateLoadingStatus('刷视图...');
     }
 
     // 卡片-选择
@@ -2093,7 +2102,7 @@ export class CardView extends ItemView {
 
     // 右键菜单
     private showContextMenu(event: MouseEvent, files: TFile[]) {
-        console.log('显示右键菜单:', event, files); // 添加调试日志
+        console.log('显示右键菜单:', event, files); 
         
         const menu = new Menu();
 
@@ -2112,7 +2121,7 @@ export class CardView extends ItemView {
             // 文件列表中显示
             menu.addItem((item) => {
                 item
-                    .setTitle(`文件列表中显示`)
+                    .setTitle(`件列表中显示`)
                     .setIcon("folder")
                     .onClick(async () => {
                         const file = files[0];  // 显示第一个选中文件的位置
@@ -2137,6 +2146,18 @@ export class CardView extends ItemView {
                         modal.open();
                     });
             });
+
+            // 添加合并笔记选项 - 移到这里，确保在 if 块内
+            if (files.length > 1) {
+                menu.addItem((item) => {
+                    item
+                        .setTitle(`合并 ${files.length} 个笔记`)
+                        .setIcon("files")
+                        .onClick(async () => {
+                            await this.mergeNotes(files);
+                        });
+                });
+            }
 
             // 删除文件
             menu.addItem((item) => {
@@ -2178,9 +2199,87 @@ export class CardView extends ItemView {
                     });
             });
         }
-        menu.showAtMouseEvent(event); // 显示右键菜单
+        menu.showAtMouseEvent(event);
     }
-    
+
+    // 合并笔记
+    private async mergeNotes(files: TFile[]) {
+        try {
+            // 打开设置对话框
+            const modal = new MergeNotesModal(this.app, files, async (settings) => {
+                try {
+                    // 按设置的顺序获取文件
+                    const orderedFiles = settings.noteOrder
+                        .map(path => this.app.vault.getAbstractFileByPath(path))
+                        .filter((file): file is TFile => file instanceof TFile);
+
+            // 收集所有笔记内容
+            const contents: string[] = [];
+                    for (const file of orderedFiles) {
+                const content = await this.app.vault.read(file);
+                contents.push(
+                            `## ${file.basename}\n\n${content}${settings.addSeparator ? `\n\n${settings.separatorStyle}\n\n` : '\n\n'}`
+                );
+            }
+
+            // 创建新笔记名称
+                    let fileName = settings.fileName;
+                    if (settings.addDatePrefix) {
+            const timestamp = new Date().toISOString().split('T')[0];
+                        fileName = `${timestamp}-${fileName}`;
+                    }
+
+                    // 确保文件名不重复
+                    let finalFileName = fileName;
+                    let counter = 1;
+                    while (this.app.vault.getAbstractFileByPath(`${finalFileName}.md`)) {
+                        finalFileName = `${fileName}-${counter}`;
+                counter++;
+            }
+
+            // 创建合并后的内容
+                    const mergedContent = `# ${fileName}\n\n` +
+                `> 创建时间：${new Date().toLocaleString()}\n` +
+                        `> 合并文件：${orderedFiles.map(f => f.basename).join(', ')}\n\n` +
+                `---\n\n` +
+                contents.join('');
+
+            // 创建新笔记
+            const newFile = await this.app.vault.create(
+                        `${finalFileName}.md`,
+                mergedContent
+            );
+
+                    // 如果不保留原文件，则删除原文件
+                    if (!settings.keepOriginal) {
+                        for (const file of orderedFiles) {
+                            await this.app.vault.trash(file, true);
+                        }
+                    }
+
+            // 打开新笔记
+            await openInAppropriateLeaf(this.app, newFile);
+
+            // 显示成功提示
+                    new Notice(`已成功合并 ${orderedFiles.length} 个笔记`);
+
+            // 刷新视图
+            this.refreshView();
+
+                } catch (error) {
+                    console.error('合并笔记失败:', error);
+                    new Notice('合并笔记失败，请查看控制台了解详情');
+                }
+            });
+
+            modal.open();
+
+        } catch (error) {
+            console.error('合并笔记失败:', error);
+            new Notice('合并笔记失败，请查看控制台了解详情');
+        }
+    }
+
     // 卡片-调整大小
     public adjustCardSize(delta: number): void {
         const adjustment = delta > 0 ? -10 : 10;
@@ -2275,7 +2374,7 @@ export class CardView extends ItemView {
         const nextBtn = header.createEl('button', { cls: 'calendar-nav-btn' });
         nextBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>';
 
-        // 添加滚轮事件到标题元素
+        // 添滚轮事件到标题元素
         titleEl.addEventListener('wheel', (e) => {
             e.preventDefault(); // 防止页面滚动
             
@@ -2699,7 +2798,7 @@ export class CardView extends ItemView {
         // 获取当月的笔记
         const notesByDate = this.getNotesByDate(year, month);
         
-        // 填充前置空白日期
+        // 填充置空白日期
         for (let i = 0; i < firstDay.getDay(); i++) {
             grid.createDiv('month-day empty');
         }
@@ -2826,7 +2925,7 @@ export class CardView extends ItemView {
                 const folderName = folderHeader.createDiv('folder-name');
                 folderName.setText(rootFolder);
                 
-                // 创建内容区域
+                // 创建内区域
                 const contentArea = folderGroup.createDiv('folder-content-area');
                 
                 // 创建左侧子文件夹导航
@@ -2916,9 +3015,16 @@ export class CardView extends ItemView {
 
         // 右键菜单
         noteItem.addEventListener('contextmenu', (e) => {
-            console.log('菜单');
             e.preventDefault();
-            this.showContextMenu(e, this.getSelectedFiles());
+            let selectedFiles = this.getSelectedFiles();
+            if (selectedFiles.length === 0 || !this.selectedNotes.has(note.path)) {
+                selectedFiles = [note];
+                // 更新选中状态
+                this.clearSelection();
+                this.selectedNotes.add(note.path);
+                noteItem.addClass('selected');
+            }
+            this.showContextMenu(e, selectedFiles);
         });
 
         // 悬停预览
@@ -2944,7 +3050,7 @@ export class CardView extends ItemView {
         this.loadTags();
     }
 
-    // 滚动同步
+    // 滚同步
     private setupScrollSync() {
         // 获取卡片容器和预览器
         const cardContainer = this.container;
@@ -3096,7 +3202,7 @@ export class CardView extends ItemView {
             }
 
             try {
-                // 获取所有添加的标签
+                // 获取所有加的标签
                 const tagItems = tagsContainer?.querySelectorAll('.tag-item.active') ?? [];
                 const tagTexts = Array.from(tagItems).map(item => item.textContent?.replace('', '').trim() ?? '');
                 
@@ -3172,7 +3278,7 @@ export class CardView extends ItemView {
                         // 添加点击切换状态事件
                         tagItem?.addEventListener('click', (e) => {
                             if (e.target !== removeBtn) {
-                                tagItem.toggleClass('active', !tagItem.hasClass('active')); // 添加第二个��数
+                                tagItem.toggleClass('active', !tagItem.hasClass('active')); // 添加第二个数
                                 tagItem.toggleClass('inactive', tagItem.hasClass('active')); // 添加第二个参数
                             }
                         });
@@ -3489,7 +3595,7 @@ export class CardView extends ItemView {
                 this
             );
             
-            // 如果有搜索词，处理高亮
+            // 如果有搜索词，理高亮
             if (this.currentSearchTerm) {
                 const contentElements = container.querySelectorAll('p, li, h1, h2, h3, h4, h5, h6');
                 contentElements.forEach(element => {
@@ -3555,7 +3661,7 @@ export class CardView extends ItemView {
             console.log('开始创建时间轴视图...');
             const timelineContainer = this.container.createDiv('timeline-container');
             
-            // 初始化加载指示器
+            // 初始化加载示器
             this.timelineLoadingIndicator.innerHTML = `
                 <div class="loading-spinner"></div>
                 <div class="loading-text">加载中...</div>
@@ -3593,7 +3699,7 @@ export class CardView extends ItemView {
             cls: 'card-settings-button',
         });
         settingsBtn.innerHTML = `
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
             <span>卡片设置</span>
         `;
 
@@ -3614,7 +3720,7 @@ export class CardView extends ItemView {
             settingsPanel.style.display = isVisible ? 'none' : 'block';
         });
 
-        // 点击其他地方关闭面板
+        // 点击其他地方关闭面
         document.addEventListener('click', (e) => {
             if (!settingsContainer.contains(e.target as Node)) {
                 settingsPanel.style.display = 'none';
@@ -3850,7 +3956,7 @@ export class CardView extends ItemView {
         });
 
         if (this.currentView === 'timeline') {
-            // 为时间轴视图更新每个日期组的笔记列表布局
+            // 为时间轴视图更新每个日期的笔记列表局
             const notesLists = container.querySelectorAll('.timeline-notes-list');
             notesLists.forEach(list => {
                 if (list instanceof HTMLElement) {
@@ -3869,7 +3975,7 @@ export class CardView extends ItemView {
                 const availableWidth = containerWidth - totalGap;
                 const cardWidth = Math.floor(availableWidth / columns);
 
-                container.style.gridTemplateColumns = `repeat(${columns}, minmax(200px, 1fr))`;
+                container.style.gridTemplateColumns = `repeat(${columns}, ${cardWidth}px)`;
                 container.style.gridGap = `${currentSettings.cardGap}px`;
                 container.style.padding = '16px';
                 container.style.boxSizing = 'border-box';
@@ -3978,7 +4084,7 @@ export class CardView extends ItemView {
         });
     }
 
-    // 添加获取周数的方法
+    // 添获取周数的方法
     private getWeekNumber(date: Date): number {
         const target = new Date(date.valueOf());
         const dayNr = (date.getDay() + 6) % 7; // 调整为周一为一周的开始
@@ -4068,7 +4174,7 @@ export class CardView extends ItemView {
             const weekdays = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
             weekdays.forEach((day, index) => {
                 const dayHeader = daysHeader.createDiv('week-day-header');
-                // 调整日期索引，��周日对应的日期放���最后
+                // 调整日期索引，周日对应的日期放最后
                 const dateIndex = index === 6 ? 0 : index + 1;
                 const date = weekDates[dateIndex];
                 dayHeader.innerHTML = `
@@ -4212,7 +4318,7 @@ export class CardView extends ItemView {
         
         console.log('导航后 - 年份:', this.currentYear, '周数:', this.currentWeek);
         
-        // 更新周信息显示
+        // 更新周信息示
         const weekInfo = this.containerEl.querySelector('.week-info');
         if (weekInfo) {
             const currentMonth = this.getMonthForWeek(this.currentYear, this.currentWeek);
@@ -4420,9 +4526,9 @@ export class CardView extends ItemView {
         // 创建日期格子容器
         const daysContainer = heatmapGrid.createDiv('days-container');
         
-        // 调整开始日期到周一
+        // 调整开始日期到周
         let iterDate = new Date(startDate);
-        // 如果开始日期不是周一，调整到上一个周一
+        // 如果开始日期不是周一，调到上一个周一
         const dayOfWeek = iterDate.getDay();
         const diff = dayOfWeek === 0 ? 6 : dayOfWeek - 1; // 将周日(0)转换为6
         iterDate.setDate(iterDate.getDate() - diff);
@@ -4521,7 +4627,7 @@ export class CardView extends ItemView {
                     label.toggleClass('highlight', index === weekDay);
                 });
 
-                // 高亮同月份的所有格子
+                // 高亮同月份���所有格子
                 daysContainer.querySelectorAll('.day-cell').forEach(otherCell => {
                     const otherDateStr = otherCell.getAttribute('data-date');
                     if (!otherDateStr) return;
@@ -4841,7 +4947,7 @@ export class CardView extends ItemView {
                     dateCell.classList.remove('selected');
                     notesSection.classList.remove('active');
                 } else {
-                    // 如果不是则移除其他的
+                    // 如果是则移除其的
                     document.querySelectorAll('.calendar-module .calendar-grid .calendar-day.selected').forEach(el => {
                         el.classList.remove('selected');
                         notesSection.classList.remove('active');
@@ -4910,7 +5016,7 @@ export class CardView extends ItemView {
             // 启用编辑模式
             modules.forEach(module => {
                 if (module instanceof HTMLElement) {
-                    // 先移除可能存在的旧控
+                    // 先移除能存在的旧控
                     module.querySelectorAll('.module-drag-handle, .module-controls').forEach(el => el.remove());
                     
                     module.classList.add('editable');
@@ -5089,7 +5195,7 @@ export class CardView extends ItemView {
             e.stopPropagation();
         };
 
-        // 定义拖拽过程函数
+        // 定义拖过程函数
         const handleDrag = (e: MouseEvent) => {
             if (!isDragging) return;
             console.log('拖拽中:', e.pageX, e.pageY);
@@ -5239,7 +5345,7 @@ export class CardView extends ItemView {
                     }
                 }
 
-                // 移除占位符和标记
+                // 移除占位和标记
                 placeholder?.remove();
                 this.container.querySelectorAll('.drop-marker').forEach(marker => marker.remove());
                 this.container.querySelectorAll('.drop-target').forEach(el => el.classList.remove('drop-target'));
@@ -5348,7 +5454,7 @@ export class CardView extends ItemView {
             moduleConfig.position = newPosition;
             moduleConfig.columns = newPosition === 'center' ? 2 : 1;
 
-            // 更新顺序（添加到目标列的末尾）
+            // 更新顺序（添加到末尾）
             const sameColumnModules = this.homeModules
                 .filter(m => m.position === newPosition)
                 .sort((a, b) => a.order - b.order);
@@ -5555,7 +5661,7 @@ export class CardView extends ItemView {
             cls: 'todo-add-btn'
         });
 
-        // 创建待办事列表容器
+        // 创建待办事列表器
         const todoList = todoContainer.createDiv('todo-list');
         
 
@@ -5784,7 +5890,7 @@ export class CardView extends ItemView {
                     const dynamicCard = timelineItem.createDiv('dynamic-card');
                     dynamicCard.createDiv('card-title').setText(file.basename);
                     
-                    // 异步加载预览内容
+                    // 步加载预览内容
                     const previewContent = dynamicCard.createDiv('card-preview');
                     previewContent.setText('加载中...');
                     
@@ -5992,7 +6098,7 @@ class RandomCardsModal extends Modal {
 
         // 保存按钮点击事件
         saveBtn.addEventListener('click', async () => {
-            // ... 保存逻辑保持不变 ...
+            // ... 存逻辑保持不变 ...
         });
     }
 
@@ -6199,6 +6305,304 @@ export const DEFAULT_HOME_MODULES: HomeModule[] = [
         position: 'center'
     }
 ];
+
+// 合并笔记设置对话框
+class MergeNotesModal extends Modal {
+    private files: TFile[];
+    private onConfirm: (settings: MergeSettings) => void;
+    private notesList: HTMLElement = createDiv(); // 初始化 notesList
+    private settings: MergeSettings = {
+        fileName: '',
+        addDatePrefix: true,
+        keepOriginal: true,
+        noteOrder: [],
+        addSeparator: true,
+        separatorStyle: '---'
+    };
+
+    constructor(app: App, files: TFile[], onConfirm: (settings: MergeSettings) => void) {
+        super(app);
+        this.files = files;
+        this.onConfirm = onConfirm;
+        this.settings.noteOrder = files.map(f => f.path);
+        this.settings.fileName = `合并笔记-${new Date().toISOString().split('T')[0]}`;
+    }
+
+    onOpen() {
+        const { contentEl } = this;
+        contentEl.empty();
+        contentEl.addClass('merge-notes-modal');
+
+        // 标题
+        contentEl.createEl('h3', { text: '合并笔记设置' });
+
+        // 文件名设置
+        const fileNameSetting = contentEl.createDiv('setting-item');
+        fileNameSetting.createEl('label', { text: '文件名' });
+        const fileNameInput = fileNameSetting.createEl('input', {
+            type: 'text',
+            value: this.settings.fileName
+        });
+        fileNameInput.addEventListener('input', () => {
+            this.settings.fileName = fileNameInput.value;
+        });
+
+        // 日期前缀选项
+        const datePrefixSetting = contentEl.createDiv('setting-item');
+        const datePrefixCheckbox = createEl('input');
+        datePrefixCheckbox.type = 'checkbox';
+        datePrefixCheckbox.checked = this.settings.addDatePrefix;
+        datePrefixSetting.appendChild(datePrefixCheckbox);
+        datePrefixSetting.createEl('label', { text: '添加日期前缀' });
+        datePrefixCheckbox.addEventListener('change', (e) => {
+            this.settings.addDatePrefix = (e.target as HTMLInputElement).checked;
+        });
+
+        // 保留原文件选项
+        const keepOriginalSetting = contentEl.createDiv('setting-item');
+        const keepOriginalCheckbox = createEl('input');
+        keepOriginalCheckbox.type = 'checkbox';
+        keepOriginalCheckbox.checked = this.settings.keepOriginal;
+        keepOriginalSetting.appendChild(keepOriginalCheckbox);
+        keepOriginalSetting.createEl('label', { text: '保留原始文件' });
+        keepOriginalCheckbox.addEventListener('change', (e) => {
+            this.settings.keepOriginal = (e.target as HTMLInputElement).checked;
+        });
+
+        // 分隔符设置
+        const separatorSetting = contentEl.createDiv('setting-item');
+        const separatorCheckbox = createEl('input');
+        separatorCheckbox.type = 'checkbox';
+        separatorCheckbox.checked = this.settings.addSeparator;
+        separatorSetting.appendChild(separatorCheckbox);
+        separatorSetting.createEl('label', { text: '添加分隔符' });
+        const separatorInput = separatorSetting.createEl('input', {
+            type: 'text',
+            value: this.settings.separatorStyle,
+            placeholder: '分隔符样式'
+        });
+
+        // 笔记列表（可拖拽排序）
+        contentEl.createEl('h4', { text: '笔记顺序（拖拽调整）' });
+        this.notesList = contentEl.createDiv('notes-list sortable');
+        this.renderNotesList();
+
+        // 按钮容器
+        const buttonContainer = contentEl.createDiv('button-container');
+        
+        // 取消按钮
+        const cancelButton = buttonContainer.createEl('button', { text: '取消' });
+        cancelButton.addEventListener('click', () => this.close());
+        
+        // 确认按钮
+        const confirmButton = buttonContainer.createEl('button', {
+            text: '确认合并',
+            cls: 'mod-cta'
+        });
+        confirmButton.addEventListener('click', () => {
+            this.onConfirm(this.settings);
+            this.close();
+        });
+    }
+
+
+    private renderNotesList() {
+        console.log('开始渲染笔记列表');
+        console.log('当前笔记顺序:', this.settings.noteOrder);
+        
+        this.notesList.empty();
+        this.settings.noteOrder.forEach((path, index) => {
+            const file = this.app.vault.getAbstractFileByPath(path);
+            if (!(file instanceof TFile)) {
+                console.log('找不到文件:', path);
+                return;
+            }
+
+            console.log('渲染笔记项:', {
+                index,
+                path,
+                name: file.basename
+            });
+
+            const noteItem = this.notesList.createDiv({
+                cls: 'note-item',
+                attr: {
+                    'data-path': path,
+                    'draggable': 'true'  // 确保设置为可拖拽
+                }
+            });
+            
+            // 拖动手柄
+            const dragHandle = noteItem.createDiv('drag-handle');
+            dragHandle.innerHTML = `
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="8" y1="6" x2="16" y2="6"></line>
+                    <line x1="8" y1="12" x2="16" y2="12"></line>
+                    <line x1="8" y1="18" x2="16" y2="18"></line>
+                </svg>
+            `;
+            
+            // 序号
+            const orderNumber = noteItem.createDiv('order-number');
+            orderNumber.setText(`${index + 1}`);
+            
+            // 笔记信息
+            const noteInfo = noteItem.createDiv('note-info');
+            noteInfo.createDiv('note-name').setText(file.basename);
+            noteInfo.createDiv('note-path').setText(file.parent?.path || '根目录');
+
+            this.setupDragAndDrop(noteItem);
+        });
+
+        console.log('笔记列表渲染完成');
+    }
+
+    // 设置拖拽和放置事件
+    private setupDragAndDrop(item: HTMLElement) {
+        let draggedItem: HTMLElement | null = null;
+
+        // 为拖动手柄添加事件监听
+        const dragHandle = item.querySelector('.drag-handle');
+        if (dragHandle) {
+            dragHandle.addEventListener('mousedown', (e) => {
+                console.log('拖动手柄被点击', item);
+                e.preventDefault(); // 恢复这个
+                
+                // 设置父元素为可拖拽
+                item.setAttribute('draggable', 'true');
+                draggedItem = item;
+                
+                // 添加拖拽开始的视觉反馈
+                requestAnimationFrame(() => {
+                    item.classList.add('dragging');
+                    item.style.opacity = '0.5';
+                });
+            });
+        }
+
+        // 拖拽开始事件
+        item.addEventListener('dragstart', (e) => {
+            console.log('开始拖拽', item.getAttribute('data-path'));
+            if (e.dataTransfer) {
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('text/plain', item.getAttribute('data-path') || '');
+            }
+        });
+
+        // 拖拽经过事件
+        item.addEventListener('dragover', (e) => {
+            e.preventDefault(); // 恢复这个，这是关键
+            if (!draggedItem || draggedItem === item) return;
+
+            console.log('拖拽经过事件', item);
+
+            const rect = item.getBoundingClientRect();
+            const midY = rect.top + rect.height / 2;
+
+            // 清除其他项的边框
+            this.notesList.querySelectorAll('.note-item').forEach(el => {
+                if (el !== draggedItem && el !== item) {
+                    (el as HTMLElement).style.borderTop = '';
+                    (el as HTMLElement).style.borderBottom = '';
+                }
+            });
+
+            // 显示放置位置指示器
+            if (e.clientY < midY) {
+                item.style.borderTop = '2px solid var(--interactive-accent)';
+                item.style.borderBottom = '';
+                console.log('显示上边框指示器');
+            } else {
+                item.style.borderTop = '';
+                item.style.borderBottom = '2px solid var(--interactive-accent)';
+                console.log('显示下边框指示器');
+            }
+        });
+
+        // 放置事件
+        item.addEventListener('drop', (e) => {
+            e.preventDefault(); // 恢复这个
+            e.stopPropagation(); // 添加这个以防止事件冒泡
+            
+            console.log('放置事件draggedItem ', draggedItem);
+            console.log('放置事件item ', item);
+            
+            if (!draggedItem || draggedItem === item) return;
+
+            const draggedPath = draggedItem.getAttribute('data-path');
+            const targetPath = item.getAttribute('data-path');
+            
+            console.log('放置事件', {
+                draggedPath,
+                targetPath,
+                mouseY: e.clientY,
+                midY: item.getBoundingClientRect().top + item.getBoundingClientRect().height / 2
+            });
+
+            if (draggedPath && targetPath) {
+                const rect = item.getBoundingClientRect();
+                const midY = rect.top + rect.height / 2;
+                const draggedIndex = this.settings.noteOrder.indexOf(draggedPath);
+                let targetIndex = this.settings.noteOrder.indexOf(targetPath);
+
+                if (e.clientY > midY) {
+                    targetIndex++;
+                }
+
+                // 更新顺序
+                const newOrder = [...this.settings.noteOrder];
+                newOrder.splice(draggedIndex, 1);
+                newOrder.splice(targetIndex, 0, draggedPath);
+                
+                console.log('更新笔记顺序', {
+                    oldOrder: this.settings.noteOrder,
+                    newOrder: newOrder
+                });
+
+                this.settings.noteOrder = newOrder;
+
+                // 立即重新渲染列表
+                this.renderNotesList();
+            }
+
+            // 清除所有拖拽标记
+            this.notesList.querySelectorAll('.note-item').forEach(item => {
+                (item as HTMLElement).style.borderTop = '';
+                (item as HTMLElement).style.borderBottom = '';
+            });
+        });
+
+        // 拖拽结束事件
+        item.addEventListener('dragend', () => {
+            console.log('结束拖拽');
+            item.setAttribute('draggable', 'false');
+            item.classList.remove('dragging');
+            item.style.opacity = '';
+            draggedItem = null;
+
+            // 清除所有拖拽标记
+            this.notesList.querySelectorAll('.note-item').forEach(item => {
+                (item as HTMLElement).style.borderTop = '';
+                (item as HTMLElement).style.borderBottom = '';
+            });
+        });
+    }
+
+    onClose() {
+        const { contentEl } = this;
+        contentEl.empty();
+    }
+}
+
+// 合并设置接口
+interface MergeSettings {
+    fileName: string;
+    addDatePrefix: boolean;
+    keepOriginal: boolean;
+    noteOrder: string[];
+    addSeparator: boolean;
+    separatorStyle: string;
+}
 
 
 
