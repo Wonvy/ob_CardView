@@ -885,15 +885,6 @@ export class CardView extends ItemView {
             <span>日历</span>
         `;
 
-        // 创建卡片设置按钮
-        const settingsBtn = cardButtons.createEl('button', {
-            cls: 'card-settings-button toolbar-button',
-        });
-        settingsBtn.innerHTML = `
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-            <span>卡片设置</span>
-        `;
-
         // 日历容器
         this.calendarContainer = calendarBtn.createDiv('calendar-container');
         this.calendarContainer.style.display = 'none';
@@ -1503,6 +1494,7 @@ export class CardView extends ItemView {
                 displayTitle = displayTitle.replace(timePattern, '').trim();
             }
             
+            // 
             if (this.currentSearchTerm) {
                 title.innerHTML = this.highlightText(displayTitle, this.currentSearchTerm);
             } else {
@@ -1555,7 +1547,7 @@ export class CardView extends ItemView {
                     }
                 });
 
-                // 标离件
+                // 鼠标离开
                 card.addEventListener('mouseleave', () => {
                     openButton.style.opacity = '0';
                     // 根据设置决定是否隐藏内容
@@ -1594,6 +1586,7 @@ export class CardView extends ItemView {
                 openButton.style.opacity = '0';  // 隐藏打开按钮
                 // ... 其他离事件 ...
             });
+
             // 修改内容显示逻辑
             if (this.cardSettings.card.showContent) {
                 // 创建笔记内容
@@ -1608,7 +1601,7 @@ export class CardView extends ItemView {
                 this.showContextMenu(e, [file]); // 传入当前文件
             });
 
-            // 添加点击事件于多选
+            // 
             card.addEventListener('click', (e) => {
                 this.handleCardSelection(file.path, e);
             });
@@ -3538,7 +3531,7 @@ export class CardView extends ItemView {
 
         // 切换面板显示时更新设置状态
         settingsBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
+            e.stopPropagation(); // 阻止事件冒泡
             const isVisible = settingsPanel.style.display === 'block';
             
             if (!isVisible) {
@@ -3557,7 +3550,7 @@ export class CardView extends ItemView {
         });
     }
 
-    // 更新设置面板状态
+    // 卡片设置面板
     private updateSettingsPanel(settingsPanel: HTMLElement) {
         // 清空现有设置
         settingsPanel.empty();
@@ -3585,6 +3578,7 @@ export class CardView extends ItemView {
             { value: 'colorful', label: '彩色主题' }
         ];
         
+        // 添加主题选项
         themes.forEach(theme => {
             const option = themeSelect.createEl('option', {
                 value: theme.value,
@@ -3755,7 +3749,7 @@ export class CardView extends ItemView {
         });
     }
 
-    // 创建复选框选项
+    // 
     private createCheckboxOption(container: HTMLElement, label: string, defaultChecked: boolean): HTMLInputElement {
         const settingItem = container.createDiv('setting-item');
         
@@ -3790,25 +3784,33 @@ export class CardView extends ItemView {
             }
         });
 
-        // 计算每行最大可的卡片数量
-        const minCardWidth = 150;
-        const containerWidth = container.offsetWidth;
-        const maxPossibleCards = Math.floor((containerWidth + currentSettings.cardGap) / (minCardWidth + currentSettings.cardGap));
+        // 计算每行最大可能的卡片数量
+        const containerWidth = container.offsetWidth - (2 * 16); // 减去容器的padding
+        console.log('Container width:', containerWidth);
 
-        // 计算每行卡片数量
-        if (currentSettings.cardsPerRow > 0) {
-            // 固定每行卡片数量，但不超过最大可能数量
-            const columns = Math.min(currentSettings.cardsPerRow, maxPossibleCards);
+        // 使用设置中的每行卡片数量
+        const columns = currentSettings.cardsPerRow;
+        console.log('Cards per row setting:', columns);
+
+        if (columns > 0) {
+            // 计算实际卡片宽度
             const totalGap = currentSettings.cardGap * (columns - 1);
-            const cardWidth = (containerWidth - totalGap) / columns;
-            container.style.gridTemplateColumns = `repeat(${columns}, ${cardWidth}px)`;
-        } else {
-            // 自动计算每行卡片数量（使用视图默认值）
-            const defaultColumns = this.cardSettings[this.currentView as keyof typeof this.cardSettings].cardsPerRow;
-            const columns = Math.min(defaultColumns, maxPossibleCards);
-            const totalGap = currentSettings.cardGap * (columns - 1);
-            const cardWidth = (containerWidth - totalGap) / columns;
-            container.style.gridTemplateColumns = `repeat(${columns}, ${cardWidth}px)`;
+            const availableWidth = containerWidth - totalGap;
+            const cardWidth = Math.floor(availableWidth / columns);
+            
+            console.log('Calculated values:', {
+                totalGap,
+                availableWidth,
+                cardWidth,
+                columns
+            });
+
+            // 设置网格布局
+            container.style.gridTemplateColumns = `repeat(${columns}, minmax(200px, 1fr))`;
+            container.style.gridGap = `${currentSettings.cardGap}px`;
+            container.style.padding = '16px';
+            container.style.boxSizing = 'border-box';
+            container.style.width = '100%';
         }
     }
 
