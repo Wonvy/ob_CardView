@@ -12,6 +12,12 @@ interface CardViewPluginSettings {
     maxCardHeight: number;
     homeModules: HomeModule[];
     cardTheme: 'light' | 'dark' | 'colorful';
+    cardSettings: {
+        card: { showDate: boolean; showContent: boolean; cardGap: number; cardsPerRow: number; cardHeight: number; };
+        list: { showDate: boolean; showContent: boolean; cardGap: number; cardsPerRow: number; cardHeight: number; };
+        timeline: { showDate: boolean; showContent: boolean; cardGap: number; cardsPerRow: number; cardHeight: number; };
+        month: { showDate: boolean; showContent: boolean; cardGap: number; cardsPerRow: number; cardHeight: number; };
+    };
 }
 
 const DEFAULT_SETTINGS: CardViewPluginSettings = {
@@ -19,6 +25,12 @@ const DEFAULT_SETTINGS: CardViewPluginSettings = {
     cardWidth: 280,
     minCardWidth: 280,
     maxCardWidth: 600,
+    cardSettings: {
+        card: { showDate: true, showContent: true, cardGap: 10, cardsPerRow: 3, cardHeight: 280 },
+        list: { showDate: true, showContent: true, cardGap: 10, cardsPerRow: 3, cardHeight: 280 },
+        timeline: { showDate: true, showContent: true, cardGap: 10, cardsPerRow: 3, cardHeight: 280 },
+        month: { showDate: true, showContent: true, cardGap: 10, cardsPerRow: 3, cardHeight: 280 },
+    },
     showTagCount: false,
     cardHeight: 280,
     minCardHeight: 200,

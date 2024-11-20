@@ -291,6 +291,7 @@ export class CardView extends ItemView {
     private statusRight: HTMLElement;
     private loadingStatus: HTMLElement;
     private currentLoadingView: 'home' | 'card' | 'list' | 'timeline' | 'month' | 'week' | null;
+    // 卡片视图-参数
     private cardSettings: {
         card: {
             showDate: boolean;
@@ -1138,7 +1139,7 @@ export class CardView extends ItemView {
         this.container.empty();
         this.container.setAttribute('data-view', view);
         
-        // 更新 content-section 的类名
+        
         const contentSection = this.containerEl.querySelector('.content-section');
         if (contentSection) {
             contentSection.removeClass('view-home', 'view-card', 'view-list', 'view-timeline', 'view-month', 'view-week');
@@ -1199,14 +1200,14 @@ export class CardView extends ItemView {
         });
     }
 
-    // 加载笔记
+    // 卡片视图-加载笔记
     private async loadNotes() {
         try {
             console.log('开始加载笔记...');
-            // 重置分状态
+            //重置分页状态
             this.currentPage = 1;
             this.hasMoreNotes = true;
-            this.container.empty();
+            this.container.empty();//清空容器
             
             // 确保加载指示器被添加到容器中
             if (!this.container.contains(this.loadingIndicator)) {
@@ -1238,12 +1239,14 @@ export class CardView extends ItemView {
 
     // 加载下一页
     private async loadNextPage() {
+
         // 添加视图检查
         if (this.currentView !== 'card') {
             console.log('中断卡片加载：视图已切换');
             return;
         }
 
+        // 如果正在加载或没有更多笔记，则返回
         if (this.isLoading || !this.hasMoreNotes) {
             return;
         }
@@ -1352,6 +1355,7 @@ export class CardView extends ItemView {
         try {
             console.log('设置无限滚动...');
             
+            // 观察加载指示器
             const observer = new IntersectionObserver(
                 (entries) => {
                     entries.forEach(entry => {
@@ -1370,8 +1374,10 @@ export class CardView extends ItemView {
                 }
             );
             
+            // 观察加载指示器
             observer.observe(this.loadingIndicator);
             
+            // 监听滚动事件
             this.container.addEventListener('scroll', () => {
                 const { scrollTop, scrollHeight, clientHeight } = this.container;
                 const scrollPercentage = Math.round((scrollTop / (scrollHeight - clientHeight)) * 100);
@@ -1387,10 +1393,12 @@ export class CardView extends ItemView {
                     }
                 }
                 
+                // 清除滚动定时器
                 if (this.scrollTimeout) {
                     clearTimeout(this.scrollTimeout);
                 }
                 
+                // 设置滚动定时器
                 this.scrollTimeout = setTimeout(() => {
                     const triggerThreshold = 300;
                     if (scrollHeight - scrollTop - clientHeight < triggerThreshold && 
@@ -1420,6 +1428,7 @@ export class CardView extends ItemView {
             
             // 创建卡片头
             const header = card.createDiv('note-card-header');
+
             // 添加修改日期
             if (this.cardSettings[this.currentView as keyof typeof this.cardSettings].showDate) {
                 const lastModified = header.createDiv('note-date show');
@@ -1755,7 +1764,7 @@ export class CardView extends ItemView {
         }
     }
 
-    // 速笔记-创建
+    // 快速笔记-创建
     private async createQuickNote(content: string, types: string[], fileName: string): Promise<TFile | null> {
         try {
             // 生成唯一的文件名
@@ -3891,9 +3900,10 @@ export class CardView extends ItemView {
             updateValue(currentValue - step);
         });
 
+        // 增加按钮事件
         increaseBtn.addEventListener('click', () => {
             const currentValue = parseInt(numberInput.value) || defaultValue;
-            updateValue(currentValue + step);
+            updateValue(currentValue + step); // 增加值
         });
 
         // 输入框事件

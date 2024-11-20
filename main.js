@@ -288,6 +288,7 @@ var CardView = class extends import_obsidian2.ItemView {
   // 构造函数
   constructor(leaf, plugin) {
     super(leaf);
+    // 卡片视图-参数
     this.cardSettings = {
       card: {
         showDate: true,
@@ -930,7 +931,7 @@ ${content}` : content;
       }
     });
   }
-  // 加载笔记
+  // 卡片视图-加载笔记
   async loadNotes() {
     try {
       console.log("\u5F00\u59CB\u52A0\u8F7D\u7B14\u8BB0...");
@@ -1334,7 +1335,7 @@ ${content}` : content;
       console.error("\u521B\u5EFA\u7B14\u8BB0\u5931\u8D25:", error);
     }
   }
-  // 速笔记-创建
+  // 快速笔记-创建
   async createQuickNote(content, types, fileName) {
     try {
       let finalFileName = fileName;
@@ -4424,6 +4425,12 @@ var DEFAULT_SETTINGS = {
   cardWidth: 280,
   minCardWidth: 280,
   maxCardWidth: 600,
+  cardSettings: {
+    card: { showDate: true, showContent: true, cardGap: 10, cardsPerRow: 3, cardHeight: 280 },
+    list: { showDate: true, showContent: true, cardGap: 10, cardsPerRow: 3, cardHeight: 280 },
+    timeline: { showDate: true, showContent: true, cardGap: 10, cardsPerRow: 3, cardHeight: 280 },
+    month: { showDate: true, showContent: true, cardGap: 10, cardsPerRow: 3, cardHeight: 280 }
+  },
   showTagCount: false,
   cardHeight: 280,
   minCardHeight: 200,
