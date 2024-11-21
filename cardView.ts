@@ -442,7 +442,7 @@ export class CardView extends ItemView {
         
         this.searchInput = searchContainer.createEl('input', {
             type: 'text',
-            placeholder: '搜索记...',
+            placeholder: '搜索关键词...',
             cls: 'search-input'
         });
 
@@ -2067,7 +2067,6 @@ export class CardView extends ItemView {
                         });
                 });
             }
-
             // 删除文件
             menu.addItem((item) => {
                 item
@@ -3566,7 +3565,7 @@ export class CardView extends ItemView {
             this.container.empty();
             
             console.log('开始创建时间轴视图...');
-            const timelineContainer = this.container.createDiv('timeline-container');
+            const timelineContainer = this.container;
             
             // 初始化加载示器
             this.timelineLoadingIndicator.innerHTML = `
@@ -3870,6 +3869,7 @@ export class CardView extends ItemView {
 
         if (this.currentView === 'timeline') {
             // 为时间轴视图更新每个日期的笔记列表局
+            container.removeAttribute('style');
             const notesLists = container.querySelectorAll('.timeline-notes-list');
             notesLists.forEach(list => {
                 if (list instanceof HTMLElement) {
@@ -3997,7 +3997,7 @@ export class CardView extends ItemView {
         });
     }
 
-    // 添获取周数的方法
+    // 获取周数
     private getWeekNumber(date: Date): number {
         const target = new Date(date.valueOf());
         const dayNr = (date.getDay() + 6) % 7; // 调整为周一为一周的开始
@@ -4008,7 +4008,7 @@ export class CardView extends ItemView {
             target.setMonth(0, 1 + ((4 - target.getDay()) + 7) % 7);
         }
         const weekNum = 1 + Math.ceil((firstThursday - target.valueOf()) / 604800000);
-        console.log(`计算周数 - 期:${date.toISOString()}, 周数:${weekNum}`);
+        // console.log(`计算周数 - 期:${date.toISOString()}, 周数:${weekNum}`);
         return weekNum;
     }
 
@@ -4040,9 +4040,18 @@ export class CardView extends ItemView {
             const currentMonth = this.getMonthForWeek(this.currentYear, this.currentWeek);
             weekInfo.setText(`${this.currentYear}年${currentMonth}月 第${this.currentWeek}周`);
             
+            // 下一周按钮
+            const nextWeekBtn = navGroup.createEl('button', { 
+                cls: 'week-nav-btn',
+                attr: { title: '下一周' }
+            });
+            nextWeekBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>';
+
+
             // 添加本周按钮
             const currentWeekBtn = navGroup.createEl('button', {
                 cls: 'week-nav-btn current-week',
+                text: '本周',
                 attr: { title: '返回本周' }
             });
             currentWeekBtn.innerHTML = `
@@ -4050,14 +4059,9 @@ export class CardView extends ItemView {
                     <circle cx="12" cy="12" r="10"></circle>
                     <polyline points="12 6 12 12 16 14"></polyline>
                 </svg>
+                <span>本周</span>
             `;
             
-            // 下一周按钮
-            const nextWeekBtn = navGroup.createEl('button', { 
-                cls: 'week-nav-btn',
-                attr: { title: '下一周' }
-            });
-            nextWeekBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>';
 
             // 添加导航事件
             prevWeekBtn.addEventListener('click', (e) => {
@@ -5809,6 +5813,7 @@ export class CardView extends ItemView {
             }
         );
         
+        // 观察加载指示器
         observer.observe(loadingIndicator);
         
         // 添加滚动事件处理

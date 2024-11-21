@@ -422,7 +422,7 @@ var CardView = class extends import_obsidian2.ItemView {
     this.createCommandButton(searchContainer);
     this.searchInput = searchContainer.createEl("input", {
       type: "text",
-      placeholder: "\u641C\u7D22\u8BB0...",
+      placeholder: "\u641C\u7D22\u5173\u952E\u8BCD...",
       cls: "search-input"
     });
     const quickNoteBar = mainLayout.createDiv("quick-note-bar");
@@ -2652,7 +2652,7 @@ ${content}` : content;
     try {
       this.container.empty();
       console.log("\u5F00\u59CB\u521B\u5EFA\u65F6\u95F4\u8F74\u89C6\u56FE...");
-      const timelineContainer = this.container.createDiv("timeline-container");
+      const timelineContainer = this.container;
       this.timelineLoadingIndicator.innerHTML = `
                 <div class="loading-spinner"></div>
                 <div class="loading-text">\u52A0\u8F7D\u4E2D...</div>
@@ -2857,6 +2857,7 @@ ${content}` : content;
       }
     });
     if (this.currentView === "timeline") {
+      container.removeAttribute("style");
       const notesLists = container.querySelectorAll(".timeline-notes-list");
       notesLists.forEach((list) => {
         if (list instanceof HTMLElement) {
@@ -2951,7 +2952,7 @@ ${content}` : content;
       }
     });
   }
-  // 添获取周数的方法
+  // 获取周数
   getWeekNumber(date) {
     const target = new Date(date.valueOf());
     const dayNr = (date.getDay() + 6) % 7;
@@ -2962,7 +2963,6 @@ ${content}` : content;
       target.setMonth(0, 1 + (4 - target.getDay() + 7) % 7);
     }
     const weekNum = 1 + Math.ceil((firstThursday - target.valueOf()) / 6048e5);
-    console.log(`\u8BA1\u7B97\u5468\u6570 - \u671F:${date.toISOString()}, \u5468\u6570:${weekNum}`);
     return weekNum;
   }
   // 创建周视图
@@ -2984,8 +2984,14 @@ ${content}` : content;
       const weekInfo = navGroup.createDiv("week-info");
       const currentMonth = this.getMonthForWeek(this.currentYear, this.currentWeek);
       weekInfo.setText(`${this.currentYear}\u5E74${currentMonth}\u6708 \u7B2C${this.currentWeek}\u5468`);
+      const nextWeekBtn = navGroup.createEl("button", {
+        cls: "week-nav-btn",
+        attr: { title: "\u4E0B\u4E00\u5468" }
+      });
+      nextWeekBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>';
       const currentWeekBtn = navGroup.createEl("button", {
         cls: "week-nav-btn current-week",
+        text: "\u672C\u5468",
         attr: { title: "\u8FD4\u56DE\u672C\u5468" }
       });
       currentWeekBtn.innerHTML = `
@@ -2993,12 +2999,8 @@ ${content}` : content;
                     <circle cx="12" cy="12" r="10"></circle>
                     <polyline points="12 6 12 12 16 14"></polyline>
                 </svg>
+                <span>\u672C\u5468</span>
             `;
-      const nextWeekBtn = navGroup.createEl("button", {
-        cls: "week-nav-btn",
-        attr: { title: "\u4E0B\u4E00\u5468" }
-      });
-      nextWeekBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>';
       prevWeekBtn.addEventListener("click", (e) => {
         e.stopPropagation();
         this.navigateWeek(-1);

@@ -9,15 +9,15 @@
     // 头部样式优化 - 固定头部
     .week-header
         display: flex
-        justify-content: space-between
+        justify-content: center
         align-items: center
         padding: 16px 24px
         border-bottom: 1px solid var(--background-modifier-border)
-        background: var(--background-primary)  // 确保背景色
-        position: sticky  // 固定定位
+        background: var(--background-primary)
+        position: sticky
         top: 0
         z-index: 10
-        flex-shrink: 0  // 防止头部被压缩
+        flex-shrink: 0
         
         .week-nav-group
             display: flex
@@ -25,6 +25,9 @@
             gap: 16px
             
             .week-nav-btn
+                display: flex
+                align-items: center
+                gap: 6px
                 background: transparent
                 border: 1px solid var(--background-modifier-border)
                 border-radius: 4px

@@ -1,59 +1,57 @@
 
 // 时间轴视图
 .view-timeline
-  .card-container  
-    display: flex 
-    .timeline-container 
-      padding: 0rem 0rem 0rem 150px
+  .card-container
+    display: flex
+    padding: 0rem 0rem 0rem 150px
+    position: relative
+
+    .timeline-date-group 
       position: relative
-      &::before 
-        content: ''
-        position: absolute
-        left: 127px  // 调整时间轴位置   
-        top: 0
-        bottom: 0
-        width: 2px
-        background-color: var(--background-modifier-border)  
+      margin-bottom: 2rem
 
-      .timeline-date-group 
-        position: relative
-        margin-bottom: 2rem
+      .timeline-date-node 
+        text-align: left
+        display: flex
+        align-items: center
+        justify-content: flex-start
+        gap: 1rem
+        flex-direction: row
 
-        .timeline-date-node 
-          display: flex
-          position: absolute
-          left: -118px
-          width: 100px
-          text-align: right
-          display: flex
-          align-items: center
-          justify-content: flex-end
-          gap: 1rem
-          flex-direction: row-reverse
-          .timeline-node-circle 
-            width: 12px
-            height: 12px
-            border: 2px solid var(--interactive-accent)
-            border-radius: 50%
-            background-color: var(--background-primary)
-            margin-right: -6px  // 调  
+        .timeline-node-circle
+          position: relative
+          width: 12px
+          height: 12px
+          border: 2px solid var(--interactive-accent)
+          border-radius: 50%
+          background-color: var(--background-primary)
+          margin-right: -6px  
+          &::before 
+            content: ''
+            position: absolute
+            left: 0  // 调整时间轴位置   
+            top: 0
+            bottom: 0
+            width: 30px
+            background-color: var(--background-modifier-border)  
 
-          .timeline-date-label 
-            font-weight: bold
-            color: var(--text-muted)  
+        .timeline-date-label 
+          font-size: 2em
+          font-weight: bold
+          color: var(--text-muted)  
+      
+      .timeline-notes-list 
+        margin-left: 20px  //
+        margin-top: 2rem
+        display: grid  // 改为网格布局
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr))  // 自适应列宽
+        gap: 1rem  // 添加间距
         
-        .timeline-notes-list 
-          margin-left: 20px  //
-          margin-top: 2rem
-          display: grid  // 改为网格布局
-          grid-template-columns: repeat(auto-fill, minmax(280px, 1fr))  // 自适应列宽
-          gap: 1rem  // 添加间距
-          
-          // 移除旧的时间轴笔记样式
-          .timeline-note-item,
-          .timeline-note-marker,
-          .timeline-note-content
-            display: none
+        // 移除旧的时间轴笔记样式
+        .timeline-note-item,
+        .timeline-note-marker,
+        .timeline-note-content
+          display: none
 
 
 
